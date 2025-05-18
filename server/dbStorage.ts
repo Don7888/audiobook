@@ -39,6 +39,24 @@ export class DbStorage implements IStorage {
     return result[0];
   }
   
+  // Method needed for Replit Auth
+  async upsertUser(userData: any): Promise<User> {
+    // Check if the user already exists
+    const existingUser = await this.getUser(parseInt(userData.sub));
+    
+    if (existingUser) {
+      // User exists, update if needed
+      return existingUser;
+    } else {
+      // Create new user
+      return this.createUser({
+        id: parseInt(userData.sub),
+        username: userData.email || `user-${userData.sub}`,
+        subscriptionTier: "basic"
+      });
+    }
+  }
+  
   // Story methods
   async getStory(id: number): Promise<Story | undefined> {
     const result = await db.select().from(stories).where(eq(stories.id, id));

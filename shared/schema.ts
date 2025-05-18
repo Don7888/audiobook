@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, varchar, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, varchar, timestamp, json, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -6,6 +6,19 @@ import { z } from "zod";
 export const subscriptionTierEnum = z.enum(["basic", "pro", "premium"]);
 
 // User schema
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => ({
+    expireIdx: index("IDX_session_expire").on(table.expire),
+  })
+);
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),

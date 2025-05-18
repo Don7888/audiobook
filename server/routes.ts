@@ -10,6 +10,7 @@ import {
 import OpenAI from "openai";
 import * as fs from 'fs';
 import * as path from 'path';
+// Auth functionality will be added in a future update
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });

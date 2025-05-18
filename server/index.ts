@@ -2,25 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import * as path from 'path';
-import { runMigrations } from './db';
-import { DbStorage } from './dbStorage';
-import { storage } from './storage';
-
-// Initialize the database
-(async () => {
-  try {
-    // Run migrations to ensure tables exist
-    await runMigrations();
-    console.log('Database migration completed successfully');
-    
-    // Initialize storage with sample data if needed
-    if (storage instanceof DbStorage) {
-      await storage.initializeSampleData();
-    }
-  } catch (error) {
-    console.error('Database initialization error:', error);
-  }
-})();
 
 const app = express();
 app.use(express.json());
