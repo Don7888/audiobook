@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Download } from "lucide-react";
+import { Play, Pause, VolumeUp } from "lucide-react";
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -8,60 +8,113 @@ interface AudioPlayerProps {
 }
 
 export default function AudioPlayer({ audioUrl, className = "" }: AudioPlayerProps) {
-  // Create a direct download link that will work on mobile
-  const openInNewTab = () => {
-    window.open(audioUrl, '_blank');
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Create a direct URL for the audio file using our static audio serving route
+  // Replace /api/stories/audio/ with /audio/ to match our Express static serving
+  const directAudioUrl = audioUrl.replace('/api/stories/audio/', '/audio/');
+
+  // Set up audio element and time updates
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const setupAudio = () => {
+      setDuration(audio.duration);
+    };
+
+    const updateTime = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const audioEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+
+    audio.addEventListener('loadedmetadata', setupAudio);
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('ended', audioEnded);
+
+    return () => {
+      audio.removeEventListener('loadedmetadata', setupAudio);
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('ended', audioEnded);
+    };
+  }, []);
+
+  // Format time in minutes:seconds
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return "00:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
-  
-  // Extract the filename for download
-  const filename = audioUrl.split('/').pop() || 'story-audio.mp3';
+
+  // Handle play/pause
+  const togglePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch(err => {
+            console.error("Play error:", err);
+            // Play in new tab as fallback
+            window.open(directAudioUrl, '_blank');
+          });
+      }
+    }
+  };
 
   return (
     <div className={`bg-purple rounded-2xl p-4 shadow text-white ${className}`}>
-      <div className="flex flex-col items-center justify-center">
-        <h4 className="font-heading font-bold text-center mb-4">Listen to Preview</h4>
-        
-        <div className="flex flex-col items-center space-y-4">
-          {/* Native audio element with standard controls that work cross-browser */}
-          <audio 
-            controls
-            src={audioUrl} 
-            className="w-full max-w-md"
-          >
-            Your browser does not support the audio element.
-          </audio>
-          
-          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
-            {/* Direct link to audio in new tab */}
-            <Button
-              onClick={openInNewTab}
-              variant="outline"
-              className="bg-white bg-opacity-20 text-white hover:bg-opacity-30 flex items-center gap-2"
-            >
-              <ExternalLink size={16} />
-              <span>Open in New Tab</span>
-            </Button>
-            
-            {/* Direct download link (always works) */}
-            <a 
-              href={audioUrl} 
-              download={filename}
-              className="no-underline"
-            >
-              <Button
-                variant="outline"
-                className="bg-green-600 hover:bg-green-700 text-white w-full flex items-center gap-2"
-              >
-                <Download size={16} />
-                <span>Download Audio</span>
-              </Button>
-            </a>
-          </div>
-          
-          <p className="text-xs text-center mt-2 opacity-80">
-            If the player isn't working, please use the download button to hear the audio.
-          </p>
+      <h4 className="font-heading font-bold text-center mb-4">Listen to Story</h4>
+      
+      <audio 
+        ref={audioRef}
+        src={directAudioUrl}
+        preload="metadata" 
+        className="hidden"
+      />
+      
+      <div className="flex flex-col items-center gap-3">
+        {/* Simple player UI */}
+        <div className="w-full bg-white bg-opacity-20 rounded-full h-2 mb-2">
+          <div 
+            className="bg-white h-2 rounded-full" 
+            style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+          ></div>
         </div>
+        
+        <div className="flex items-center justify-between w-full">
+          <span className="text-sm">{formatTime(currentTime)}</span>
+          
+          <Button
+            onClick={togglePlay}
+            variant="outline"
+            className="bg-white text-purple rounded-full w-12 h-12 flex items-center justify-center"
+          >
+            {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-1" />}
+          </Button>
+          
+          <span className="text-sm">{formatTime(duration)}</span>
+        </div>
+        
+        <p className="text-xs text-center mt-2 opacity-80">
+          AI-generated voice narration using OpenAI's TTS
+        </p>
       </div>
     </div>
   );
