@@ -7,20 +7,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wand2, BookOpen, Headphones, VolumeX, Volume2, Loader2 } from "lucide-react";
+import { Wand2, BookOpen, Headphones, VolumeX, Volume2, Loader2, LogIn } from "lucide-react";
 import { generateStory, generateAudio, GeneratedStory } from "@/lib/openai";
 import StoryPreview from "./StoryPreview";
 import SoundEffectSelector from "./SoundEffectSelector";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { Link } from "wouter";
 
 interface StoryCreatorProps {
   onStoryGenerated?: (story: GeneratedStory, audio: string, soundEffects?: SoundEffectPlacement[]) => void;
   userId?: number;
 }
 
-export default function StoryCreator({ onStoryGenerated, userId }: StoryCreatorProps) {
+export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [activeTab, setActiveTab] = useState("prompt");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
@@ -29,6 +31,7 @@ export default function StoryCreator({ onStoryGenerated, userId }: StoryCreatorP
   const [audioDuration, setAudioDuration] = useState(0);
   const [soundEffectSuggestions, setSoundEffectSuggestions] = useState<Array<{ description: string; timing: string; }>>([]);
   const { toast } = useToast();
+  const { user, isAuthenticated, userId } = useAuth();
 
   // Fetch subscription plans to check features
   const { data: subscriptionPlans } = useQuery({
@@ -69,9 +72,18 @@ export default function StoryCreator({ onStoryGenerated, userId }: StoryCreatorP
 
   const handleGenerateStory = async (data: StoryGeneration) => {
     try {
+      if (!isAuthenticated || !userId) {
+        toast({
+          title: "Authentication Required",
+          description: "You need to sign in to create stories",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       setIsGenerating(true);
       
-      // Add user ID if available
+      // Add user ID
       const storyParams = {
         ...data,
         userId: userId
@@ -129,11 +141,31 @@ export default function StoryCreator({ onStoryGenerated, userId }: StoryCreatorP
       <div className="container mx-auto px-4">
         <h2 className="font-heading font-bold text-3xl md:text-4xl text-center mb-12">Create Your Audiobook</h2>
         
-        <Tabs 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl mx-auto"
-        >
+        {!isAuthenticated ? (
+          <div className="bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl mx-auto p-8 text-center">
+            <div className="mb-6">
+              <LogIn className="mx-auto h-16 w-16 text-primary mb-4" />
+              <h3 className="text-2xl font-semibold mb-3">Sign In Required</h3>
+              <p className="text-gray-600 mb-6">
+                You need to sign in to create and save your own audiobooks. 
+                Sign in now to unlock all the storytelling features.
+              </p>
+              <Link href="/signin">
+                <Button className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3">
+                  Sign In to Continue
+                </Button>
+              </Link>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
+            </p>
+          </div>
+        ) : (
+          <Tabs 
+            value={activeTab} 
+            onValueChange={setActiveTab}
+            className="bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl mx-auto"
+          >
           <TabsList className="flex w-full h-auto border-b">
             <TabsTrigger 
               value="prompt" 
@@ -405,6 +437,7 @@ export default function StoryCreator({ onStoryGenerated, userId }: StoryCreatorP
             )}
           </TabsContent>
         </Tabs>
+        )}
       </div>
     </section>
   );
