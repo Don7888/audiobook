@@ -279,26 +279,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const fs = require('fs');
         const path = require('path');
         
-        // Create directory if it doesn't exist
-        const dir = path.join(process.cwd(), 'public', 'stories', 'audio');
-        if (!fs.existsSync(dir)){
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        
-        // Write the file
-        const filePath = path.join(dir, `${timestamp}.mp3`);
-        fs.writeFileSync(filePath, nodeBuffer);
-        
-        // Serve this file statically
-        app.use('/api/stories/audio', (req, res, next) => {
-          const audioFile = path.join(process.cwd(), 'public', 'stories', 'audio', path.basename(req.path));
-          if (fs.existsSync(audioFile)) {
-            return res.sendFile(audioFile);
+        // Create a simpler directory structure since we're in a web environment
+        const dir = path.join(process.cwd(), 'audio');
+        try {
+          if (!fs.existsSync(dir)){
+            fs.mkdirSync(dir, { recursive: true });
           }
-          next();
-        });
+          
+          // Write the file
+          const filePath = path.join(dir, `${timestamp}.mp3`);
+          fs.writeFileSync(filePath, nodeBuffer);
+          
+          // Serve this file statically when requested later
+          if (!app._router.stack.some(layer => layer.route && layer.route.path === '/api/stories/audio/:filename')) {
+            app.get('/api/stories/audio/:filename', (req, res) => {
+              const audioFile = path.join(process.cwd(), 'audio', req.params.filename);
+              if (fs.existsSync(audioFile)) {
+                return res.sendFile(audioFile);
+              } else {
+                return res.status(404).send('Audio file not found');
+              }
+            });
+          }
+          
+          return res.status(200).json({ audioUrl });
         
-        return res.status(200).json({ audioUrl });
         
       } catch (openAiError) {
         console.error("OpenAI TTS error:", openAiError);
