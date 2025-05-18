@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@300;400;600;700&family=Comic+Neue:wght@400;700&display=swap');
+
+:root {
+  /* Base colors */
+  --background: 0 0% 100%;
+  --foreground: 210 11% 30%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 11% 30%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 11% 30%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  
+  /* Brand colors */
+  --primary: 0 82% 71%;  /* #FF6B6B */
+  --primary-foreground: 211 100% 99%;
+  --secondary: 174 65% 57%; /* #4ECDC4 */
+  --secondary-foreground: 210 11% 30%;
+  --accent: 44 100% 70%; /* #FFD166 */
+  --accent-foreground: 210 11% 30%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --purple: 249 48% 58%; /* #6A5ACD */
+  --dark: 210 11% 30%; /* #495057 */
+  --light: 210 17% 98%; /* #F8F9FA */
+  
+  --ring: 0 82% 71%;
+  --radius: 1rem;
+  
+  /* Chart colors */
+  --chart-1: 0 82% 71%; 
+  --chart-2: 174 65% 57%;
+  --chart-3: 44 100% 70%;
+  --chart-4: 249 48% 58%;
+  --chart-5: 210 11% 30%;
+  
+  /* Sidebar colors */
+  --sidebar-background: 210 17% 98%;
+  --sidebar-foreground: 210 11% 30%;
+  --sidebar-primary: 0 82% 71%;
+  --sidebar-primary-foreground: 210 17% 98%;
+  --sidebar-accent: 44 100% 70%;
+  --sidebar-accent-foreground: 210 11% 30%;
+  --sidebar-border: 20 5.9% 90%;
+  --sidebar-ring: 0 82% 71%;
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --primary: 0 82% 65%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 174 65% 45%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 44 90% 60%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 212.7 26.8% 83.9%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-light font-body text-dark antialiased;
+    background-image: radial-gradient(theme('colors.secondary.DEFAULT') 0.5px, transparent 0.5px), radial-gradient(theme('colors.primary.DEFAULT') 0.5px, theme('colors.light.DEFAULT') 0.5px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+  }
+}
+
+@layer components {
+  .audio-wave {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+  }
+  
+  .audio-wave .bar {
+    width: 6px;
+    border-radius: 3px;
+    background: theme('colors.purple.DEFAULT');
+    animation: wave 1.5s ease-in-out infinite;
+  }
+  
+  .audio-wave .bar:nth-child(2) { animation-delay: 0.2s; }
+  .audio-wave .bar:nth-child(3) { animation-delay: 0.4s; }
+  .audio-wave .bar:nth-child(4) { animation-delay: 0.6s; }
+  .audio-wave .bar:nth-child(5) { animation-delay: 0.8s; }
+  
+  @keyframes wave {
+    0%, 100% { height: 10px; }
+    50% { height: 30px; }
+  }
+  
+  .platform-card {
+    @apply transition-all duration-300;
+  }
+  
+  .platform-card:hover {
+    transform: translateY(-5px);
+    @apply shadow-xl;
+  }
+  
+  .book-cover {
+    @apply transition-transform duration-300;
+  }
+  
+  .book-cover:hover {
+    transform: scale(1.05);
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: 'Quicksand', sans-serif;
+  }
+  
+  .font-body {
+    font-family: 'Nunito', sans-serif;
+  }
+  
+  .font-accent {
+    font-family: 'Comic Neue', cursive;
+  }
+}
