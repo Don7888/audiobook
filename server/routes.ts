@@ -8,6 +8,9 @@ import {
   insertUserSchema, soundEffectPlacementSchema
 } from "@shared/schema";
 import OpenAI from "openai";
+import * as fs from 'fs';
+import * as path from 'path';
+import { generateAudio } from './tts';
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
