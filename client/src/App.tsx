@@ -9,6 +9,7 @@ import Home from "@/pages/Home";
 import Library from "@/pages/Library";
 import Help from "@/pages/Help";
 import Subscription from "@/pages/Subscription";
+import AudioDownload from "@/pages/AudioDownload";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/library" component={Library} />
       <Route path="/help" component={Help} />
       <Route path="/subscription" component={Subscription} />
+      <Route path="/audio-download" component={AudioDownload} />
       <Route component={NotFound} />
     </Switch>
   );
