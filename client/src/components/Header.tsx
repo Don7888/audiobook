@@ -43,6 +43,9 @@ export default function Header() {
                   <Link href="/library">My Library</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/subscription">Plans</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/help">Help</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -51,23 +54,30 @@ export default function Header() {
             <ul className="flex space-x-6 items-center">
               <li>
                 <Link href="/">
-                  <a className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/' ? 'text-primary' : ''}`}>
+                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/' ? 'text-primary' : ''}`}>
                     Create
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/library">
-                  <a className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/library' ? 'text-primary' : ''}`}>
+                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/library' ? 'text-primary' : ''}`}>
                     My Library
-                  </a>
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/subscription">
+                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/subscription' ? 'text-primary' : ''}`}>
+                    Plans
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/help">
-                  <a className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/help' ? 'text-primary' : ''}`}>
+                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/help' ? 'text-primary' : ''}`}>
                     Help
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
