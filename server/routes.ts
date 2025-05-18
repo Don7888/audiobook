@@ -10,12 +10,121 @@ import {
 import OpenAI from "openai";
 import * as fs from 'fs';
 import * as path from 'path';
-// Auth functionality will be added in a future update
+// Basic authentication middleware
+const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+  // Get the user ID from session/token
+  const userId = req.headers['user-id'];
+  
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required', success: false });
+  }
+  
+  try {
+    // Get user by ID
+    const user = await storage.getUser(Number(userId));
+    
+    if (!user) {
+      return res.status(401).json({ message: 'User not found', success: false });
+    }
+    
+    // Attach user to request
+    (req as any).user = user;
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(500).json({ message: 'Server error during authentication', success: false });
+  }
+};
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Authentication endpoints
+  app.post('/api/auth/register', async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ 
+          message: 'Username and password are required', 
+          success: false 
+        });
+      }
+      
+      // Check if username already exists
+      const existingUser = await storage.getUserByUsername(username);
+      if (existingUser) {
+        return res.status(409).json({ 
+          message: 'Username already taken', 
+          success: false 
+        });
+      }
+      
+      // Create new user
+      const newUser = await storage.createUser({
+        username,
+        password,
+        subscriptionTier: 'basic' // Default subscription tier
+      });
+      
+      // Return success without password
+      const { password: _, ...userWithoutPassword } = newUser;
+      return res.status(201).json({ 
+        user: userWithoutPassword, 
+        success: true 
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      return res.status(500).json({ 
+        message: 'Server error during registration', 
+        success: false 
+      });
+    }
+  });
+  
+  app.post('/api/auth/login', async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ 
+          message: 'Username and password are required', 
+          success: false 
+        });
+      }
+      
+      // Find user by username
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user || user.password !== password) {
+        return res.status(401).json({ 
+          message: 'Invalid username or password', 
+          success: false 
+        });
+      }
+      
+      // Return success without password
+      const { password: _, ...userWithoutPassword } = user;
+      return res.status(200).json({ 
+        user: userWithoutPassword, 
+        success: true 
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({ 
+        message: 'Server error during login', 
+        success: false 
+      });
+    }
+  });
+  
+  app.get('/api/auth/user', authenticateUser, (req: Request, res: Response) => {
+    const user = (req as any).user;
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  });
   // Error handler middleware for zod validation errors
   const handleZodError = (err: unknown, res: Response) => {
     if (err instanceof ZodError) {

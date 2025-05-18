@@ -10,6 +10,8 @@ import Library from "@/pages/Library";
 import Help from "@/pages/Help";
 import Subscription from "@/pages/Subscription";
 import AudioDownload from "@/pages/AudioDownload";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
 import NotFound from "@/pages/not-found";
 
 function Router() {
