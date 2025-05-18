@@ -1,10 +1,14 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import * as path from 'path';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve audio files from the 'audio' directory
+app.use('/audio', express.static(path.join(process.cwd(), 'audio')));
 
 app.use((req, res, next) => {
   const start = Date.now();
