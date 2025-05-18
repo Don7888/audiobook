@@ -13,33 +13,41 @@ export default function AudioPlayer({ audioUrl, className = "" }: AudioPlayerPro
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(1);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
+    // Reset state when audioUrl changes
+    setIsPlaying(false);
+    setCurrentTime(0);
     
-    // Set up event listeners
-    audio.addEventListener("loadedmetadata", () => {
-      setDuration(audio.duration);
-    });
+    // Set up event listeners if audio element exists
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      audioElement.addEventListener("loadedmetadata", () => {
+        setDuration(audioElement.duration || 0);
+      });
+      
+      audioElement.addEventListener("timeupdate", () => {
+        setCurrentTime(audioElement.currentTime || 0);
+      });
+      
+      audioElement.addEventListener("ended", () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      });
+      
+      // Load the new audio
+      audioElement.load();
+    }
     
-    audio.addEventListener("timeupdate", () => {
-      setCurrentTime(audio.currentTime);
-    });
-    
-    audio.addEventListener("ended", () => {
-      setIsPlaying(false);
-      setCurrentTime(0);
-    });
-    
-    // Clean up
     return () => {
-      audio.pause();
-      audio.src = "";
-      audio.removeEventListener("loadedmetadata", () => {});
-      audio.removeEventListener("timeupdate", () => {});
-      audio.removeEventListener("ended", () => {});
+      // Clean up event listeners
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.removeEventListener("loadedmetadata", () => {});
+        audioElement.removeEventListener("timeupdate", () => {});
+        audioElement.removeEventListener("ended", () => {});
+      }
     };
   }, [audioUrl]);
 
@@ -49,7 +57,21 @@ export default function AudioPlayer({ audioUrl, className = "" }: AudioPlayerPro
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      // Create a play promise to handle autoplay restrictions
+      const playPromise = audioRef.current.play();
+      
+      // Handle potential play() rejection (due to browser autoplay policy)
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            // Playback started successfully
+          })
+          .catch(error => {
+            // Auto-play was prevented
+            console.error("Playback prevented:", error);
+            setIsPlaying(false);
+          });
+      }
     }
     
     setIsPlaying(!isPlaying);
@@ -89,16 +111,22 @@ export default function AudioPlayer({ audioUrl, className = "" }: AudioPlayerPro
 
   return (
     <div className={`bg-purple rounded-2xl p-4 shadow text-white ${className}`}>
+      {/* Hidden audio element that will be controlled by our custom UI */}
+      <audio ref={audioRef} preload="metadata" className="hidden">
+        <source src={audioUrl} type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+      
       <div className="flex items-center justify-between mb-4">
         <h4 className="font-heading font-bold">Listen to Preview</h4>
         <span className="text-sm">
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatTime(currentTime)} / {formatTime(duration || 0)}
         </span>
       </div>
       
       <Slider
         value={[currentTime]}
-        max={duration}
+        max={duration || 100}
         step={0.01}
         className="mb-4"
         onValueChange={handleSliderChange}
