@@ -117,12 +117,21 @@ export class MemStorage implements IStorage {
   async createStory(insertStory: InsertStory): Promise<Story> {
     const id = this.currentStoryId++;
     const now = new Date();
+    
+    // Handle sound effects properly with type safety
+    const soundEffects = insertStory.soundEffects ? 
+      Array.isArray(insertStory.soundEffects) ? 
+        insertStory.soundEffects : 
+        [] 
+      : [];
+      
     const story: Story = { 
       ...insertStory, 
       id, 
       createdAt: now,
-      soundEffects: insertStory.soundEffects || [] 
+      soundEffects
     };
+    
     this.stories.set(id, story);
     return story;
   }
@@ -131,7 +140,18 @@ export class MemStorage implements IStorage {
     const existingStory = this.stories.get(id);
     if (!existingStory) return undefined;
     
-    const updatedStory = { ...existingStory, ...storyUpdate };
+    // Handle sound effects with type safety
+    let soundEffects = existingStory.soundEffects || [];
+    if (storyUpdate.soundEffects) {
+      soundEffects = Array.isArray(storyUpdate.soundEffects) ? storyUpdate.soundEffects : [];
+    }
+    
+    const updatedStory = { 
+      ...existingStory, 
+      ...storyUpdate,
+      soundEffects
+    };
+    
     this.stories.set(id, updatedStory);
     return updatedStory;
   }

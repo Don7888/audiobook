@@ -44,6 +44,10 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        // Custom brand colors
+        purple: "hsl(var(--purple))",
+        dark: "hsl(var(--dark))",
+        light: "hsl(var(--light))",
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",

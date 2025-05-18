@@ -50,7 +50,9 @@ export default function SoundEffectSelector({
   });
 
   // Get unique categories from sound effects
-  const categories = ["All", ...new Set(allEffects.map(effect => effect.category))];
+  const categorySet = new Set<string>();
+  allEffects.forEach(effect => categorySet.add(effect.category));
+  const categories = ["All", ...Array.from(categorySet)];
 
   // Filter effects by selected category
   const filteredEffects = selectedCategory === "All" 
