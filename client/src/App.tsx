@@ -22,6 +22,8 @@ function Router() {
       <Route path="/help" component={Help} />
       <Route path="/subscription" component={Subscription} />
       <Route path="/audio-download" component={AudioDownload} />
+      <Route path="/signin" component={SignIn} />
+      <Route path="/signup" component={SignUp} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 import { useMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import { Menu } from "lucide-react";
 export default function Header() {
   const isMobile = useMobile();
   const [location] = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
   
   return (
     <header className="bg-white shadow-md">
@@ -81,17 +83,58 @@ export default function Header() {
                 </Link>
               </li>
               <li>
-                <Button className="bg-accent hover:bg-amber-400 text-dark font-semibold">
-                  Sign In
-                </Button>
+                {isAuthenticated ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <User size={18} />
+                        <span>{user?.username}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href="/library">My Stories</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => logout()}>
+                        Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link href="/signin">
+                    <Button className="bg-accent hover:bg-amber-400 text-dark font-semibold">
+                      Sign In
+                    </Button>
+                  </Link>
+                )}
               </li>
             </ul>
           )}
           
-          {isMobile && (
-            <Button className="bg-accent hover:bg-amber-400 text-dark font-semibold ml-2">
-              Sign In
-            </Button>
+          {isMobile && !isAuthenticated && (
+            <Link href="/signin">
+              <Button className="bg-accent hover:bg-amber-400 text-dark font-semibold ml-2">
+                Sign In
+              </Button>
+            </Link>
+          )}
+          {isMobile && isAuthenticated && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2 ml-2">
+                  <User size={18} />
+                  <span>{user?.username}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link href="/library">My Stories</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => logout()}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </nav>
       </div>

@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SignInForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { login } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,14 +28,19 @@ export default function SignInForm() {
     setIsLoading(true);
     
     try {
-      const response = await apiRequest('/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ username, password }),
       });
       
-      if (response.success) {
-        // Invalidate queries to refresh user data
-        queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Login the user
+        login(data.user);
         
         toast({
           title: "Welcome back!",
@@ -46,7 +52,7 @@ export default function SignInForm() {
       } else {
         toast({
           title: "Sign in failed",
-          description: response.message || "Invalid username or password",
+          description: data.message || "Invalid username or password",
           variant: "destructive"
         });
       }
