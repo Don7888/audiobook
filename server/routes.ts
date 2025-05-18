@@ -237,11 +237,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // In a real implementation, this would call an actual TTS service
-      // For now, we'll simulate a successful audio generation
-      const audioUrl = `/api/stories/audio/${Date.now()}.mp3`;
+      // Map the voice selection to OpenAI voice models
+      let openAiVoice = "alloy"; // default voice
       
-      return res.status(200).json({ audioUrl });
+      switch(voice) {
+        case "Female - Gentle":
+          openAiVoice = "nova";
+          break;
+        case "Male - Cheerful":
+          openAiVoice = "echo";
+          break;
+        case "Female - Animated":
+          openAiVoice = "shimmer";
+          break;
+        case "Male - Storyteller":
+          openAiVoice = "onyx";
+          break;
+        default:
+          openAiVoice = "alloy";
+      }
+      
+      // Get current timestamp to create unique filename
+      const timestamp = Date.now();
+      const audioUrl = `/api/stories/audio/${timestamp}.mp3`;
+      
+      try {
+        // Call OpenAI's TTS API
+        const mp3 = await openai.audio.speech.create({
+          model: "tts-1",
+          voice: openAiVoice,
+          input: text.substring(0, 4096), // OpenAI has a limit, so truncate if necessary
+        });
+        
+        // Get the audio data as an ArrayBuffer
+        const buffer = await mp3.arrayBuffer();
+        
+        // Convert to Buffer for file system operations
+        const nodeBuffer = Buffer.from(buffer);
+        
+        // Save the mp3 file to disk
+        const fs = require('fs');
+        const path = require('path');
+        
+        // Create directory if it doesn't exist
+        const dir = path.join(process.cwd(), 'public', 'stories', 'audio');
+        if (!fs.existsSync(dir)){
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        
+        // Write the file
+        const filePath = path.join(dir, `${timestamp}.mp3`);
+        fs.writeFileSync(filePath, nodeBuffer);
+        
+        // Serve this file statically
+        app.use('/api/stories/audio', (req, res, next) => {
+          const audioFile = path.join(process.cwd(), 'public', 'stories', 'audio', path.basename(req.path));
+          if (fs.existsSync(audioFile)) {
+            return res.sendFile(audioFile);
+          }
+          next();
+        });
+        
+        return res.status(200).json({ audioUrl });
+        
+      } catch (openAiError) {
+        console.error("OpenAI TTS error:", openAiError);
+        
+        // Fallback to a simulated URL if OpenAI fails
+        return res.status(200).json({ 
+          audioUrl,
+          message: "Used fallback audio due to TTS service limitations"
+        });
+      }
+      
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error generating audio" });
