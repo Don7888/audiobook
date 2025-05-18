@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { ZodError } from "zod";
@@ -10,7 +10,6 @@ import {
 import OpenAI from "openai";
 import * as fs from 'fs';
 import * as path from 'path';
-import { generateAudio } from './tts';
 
 // Initialize OpenAI client
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
@@ -240,6 +239,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Set up the audio directory and endpoint if needed
+      const audioDir = path.join(process.cwd(), 'audio');
+      if (!fs.existsSync(audioDir)) {
+        fs.mkdirSync(audioDir, { recursive: true });
+      }
+      
+      // Make sure we have a route to serve audio files
+      if (!app._router.stack.some((layer: any) => 
+          layer.route && layer.route.path === '/api/stories/audio/:filename')) {
+        app.get('/api/stories/audio/:filename', (req, res) => {
+          const audioFile = path.join(process.cwd(), 'audio', req.params.filename);
+          if (fs.existsSync(audioFile)) {
+            return res.sendFile(audioFile);
+          } else {
+            return res.status(404).send('Audio file not found');
+          }
+        });
+      }
+      
       // Map the voice selection to OpenAI voice models
       let openAiVoice = "alloy"; // default voice
       
@@ -260,9 +278,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           openAiVoice = "alloy";
       }
       
-      // Get current timestamp to create unique filename
+      // Generate a unique filename
       const timestamp = Date.now();
-      const audioUrl = `/api/stories/audio/${timestamp}.mp3`;
+      const audioFileName = `${timestamp}.mp3`;
+      const audioUrl = `/api/stories/audio/${audioFileName}`;
+      const audioFilePath = path.join(audioDir, audioFileName);
       
       try {
         // Call OpenAI's TTS API
@@ -272,42 +292,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           input: text.substring(0, 4096), // OpenAI has a limit, so truncate if necessary
         });
         
-        // Get the audio data as an ArrayBuffer
+        // Get the audio data as an ArrayBuffer and save it
         const buffer = await mp3.arrayBuffer();
+        fs.writeFileSync(audioFilePath, Buffer.from(buffer));
         
-        // Convert to Buffer for file system operations
-        const nodeBuffer = Buffer.from(buffer);
-        
-        // Save the mp3 file to disk
-        const fs = require('fs');
-        const path = require('path');
-        
-        // Create a simpler directory structure since we're in a web environment
-        const dir = path.join(process.cwd(), 'audio');
-        try {
-          if (!fs.existsSync(dir)){
-            fs.mkdirSync(dir, { recursive: true });
-          }
-          
-          // Write the file
-          const filePath = path.join(dir, `${timestamp}.mp3`);
-          fs.writeFileSync(filePath, nodeBuffer);
-          
-          // Serve this file statically when requested later
-          if (!app._router.stack.some(layer => layer.route && layer.route.path === '/api/stories/audio/:filename')) {
-            app.get('/api/stories/audio/:filename', (req, res) => {
-              const audioFile = path.join(process.cwd(), 'audio', req.params.filename);
-              if (fs.existsSync(audioFile)) {
-                return res.sendFile(audioFile);
-              } else {
-                return res.status(404).send('Audio file not found');
-              }
-            });
-          }
-          
-          return res.status(200).json({ audioUrl });
-        
-        
+        return res.status(200).json({ audioUrl });
       } catch (openAiError) {
         console.error("OpenAI TTS error:", openAiError);
         
@@ -317,7 +306,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Used fallback audio due to TTS service limitations"
         });
       }
-      
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error generating audio" });
