@@ -218,10 +218,10 @@ export default function Characters() {
   
   return (
     <div className="container mx-auto py-12">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Your Characters</h1>
-        <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90">
-          <Plus className="mr-2 h-4 w-4" /> Create Character
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold mb-4 sm:mb-0">Your Characters</h1>
+        <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90 w-full sm:w-auto py-6 text-lg">
+          <Plus className="mr-2 h-6 w-6" /> Create New Character
         </Button>
       </div>
       
