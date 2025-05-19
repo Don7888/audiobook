@@ -76,6 +76,13 @@ export default function Header() {
                 </Link>
               </li>
               <li>
+                <Link href="/characters">
+                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/characters' ? 'text-primary' : ''}`}>
+                    Characters
+                  </span>
+                </Link>
+              </li>
+              <li>
                 <Link href="/help">
                   <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/help' ? 'text-primary' : ''}`}>
                     Help

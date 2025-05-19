@@ -5,7 +5,9 @@ import { ZodError } from "zod";
 import { 
   insertStorySchema, storyGenerationSchema, 
   insertSoundEffectSchema, subscriptionPlans,
-  insertUserSchema, soundEffectPlacementSchema
+  insertUserSchema, soundEffectPlacementSchema,
+  insertCharacterSchema, characterCreationSchema,
+  type Character
 } from "@shared/schema";
 import OpenAI from "openai";
 import * as fs from 'fs';
@@ -553,6 +555,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create HTTP server
+  // Character routes
+  app.get("/api/characters", async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['user-id'];
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const characters = await storage.getCharactersByUserId(parseInt(userId.toString()));
+      res.json(characters);
+    } catch (error) {
+      console.error("Error fetching characters:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.get("/api/characters/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const character = await storage.getCharacter(id);
+      
+      if (character) {
+        res.json(character);
+      } else {
+        res.status(404).json({ message: "Character not found" });
+      }
+    } catch (error) {
+      console.error("Error fetching character:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.post("/api/characters", async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['user-id'];
+      
+      if (!userId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Validate with character creation schema
+      const validationResult = characterCreationSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return handleZodError(validationResult.error, res);
+      }
+      
+      // Create character with user ID
+      const characterData = {
+        ...req.body,
+        userId: parseInt(userId.toString())
+      };
+      
+      const character = await storage.createCharacter(characterData);
+      res.status(201).json(character);
+    } catch (error) {
+      console.error("Error creating character:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.patch("/api/characters/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const character = await storage.getCharacter(id);
+      
+      if (!character) {
+        return res.status(404).json({ message: "Character not found" });
+      }
+      
+      const userId = req.headers['user-id'];
+      
+      if (!userId || character.userId !== parseInt(userId.toString())) {
+        return res.status(403).json({ message: "Unauthorized to update this character" });
+      }
+      
+      // Validate update data
+      const validationResult = characterCreationSchema.partial().safeParse(req.body);
+      if (!validationResult.success) {
+        return handleZodError(validationResult.error, res);
+      }
+      
+      const updatedCharacter = await storage.updateCharacter(id, req.body);
+      res.json(updatedCharacter);
+    } catch (error) {
+      console.error("Error updating character:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  app.delete("/api/characters/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const character = await storage.getCharacter(id);
+      
+      if (!character) {
+        return res.status(404).json({ message: "Character not found" });
+      }
+      
+      const userId = req.headers['user-id'];
+      
+      if (!userId || character.userId !== parseInt(userId.toString())) {
+        return res.status(403).json({ message: "Unauthorized to delete this character" });
+      }
+      
+      const success = await storage.deleteCharacter(id);
+      
+      if (success) {
+        res.status(204).send();
+      } else {
+        res.status(404).json({ message: "Character not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting character:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

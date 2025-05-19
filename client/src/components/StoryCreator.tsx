@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { StoryGeneration, storyGenerationSchema, SoundEffectPlacement } from "@shared/schema";
+import { StoryGeneration, storyGenerationSchema, SoundEffectPlacement, type Character } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Wand2, BookOpen, Headphones, VolumeX, Volume2, Loader2, LogIn } from "lucide-react";
+import { Wand2, BookOpen, Headphones, VolumeX, Volume2, Loader2, LogIn, UserPlus } from "lucide-react";
 import { generateStory, generateAudio, GeneratedStory } from "@/lib/openai";
 import StoryPreview from "./StoryPreview";
 import SoundEffectSelector from "./SoundEffectSelector";
@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface StoryCreatorProps {
   onStoryGenerated?: (story: GeneratedStory, audio: string, soundEffects?: SoundEffectPlacement[]) => void;
