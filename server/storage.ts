@@ -39,17 +39,21 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private stories: Map<number, Story>;
+  private characters: Map<number, Character>;
   private soundEffects: Map<number, SoundEffect>;
   currentUserId: number;
   currentStoryId: number;
+  currentCharacterId: number;
   currentSoundEffectId: number;
 
   constructor() {
     this.users = new Map();
     this.stories = new Map();
+    this.characters = new Map();
     this.soundEffects = new Map();
     this.currentUserId = 1;
     this.currentStoryId = 1;
+    this.currentCharacterId = 1;
     this.currentSoundEffectId = 1;
     this.initializeSampleSoundEffects();
   }
@@ -197,6 +201,45 @@ export class MemStorage implements IStorage {
 
   async getAllSoundEffects(): Promise<SoundEffect[]> {
     return Array.from(this.soundEffects.values());
+  }
+  
+  // Character methods
+  async getCharacter(id: number): Promise<Character | undefined> {
+    return this.characters.get(id);
+  }
+  
+  async getCharactersByUserId(userId: number): Promise<Character[]> {
+    return Array.from(this.characters.values()).filter(
+      character => character.userId === userId
+    );
+  }
+  
+  async createCharacter(insertCharacter: InsertCharacter): Promise<Character> {
+    const id = this.currentCharacterId++;
+    const now = new Date();
+    
+    const character: Character = { 
+      ...insertCharacter, 
+      id,
+      createdAt: now
+    };
+    
+    this.characters.set(id, character);
+    return character;
+  }
+  
+  async updateCharacter(id: number, characterUpdate: Partial<InsertCharacter>): Promise<Character | undefined> {
+    const existingCharacter = this.characters.get(id);
+    if (!existingCharacter) return undefined;
+    
+    const updatedCharacter = { ...existingCharacter, ...characterUpdate };
+    this.characters.set(id, updatedCharacter);
+    
+    return updatedCharacter;
+  }
+  
+  async deleteCharacter(id: number): Promise<boolean> {
+    return this.characters.delete(id);
   }
 }
 
