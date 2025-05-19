@@ -61,22 +61,22 @@ export class MemStorage implements IStorage {
 
   private async initializeSampleSoundEffects() {
     const sampleEffects: InsertSoundEffect[] = [
-      { name: "Rain", category: "Weather", url: "/sounds/Weather/rain.mp3" },
-      { name: "Thunder", category: "Weather", url: "/sounds/Weather/thunder.mp3" },
-      { name: "Wind", category: "Weather", url: "/sounds/Weather/wind.mp3" },
-      { name: "Cat", category: "Animals", url: "/sounds/Animals/cat.mp3" },
-      { name: "Dog Barking", category: "Animals", url: "/sounds/Animals/dog-bark.mp3" },
-      { name: "Birds Chirping", category: "Animals", url: "/sounds/Animals/birds.mp3" },
-      { name: "Magic Spell", category: "Fantasy", url: "/sounds/Fantasy/magic-spell.mp3" },
-      { name: "Dragon Roar", category: "Fantasy", url: "/sounds/Fantasy/dragon-roar.mp3" },
-      { name: "Footsteps", category: "Human", url: "/sounds/Human/footsteps.mp3" },
-      { name: "Laughter", category: "Human", url: "/sounds/Human/laugh.mp3" },
-      { name: "Door Creaking", category: "Household", url: "/sounds/Household/door-creak.mp3" },
-      { name: "Clock Ticking", category: "Household", url: "/sounds/Household/clock-tick.mp3" },
-      { name: "Ocean Waves", category: "Environment", url: "/sounds/Environment/ocean-waves.mp3" },
-      { name: "Forest Sounds", category: "Environment", url: "/sounds/Environment/forest.mp3" },
-      { name: "Success Jingle", category: "Other", url: "/sounds/Other/success.mp3" },
-      { name: "Alert Sound", category: "Other", url: "/sounds/Other/alert.mp3" },
+      { name: "Rain", category: "Weather", url: "/sounds/Weather/rain.mp3", userId: null },
+      { name: "Thunder", category: "Weather", url: "/sounds/Weather/thunder.mp3", userId: null },
+      { name: "Wind", category: "Weather", url: "/sounds/Weather/wind.mp3", userId: null },
+      { name: "Cat", category: "Animals", url: "/sounds/Animals/cat.mp3", userId: null },
+      { name: "Dog Barking", category: "Animals", url: "/sounds/Animals/dog-bark.mp3", userId: null },
+      { name: "Birds Chirping", category: "Animals", url: "/sounds/Animals/birds.mp3", userId: null },
+      { name: "Magic Spell", category: "Fantasy", url: "/sounds/Fantasy/magic-spell.mp3", userId: null },
+      { name: "Dragon Roar", category: "Fantasy", url: "/sounds/Fantasy/dragon-roar.mp3", userId: null },
+      { name: "Footsteps", category: "Human", url: "/sounds/Human/footsteps.mp3", userId: null },
+      { name: "Laughter", category: "Human", url: "/sounds/Human/laugh.mp3", userId: null },
+      { name: "Door Creaking", category: "Household", url: "/sounds/Household/door-creak.mp3", userId: null },
+      { name: "Clock Ticking", category: "Household", url: "/sounds/Household/clock-tick.mp3", userId: null },
+      { name: "Ocean Waves", category: "Environment", url: "/sounds/Environment/ocean-waves.mp3", userId: null },
+      { name: "Forest Sounds", category: "Environment", url: "/sounds/Environment/forest.mp3", userId: null },
+      { name: "Success Jingle", category: "Other", url: "/sounds/Other/success.mp3", userId: null },
+      { name: "Alert Sound", category: "Other", url: "/sounds/Other/alert.mp3", userId: null },
     ];
 
     for (const effect of sampleEffects) {
@@ -194,7 +194,13 @@ export class MemStorage implements IStorage {
   async createSoundEffect(insertSoundEffect: InsertSoundEffect): Promise<SoundEffect> {
     const id = this.currentSoundEffectId++;
     const now = new Date();
-    const soundEffect: SoundEffect = { ...insertSoundEffect, id, createdAt: now };
+    // Ensure userId is always properly set (null if not provided)
+    const soundEffect: SoundEffect = { 
+      ...insertSoundEffect, 
+      id, 
+      createdAt: now,
+      userId: insertSoundEffect.userId ?? null 
+    };
     this.soundEffects.set(id, soundEffect);
     return soundEffect;
   }

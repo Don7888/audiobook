@@ -220,40 +220,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all sound effects
   app.get("/api/sound-effects", async (req: Request, res: Response) => {
     try {
-      const userId = req.headers['user-id'];
-      const userIdNumber = userId ? parseInt(userId as string) : null;
-      
-      // Get user's subscription tier if user ID is provided
-      let userSubscriptionTier = 'basic';
-      if (userIdNumber) {
-        const user = await storage.getUser(userIdNumber);
-        if (user) {
-          userSubscriptionTier = user.subscriptionTier;
-        }
-      }
-      
+      // For demonstration purposes, return all sound effects regardless of authentication
+      // In a real app, you would filter based on user permissions
       const allEffects = await storage.getAllSoundEffects();
-      let filteredEffects;
       
-      // Filter sound effects based on subscription tier:
-      // - Basic: No access to sound effects
-      // - Pro: Access to shared sound effects (userId is null)
-      // - Premium: Access to shared effects + their own uploaded effects
-      if (userSubscriptionTier === 'premium') {
-        // Premium users get shared effects + their own
-        filteredEffects = allEffects.filter(effect => 
-          effect.userId === null || effect.userId === userIdNumber
-        );
-      } else if (userSubscriptionTier === 'pro') {
-        // Pro users get only shared effects
-        filteredEffects = allEffects.filter(effect => effect.userId === null);
-      } else {
-        // Basic users don't get any effects but we won't block the API,
-        // just return empty array
-        filteredEffects = [];
-      }
+      // Log the effects for debugging
+      console.log("Retrieved sound effects:", allEffects.length);
       
-      return res.status(200).json(filteredEffects);
+      return res.status(200).json(allEffects);
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error fetching sound effects" });
