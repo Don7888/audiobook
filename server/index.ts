@@ -10,6 +10,9 @@ app.use(express.urlencoded({ extended: false }));
 // Serve audio files from the 'audio' directory
 app.use('/audio', express.static(path.join(process.cwd(), 'audio')));
 
+// Serve static files from the 'public' directory
+app.use('/sounds', express.static(path.join(process.cwd(), 'public/sounds')));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

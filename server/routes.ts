@@ -7,9 +7,11 @@ import {
   insertSoundEffectSchema, subscriptionPlans,
   insertUserSchema, soundEffectPlacementSchema,
   insertCharacterSchema, characterCreationSchema,
-  type Character
+  type Character, type InsertSoundEffect
 } from "@shared/schema";
 import OpenAI from "openai";
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
 // Basic authentication middleware
@@ -257,6 +259,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(201).json(newEffect);
     } catch (err) {
       return handleZodError(err, res);
+    }
+  });
+  
+  // Set up storage for sound effect uploads
+  const soundEffectsStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const category = req.body.category || 'Other';
+      const dir = path.join(process.cwd(), 'public/sounds', category);
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+      const uniqueFilename = `${uuidv4()}-${file.originalname}`;
+      cb(null, uniqueFilename);
+    }
+  });
+  
+  const soundEffectUpload = multer({ 
+    storage: soundEffectsStorage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      // Check if the file is an audio file
+      if (file.mimetype.startsWith('audio/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only audio files are allowed') as any, false);
+      }
+    }
+  });
+  
+  // Upload a sound effect file
+  app.post("/api/sound-effects/upload", soundEffectUpload.single('soundFile'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      const category = req.body.category || 'Other';
+      const name = req.body.name || req.file.originalname.split('.')[0];
+      
+      // Create URL for the sound effect
+      const url = `/sounds/${category}/${req.file.filename}`;
+      
+      // Save to database
+      const effectData: InsertSoundEffect = {
+        name,
+        category,
+        url
+      };
+      
+      const newEffect = await storage.createSoundEffect(effectData);
+      return res.status(201).json(newEffect);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error uploading sound effect" });
     }
   });
 
