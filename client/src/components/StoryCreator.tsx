@@ -142,8 +142,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
       }
       
-      // Generate audio for the story
-      const audioUrl = await generateAudio(storyResponse.content, data.narrator);
+      // Generate audio for the story (include title so narrator reads it first)
+      const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
       setAudioUrl(audioUrl);
       
       // Estimate audio duration (1 character ≈ 0.1 seconds)
