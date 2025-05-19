@@ -681,6 +681,100 @@ ${textWithoutSfx}`
       return res.status(500).json({ message: "Error deleting story" });
     }
   });
+  
+  // Export stories to different formats
+  app.post("/api/stories/export", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { playlistName, description, format, storyIds } = req.body;
+      
+      if (!playlistName || !format || !storyIds || !Array.isArray(storyIds) || storyIds.length === 0) {
+        return res.status(400).json({ 
+          message: "Invalid export parameters", 
+          details: "Please provide a playlist name, format, and at least one story ID"
+        });
+      }
+      
+      // Validate that formats are supported
+      const supportedFormats = ['mp3', 'yoto', 'toniebox', 'audible'];
+      if (!supportedFormats.includes(format)) {
+        return res.status(400).json({
+          message: "Unsupported format",
+          details: `Format must be one of: ${supportedFormats.join(', ')}`
+        });
+      }
+      
+      // Validate that user owns or has access to the stories
+      const userId = parseInt(req.headers['user-id'] as string);
+      for (const storyId of storyIds) {
+        const story = await storage.getStory(storyId);
+        if (!story) {
+          return res.status(404).json({
+            message: "Story not found",
+            details: `Story with ID ${storyId} does not exist`
+          });
+        }
+        
+        // Check if story belongs to user (or is public in the future)
+        if (story.userId !== userId) {
+          return res.status(403).json({
+            message: "Access denied",
+            details: "You don't have permission to export this story"
+          });
+        }
+      }
+      
+      // Export the stories
+      const result = await exportStories({
+        playlistName,
+        description,
+        format: format as 'mp3' | 'yoto' | 'toniebox' | 'audible',
+        storyIds
+      });
+      
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error("Export error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      return res.status(500).json({
+        message: "Failed to export stories",
+        details: errorMessage
+      });
+    }
+  });
+  
+  // Serve exported files
+  app.get("/api/exports/:filename", authenticateUser, (req: Request, res: Response) => {
+    const filename = req.params.filename;
+    const filePath = path.join(process.cwd(), 'exports', filename);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: "Export file not found" });
+    }
+    
+    // Determine content type based on file extension
+    const ext = path.extname(filename).toLowerCase();
+    let contentType = 'application/octet-stream'; // Default
+    
+    switch (ext) {
+      case '.mp3':
+        contentType = 'audio/mpeg';
+        break;
+      case '.aax':
+      case '.audible':
+        contentType = 'audio/vnd.audible.aax';
+        break;
+      case '.yoto':
+      case '.toniebox':
+        contentType = 'audio/mpeg'; // These are also MP3-based formats
+        break;
+    }
+    
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  });
 
   // Create HTTP server
   // Character routes

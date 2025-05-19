@@ -14,6 +14,7 @@ import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import Characters from "@/pages/Characters";
 import SoundEffects from "@/pages/SoundEffects";
+import Export from "@/pages/Export";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/signup" component={SignUp} />
       <Route path="/characters" component={Characters} />
       <Route path="/sound-effects" component={SoundEffects} />
+      <Route path="/export" component={Export} />
       <Route component={NotFound} />
     </Switch>
   );
