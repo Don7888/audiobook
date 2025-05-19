@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Story } from "@shared/schema";
+import { Story, Character } from "@shared/schema";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Play, Download, Trash2 } from "lucide-react";
+import { Play, Download, Trash2, Users } from "lucide-react";
 import AudioPlayer from "@/components/AudioPlayer";
 import { 
   AlertDialog,
@@ -22,6 +22,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Helmet } from "react-helmet";
+import { Badge } from "@/components/ui/badge";
 
 export default function Library() {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
@@ -33,6 +34,16 @@ export default function Library() {
     queryFn: async () => {
       const response = await fetch('/api/stories', { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch stories');
+      return response.json();
+    }
+  });
+  
+  // Fetch all characters
+  const { data: characters = [] } = useQuery<Character[]>({
+    queryKey: ['/api/characters'],
+    queryFn: async () => {
+      const response = await fetch('/api/characters', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch characters');
       return response.json();
     }
   });
@@ -131,6 +142,15 @@ export default function Library() {
                         >
                           <h3 className="font-heading font-bold">{story.title}</h3>
                           <p className="text-sm text-gray-600 line-clamp-2">{story.text.substring(0, 100)}...</p>
+                          
+                          {/* Show character indicators */}
+                          {story.characterIds && story.characterIds.length > 0 && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Users size={12} className="text-primary" />
+                              <span className="text-xs text-primary">{story.characterIds.length} character{story.characterIds.length > 1 ? 's' : ''}</span>
+                            </div>
+                          )}
+                          
                           <div className="flex justify-between items-center mt-2">
                             <span className="text-xs text-gray-500">
                               {new Date(story.createdAt).toLocaleDateString()}
@@ -215,6 +235,26 @@ export default function Library() {
                         ))}
                       </div>
                     </div>
+                    
+                    {/* Show story characters if any */}
+                    {selectedStory.characterIds && selectedStory.characterIds.length > 0 && (
+                      <div className="mb-6">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users size={16} className="text-primary" />
+                          <h3 className="font-heading font-semibold">Characters in this story:</h3>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedStory.characterIds.map(characterId => {
+                            const character = characters.find(c => c.id === characterId);
+                            return character ? (
+                              <Badge key={characterId} variant="outline" className="bg-blue-50 text-primary border-primary">
+                                {character.name}
+                              </Badge>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    )}
                     
                     <AudioPlayer audioUrl={selectedStory.audioUrl} />
                     

@@ -48,7 +48,8 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
         storyType: "Adventure",
         narrator: "Female - Gentle",
         audioUrl: audioUrl,
-        soundEffects: soundEffects
+        soundEffects: soundEffects,
+        characterIds: characterIds.length > 0 ? characterIds : undefined
       });
       
       queryClient.invalidateQueries({ queryKey: ['/api/stories'] });

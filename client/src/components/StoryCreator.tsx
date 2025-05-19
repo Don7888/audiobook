@@ -485,6 +485,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   audioUrl={audioUrl} 
                   onEdit={() => setActiveTab("edit")}
                   soundEffects={soundEffects}
+                  characterIds={selectedCharacters}
                 />
 
                 {canUseSoundEffects && (
