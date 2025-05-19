@@ -44,6 +44,7 @@ export interface SaveStoryParams {
   audioUrl: string;
   userId?: number;
   soundEffects?: SoundEffectPlacement[];
+  characterIds?: number[];
 }
 
 export async function saveStory(storyData: SaveStoryParams) {

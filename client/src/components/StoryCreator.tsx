@@ -108,11 +108,25 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       
       setIsGenerating(true);
       
-      // Add user ID
+      // Add user ID and selected characters
       const storyParams = {
         ...data,
-        userId: userId
+        userId: userId,
+        characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
       };
+      
+      // Find character details for selected characters to include in prompt
+      if (selectedCharacters.length > 0) {
+        const characterDetails = selectedCharacters.map(id => {
+          const character = userCharacters.find((c: Character) => c.id === id);
+          return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
+        }).filter(Boolean).join('\n\n');
+        
+        // Append character information to the prompt
+        if (characterDetails) {
+          storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
+        }
+      }
       
       // Generate the story text
       const storyResponse = await generateStory(storyParams);

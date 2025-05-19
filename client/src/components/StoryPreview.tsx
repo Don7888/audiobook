@@ -12,9 +12,10 @@ interface StoryPreviewProps {
   audioUrl: string;
   onEdit?: () => void;
   soundEffects?: SoundEffectPlacement[];
+  characterIds?: number[];
 }
 
-export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [] }: StoryPreviewProps) {
+export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [], characterIds = [] }: StoryPreviewProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [storyImage, setStoryImage] = useState<string>("https://pixabay.com/get/g9abdb05c255a115ab332e9d29d18bb736f3500a42a629e61cda8d0afb1de96c3d8206ec5ca044c5b631f6fb8856065a60252c1dca34ad487a985001046dab40d_1280.jpg");
