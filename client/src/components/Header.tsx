@@ -51,6 +51,9 @@ export default function Header() {
                   <Link href="/sound-effects">Sound Effects</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/export">Export</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/subscription">Plans</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -92,6 +95,13 @@ export default function Header() {
                 <Link href="/sound-effects">
                   <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/sound-effects' ? 'text-primary' : ''}`}>
                     Sound Effects
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/export">
+                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/export' ? 'text-primary' : ''}`}>
+                    Export
                   </span>
                 </Link>
               </li>
