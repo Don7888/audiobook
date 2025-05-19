@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SoundEffect } from '@shared/schema';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 interface SoundEffectEditorProps {
   content: string;
@@ -146,7 +147,7 @@ export default function SoundEffectEditor({ content, onChange }: SoundEffectEdit
 
   return (
     <div className="relative w-full">
-      <textarea
+      <Textarea
         ref={textareaRef}
         value={content}
         onChange={handleChange}

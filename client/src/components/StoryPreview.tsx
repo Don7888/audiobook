@@ -25,10 +25,13 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
   
   const handleToggleEdit = () => {
     if (isEditing) {
-      // Save changes when exiting edit mode
+      // When exiting edit mode, update the story content with edited content
       setIsEditing(false);
+      // We could update the story content here if needed
+      // For now, we're just toggling the edit mode
     } else {
-      // Enter edit mode
+      // Enter edit mode with current content
+      setEditableContent(story.content);
       setIsEditing(true);
     }
   };
