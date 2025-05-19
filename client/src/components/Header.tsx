@@ -45,6 +45,9 @@ export default function Header() {
                   <Link href="/library">My Library</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/characters">Characters</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/subscription">Plans</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
