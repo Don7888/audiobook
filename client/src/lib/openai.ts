@@ -22,9 +22,9 @@ export async function generateStory(storyParams: StoryGeneration): Promise<Gener
   }
 }
 
-export async function generateAudio(text: string, voice: string = "female-gentle", userId?: number): Promise<string> {
+export async function generateAudio(text: string, voice: string = "female-gentle", userId?: number, title?: string): Promise<string> {
   try {
-    const response = await apiRequest("POST", "/api/stories/generate-audio", { text, voice, userId });
+    const response = await apiRequest("POST", "/api/stories/generate-audio", { text, voice, userId, title });
     const data = await response.json();
     return data.audioUrl;
   } catch (error) {

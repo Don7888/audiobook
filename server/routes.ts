@@ -441,7 +441,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate audio for a story
   app.post("/api/stories/generate-audio", async (req: Request, res: Response) => {
     try {
-      const { text, voice, userId } = req.body;
+      const { text, voice, userId, title } = req.body;
       
       if (!text || typeof text !== "string") {
         return res.status(400).json({ message: "Text is required" });
@@ -517,11 +517,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Remove [SFX:xxx] tags before generating audio so the narrator doesn't read them
         const textWithoutSfx = text.replace(/\[SFX:[^\]]+\]/g, '');
         
+        // Add the title to the beginning of the narration with a pause after it
+        const titleAndStory = title 
+          ? `${title}. 
+
+${textWithoutSfx}`
+          : textWithoutSfx;
+        
         // Call OpenAI's TTS API
         const mp3 = await openai.audio.speech.create({
           model: "tts-1",
           voice: openAiVoice,
-          input: textWithoutSfx.substring(0, 4096), // OpenAI has a limit, so truncate if necessary
+          input: titleAndStory.substring(0, 4096), // OpenAI has a limit, so truncate if necessary
         });
         
         // Get the audio data as an ArrayBuffer and save it
