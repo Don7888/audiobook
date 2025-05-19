@@ -49,8 +49,9 @@ export default function Subscription() {
         subscriptionTier: tier
       });
       
-      // Invalidate user data to refresh
+      // Invalidate user data and auth user data to refresh both
       queryClient.invalidateQueries({ queryKey: ['/api/users', userData.id] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
       toast({
         title: "Subscription Updated",
