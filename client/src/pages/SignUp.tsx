@@ -1,17 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 
 export default function SignUp() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [subscriptionTier, setSubscriptionTier] = useState('basic');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Fetch subscription plans
+  const { data: plans, isLoading: isLoadingPlans } = useQuery<Record<string, any>>({
+    queryKey: ['/api/subscription-plans'],
+    queryFn: async () => {
+      const response = await fetch('/api/subscription-plans');
+      if (!response.ok) throw new Error('Failed to fetch subscription plans');
+      return response.json();
+    }
+  });
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +55,11 @@ export default function SignUp() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ 
+          username, 
+          password, 
+          subscriptionTier 
+        }),
       });
       
       const data = await response.json();
@@ -50,7 +67,7 @@ export default function SignUp() {
       if (response.ok) {
         toast({
           title: "Account created!",
-          description: "You can now sign in with your credentials",
+          description: `Your account with ${subscriptionTier} plan has been created successfully.`,
         });
         
         // Redirect to sign-in page
@@ -120,7 +137,30 @@ export default function SignUp() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <div className="grid gap-2">
+              <Label htmlFor="subscriptionTier">Subscription Plan</Label>
+              <Select
+                value={subscriptionTier}
+                onValueChange={setSubscriptionTier}
+              >
+                <SelectTrigger id="subscriptionTier">
+                  <SelectValue placeholder="Select a plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  {plans && Object.entries(plans).map(([tier, plan]) => (
+                    <SelectItem key={tier} value={tier}>
+                      {tier.charAt(0).toUpperCase() + tier.slice(1)} - ${plan.price}/mo
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {plans && subscriptionTier && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {plans[subscriptionTier]?.description}
+                </p>
+              )}
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading || isLoadingPlans}>
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </div>
