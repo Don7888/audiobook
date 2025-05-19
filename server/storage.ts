@@ -27,6 +27,7 @@ export interface IStorage {
   createCharacter(character: InsertCharacter): Promise<Character>;
   updateCharacter(id: number, character: Partial<InsertCharacter>): Promise<Character | undefined>;
   deleteCharacter(id: number): Promise<boolean>;
+  getAllCharacters(): Promise<Character[]>;
   
   // Sound effect methods
   getSoundEffect(id: number): Promise<SoundEffect | undefined>;
@@ -242,6 +243,10 @@ export class MemStorage implements IStorage {
   
   async deleteCharacter(id: number): Promise<boolean> {
     return this.characters.delete(id);
+  }
+  
+  async getAllCharacters(): Promise<Character[]> {
+    return Array.from(this.characters.values());
   }
 }
 

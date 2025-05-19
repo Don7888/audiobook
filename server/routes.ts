@@ -560,7 +560,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.headers['user-id'];
       if (!userId) {
-        return res.status(401).json({ message: "Authentication required" });
+        // For library and story display purposes, allow access to all characters
+        const allCharacters = await storage.getAllCharacters();
+        return res.json(allCharacters);
       }
       
       const characters = await storage.getCharactersByUserId(parseInt(userId.toString()));
