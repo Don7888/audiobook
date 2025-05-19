@@ -42,8 +42,14 @@ export default function SoundEffectPlayer({ storyText, isPlaying, currentTime }:
       
       while ((match = regex.exec(paragraph)) !== null) {
         // Calculate a timestamp based on the position of the sound effect in the text
+        // Position is relative within paragraph (0-1)
         const effectPosition = match.index / paragraphLength;
-        const timestamp = cumulativeLength + (effectPosition * (paragraphLength / 20)); // Assuming ~20 chars per second
+        
+        // Calculate better timestamp with higher words-per-second rate for more realistic timing
+        // Average reading speed is about 150-200 words per minute, or about 2.5-3.3 words per second
+        // Assuming an average of 5 characters per word, that's roughly 12-17 characters per second
+        const charactersPerSecond = 12;
+        const timestamp = cumulativeLength + (effectPosition * (paragraphLength / charactersPerSecond));
         
         effects.push({
           name: match[1].trim(),
@@ -51,7 +57,9 @@ export default function SoundEffectPlayer({ storyText, isPlaying, currentTime }:
         });
       }
       
-      cumulativeLength += (paragraphLength / 20) + 1; // +1 second pause between paragraphs
+      // Adjust the paragraph timing to match the same charactersPerSecond rate used above
+      const charactersPerSecond = 12;
+      cumulativeLength += (paragraphLength / charactersPerSecond) + 1; // +1 second pause between paragraphs
     }
     
     setSoundEffects(effects);
