@@ -80,8 +80,16 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     enabled: isAuthenticated && !!userId
   });
 
-  const userSubscriptionTier = userData?.subscriptionTier || 'basic';
-  const canUseSoundEffects = subscriptionPlans?.[userSubscriptionTier]?.allowSoundEffects || false;
+  // Get the user's subscription tier and whether they can use sound effects
+  const userSubscriptionTier = userData?.subscriptionTier || user?.subscriptionTier || 'basic';
+  console.log("User subscription tier:", userSubscriptionTier);
+  console.log("Subscription plans:", subscriptionPlans);
+  
+  // Check if the user can use sound effects based on their subscription tier
+  const canUseSoundEffects = 
+    userSubscriptionTier === 'pro' || 
+    userSubscriptionTier === 'premium' || 
+    (subscriptionPlans && subscriptionPlans[userSubscriptionTier]?.allowSoundEffects === true);
 
   const form = useForm<StoryGeneration>({
     resolver: zodResolver(storyGenerationSchema),
