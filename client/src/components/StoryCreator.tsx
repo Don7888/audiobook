@@ -31,6 +31,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [soundEffects, setSoundEffects] = useState<SoundEffectPlacement[]>([]);
   const [audioDuration, setAudioDuration] = useState(0);
   const [soundEffectSuggestions, setSoundEffectSuggestions] = useState<Array<{ description: string; timing: string; }>>([]);
+  const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
   const { toast } = useToast();
   const { user, isAuthenticated, userId } = useAuth();
 
@@ -54,6 +55,29 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       return response.json();
     },
     enabled: !!userId,
+  });
+  
+  // Fetch user's characters
+  const { data: userCharacters = [] } = useQuery({
+    queryKey: ['/api/characters'],
+    queryFn: async () => {
+      if (!isAuthenticated || !userId) return [];
+      
+      try {
+        const response = await fetch('/api/characters', {
+          headers: {
+            'user-id': userId.toString()
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch characters');
+        return response.json();
+      } catch (error) {
+        console.error('Error fetching characters:', error);
+        return [];
+      }
+    },
+    enabled: isAuthenticated && !!userId
   });
 
   const userSubscriptionTier = userData?.subscriptionTier || 'basic';
@@ -331,6 +355,49 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </FormItem>
                   )}
                 />
+                
+                {/* Character Selection */}
+                {userCharacters.length > 0 && (
+                  <div className="space-y-4 border rounded-lg p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-heading font-semibold text-lg">Include Characters</h3>
+                      <Link href="/characters">
+                        <Button type="button" variant="outline" size="sm" className="flex items-center">
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Manage Characters
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                      {userCharacters.map((character: Character) => (
+                        <div key={character.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-slate-50">
+                          <Checkbox 
+                            id={`character-${character.id}`}
+                            checked={selectedCharacters.includes(character.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedCharacters([...selectedCharacters, character.id]);
+                              } else {
+                                setSelectedCharacters(selectedCharacters.filter(id => id !== character.id));
+                              }
+                            }}
+                          />
+                          <div className="grid gap-1.5 leading-none">
+                            <label
+                              htmlFor={`character-${character.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {character.name}
+                            </label>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {character.personality}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex justify-end">
                   <Button 
