@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { SoundEffectPlacement } from "@shared/schema";
+import SoundEffectEditor from "./SoundEffectEditor";
 
 interface StoryPreviewProps {
   story: GeneratedStory;
@@ -18,6 +19,8 @@ interface StoryPreviewProps {
 export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [], characterIds = [] }: StoryPreviewProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableContent, setEditableContent] = useState(story.content);
   const [storyImage, setStoryImage] = useState<string>("https://pixabay.com/get/g9abdb05c255a115ab332e9d29d18bb736f3500a42a629e61cda8d0afb1de96c3d8206ec5ca044c5b631f6fb8856065a60252c1dca34ad487a985001046dab40d_1280.jpg");
   
   // Use AI to select an appropriate image based on the story content
@@ -81,11 +84,34 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
       
       <div className="md:w-2/3 p-6">
         <h3 className="font-heading font-bold text-2xl mb-4">{story.title}</h3>
-        <div className="bg-white rounded-2xl p-4 mb-6 max-h-60 overflow-y-auto shadow-inner">
-          {story.content.split('\n\n').map((paragraph, index) => (
-            <p key={index} className="mb-3">{paragraph}</p>
-          ))}
-        </div>
+        
+        {isEditing ? (
+          <div className="mb-6">
+            <SoundEffectEditor 
+              content={editableContent} 
+              onChange={setEditableContent} 
+            />
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl p-4 mb-6 max-h-60 overflow-y-auto shadow-inner">
+            {story.content.split('\n\n').map((paragraph, index) => (
+              <p key={index} className="mb-3">
+                {paragraph.split(/(\[SFX:[^\]]+\])/).map((part, i) => {
+                  if (part.match(/\[SFX:[^\]]+\]/)) {
+                    // Extract sound effect name
+                    const effectName = part.replace(/\[SFX:([^\]]+)\]/, '$1');
+                    return (
+                      <span key={i} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                        🔊 {effectName}
+                      </span>
+                    );
+                  }
+                  return <span key={i}>{part}</span>;
+                })}
+              </p>
+            ))}
+          </div>
+        )}
         
         <AudioPlayer audioUrl={audioUrl} />
         

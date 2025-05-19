@@ -417,7 +417,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         The story should be appropriate for children in the specified age range and should be engaging and imaginative.
       `;
       
-      // If sound effects are requested, add sound effect recommendations
+      // Always add sound effects in the text regardless of subscription tier
+      prompt += `
+        VERY IMPORTANT: Include sound effects directly in the story text using the format [SFX:description] 
+        where "description" is a brief description of the sound.
+        
+        For example:
+        - "Once upon a time [SFX:magical chimes], in a forest far away..."
+        - "Suddenly, there was a loud crash! [SFX:thunder]"
+        - "The little bird sang happily [SFX:birds chirping] as it flew through the blue sky."
+        
+        Include 4-6 appropriate sound effects throughout the story at natural points where they would enhance
+        the storytelling experience. Make the sound effects descriptive but concise.
+      `;
+      
+      // For subscription tiers that include sound effects, add suggestions
       if (storyParams.includeSoundEffects) {
         prompt += `
           Additionally, suggest 3-5 sound effects that would enhance this story, with timing recommendations.
