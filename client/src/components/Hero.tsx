@@ -13,14 +13,21 @@ export default function Hero() {
             <p className="text-lg mb-6 text-gray-600">
               Turn your ideas into captivating stories with AI-powered storytelling. Record and save audiobooks for Yoto, Toni, and Audible.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
               <Link href="#create">
                 <Button className="bg-primary hover:bg-red-500 text-white font-bold py-7 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl w-full sm:w-auto">
                   Create New Story
                 </Button>
               </Link>
+              <Link href="/characters">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-7 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl w-full sm:w-auto">
+                  Create Characters
+                </Button>
+              </Link>
+            </div>
+            <div className="flex justify-start">
               <Link href="#examples">
-                <Button variant="outline" className="bg-white hover:bg-gray-100 text-primary border-2 border-primary font-bold py-7 px-8 rounded-2xl text-lg shadow-md w-full sm:w-auto">
+                <Button variant="outline" className="bg-white hover:bg-gray-100 text-primary border-2 border-primary font-bold py-5 px-6 rounded-xl text-base shadow-md">
                   See Examples
                 </Button>
               </Link>
