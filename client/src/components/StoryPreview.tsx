@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { SoundEffectPlacement } from "@shared/schema";
-import SoundEffectEditor from "./SoundEffectEditor";
+import SimpleTextEditor from "./SimpleTextEditor";
 
 interface StoryPreviewProps {
   story: GeneratedStory;
@@ -100,7 +100,7 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
         
         {isEditing ? (
           <div className="mb-6">
-            <SoundEffectEditor 
+            <SimpleTextEditor 
               content={editableContent} 
               onChange={setEditableContent} 
             />
