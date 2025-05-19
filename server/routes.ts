@@ -609,7 +609,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: parseInt(userId.toString())
       };
       
+      console.log("Creating character:", characterData);
+      
       const character = await storage.createCharacter(characterData);
+      console.log("Character created:", character);
+      
       res.status(201).json(character);
     } catch (error) {
       console.error("Error creating character:", error);

@@ -66,19 +66,28 @@ export default function Characters() {
     }
     
     try {
+      console.log("Creating character with data:", { ...data, userId });
+      
       const response = await fetch('/api/characters', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'user-id': userId.toString()
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({
+          name: data.name,
+          appearance: data.appearance,
+          personality: data.personality
+        })
       });
       
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to create character');
       }
+      
+      const result = await response.json();
+      console.log("Character created:", result);
       
       toast({
         title: "Character created!",
@@ -90,6 +99,7 @@ export default function Characters() {
       setIsCreating(false);
       refetch();
     } catch (error) {
+      console.error("Error in character creation:", error);
       toast({
         title: "Error creating character",
         description: error instanceof Error ? error.message : "An unknown error occurred",
