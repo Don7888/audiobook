@@ -92,8 +92,53 @@ export default function SoundEffectPlayer({ storyText, isPlaying, currentTime }:
         }
         
         audioRef.current = new Audio(matchingEffect.url);
-        audioRef.current.volume = 0.7; // Slightly lower volume than narration
-        audioRef.current.play().catch(error => console.error('Error playing sound effect:', error));
+        audioRef.current.volume = 0.0; // Start with zero volume for fade-in
+        audioRef.current.loop = true; // Loop the sound effect
+        
+        // Play the sound with 5 second duration including fade in/out
+        const fadeInDuration = 1000; // 1 second fade in
+        const sustainDuration = 3000; // 3 seconds at full volume
+        const fadeOutDuration = 1000; // 1 second fade out
+        const maxVolume = 0.7; // Maximum volume (slightly lower than narration)
+        
+        let startTime = Date.now();
+        
+        // Create the fade effect with requestAnimationFrame
+        const fadeAudio = () => {
+          if (!audioRef.current) return;
+          
+          const elapsed = Date.now() - startTime;
+          
+          // Fade in period
+          if (elapsed < fadeInDuration) {
+            audioRef.current.volume = maxVolume * (elapsed / fadeInDuration);
+          }
+          // Sustain period
+          else if (elapsed < fadeInDuration + sustainDuration) {
+            audioRef.current.volume = maxVolume;
+          }
+          // Fade out period
+          else if (elapsed < fadeInDuration + sustainDuration + fadeOutDuration) {
+            const fadeOutElapsed = elapsed - (fadeInDuration + sustainDuration);
+            audioRef.current.volume = maxVolume * (1 - (fadeOutElapsed / fadeOutDuration));
+          }
+          // End of effect
+          else {
+            audioRef.current.pause();
+            audioRef.current.loop = false;
+            return;
+          }
+          
+          // Continue the animation
+          requestAnimationFrame(fadeAudio);
+        };
+        
+        // Start playback and fading
+        audioRef.current.play()
+          .then(() => {
+            requestAnimationFrame(fadeAudio);
+          })
+          .catch(error => console.error('Error playing sound effect:', error));
         
         // Mark this effect as played so it doesn't repeat
         setLastPlayedEffect(effectToPlay.timestamp);
