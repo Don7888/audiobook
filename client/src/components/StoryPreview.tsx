@@ -144,7 +144,7 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
             variant="outline"
             className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-heading font-bold flex items-center"
           >
-            <Edit className="mr-2" /> {isEditing ? "Done Editing" : "Edit Sound Effects"}
+            <Edit className="mr-2" /> {isEditing ? "Done Editing" : "Edit Story"}
           </Button>
           
           <Button
