@@ -288,7 +288,10 @@ export default function Characters() {
       )}
       
       {/* Create Character Dialog */}
-      <Dialog open={isCreating} onOpenChange={setIsCreating}>
+      <Dialog open={isCreating} onOpenChange={(open) => {
+          setIsCreating(open);
+          if (!open) form.reset();
+        }}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Create New Character</DialogTitle>

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export interface AuthUser {
   id: number;
@@ -12,7 +12,7 @@ export function useAuth() {
     localStorage.getItem("userId") ? Number(localStorage.getItem("userId")) : null
   );
   
-  const { data: user, isLoading, error } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
       if (!userId) return null;
@@ -41,6 +41,9 @@ export function useAuth() {
       }
     },
     enabled: !!userId,
+    staleTime: 60000, // 1 minute
+    retryOnMount: true,
+    refetchOnWindowFocus: true
   });
   
   const login = (userData: { id: number }) => {
@@ -57,7 +60,7 @@ export function useAuth() {
     user,
     userId,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!userId,
     login,
     logout,
   };
