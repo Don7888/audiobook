@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, VolumeUp } from "lucide-react";
+import { Play, Pause, Volume } from "lucide-react";
+import SoundEffectPlayer from "./SoundEffectPlayer";
 
 interface AudioPlayerProps {
   audioUrl: string;
   className?: string;
+  storyText?: string;
 }
 
-export default function AudioPlayer({ audioUrl, className = "" }: AudioPlayerProps) {
+export default function AudioPlayer({ audioUrl, className = "", storyText = "" }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);

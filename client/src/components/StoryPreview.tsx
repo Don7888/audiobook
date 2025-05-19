@@ -23,6 +23,16 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
   const [editableContent, setEditableContent] = useState(story.content);
   const [storyImage, setStoryImage] = useState<string>("https://pixabay.com/get/g9abdb05c255a115ab332e9d29d18bb736f3500a42a629e61cda8d0afb1de96c3d8206ec5ca044c5b631f6fb8856065a60252c1dca34ad487a985001046dab40d_1280.jpg");
   
+  const handleToggleEdit = () => {
+    if (isEditing) {
+      // Save changes when exiting edit mode
+      setIsEditing(false);
+    } else {
+      // Enter edit mode
+      setIsEditing(true);
+    }
+  };
+  
   // Use AI to select an appropriate image based on the story content
   useEffect(() => {
     // In a real implementation, we would call an image selection API
@@ -113,7 +123,10 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
           </div>
         )}
         
-        <AudioPlayer audioUrl={audioUrl} />
+        <AudioPlayer 
+          audioUrl={audioUrl} 
+          storyText={isEditing ? editableContent : story.content} 
+        />
         
         {soundEffects && soundEffects.length > 0 && (
           <div className="mt-4 bg-blue-50 rounded-xl p-3">
@@ -124,11 +137,11 @@ export default function StoryPreview({ story, audioUrl, onEdit, soundEffects = [
         
         <div className="flex justify-between mt-6">
           <Button
-            onClick={onEdit}
+            onClick={handleToggleEdit}
             variant="outline"
             className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-heading font-bold flex items-center"
           >
-            <Edit className="mr-2" /> Edit Story
+            <Edit className="mr-2" /> {isEditing ? "Done Editing" : "Edit Sound Effects"}
           </Button>
           
           <Button
