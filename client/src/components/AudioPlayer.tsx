@@ -114,6 +114,15 @@ export default function AudioPlayer({ audioUrl, className = "", storyText = "" }
           <span className="text-sm">{formatTime(duration)}</span>
         </div>
         
+        {/* Sound Effect Player component */}
+        {storyText && (
+          <SoundEffectPlayer 
+            storyText={storyText} 
+            isPlaying={isPlaying} 
+            currentTime={currentTime} 
+          />
+        )}
+        
         <p className="text-xs text-center mt-2 opacity-80">
           AI-generated voice narration using OpenAI's TTS
         </p>
