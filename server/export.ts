@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { storage } from './storage';
 import type { Story } from '@shared/schema';
+import OpenAI from 'openai';
 
 interface ExportOptions {
   playlistName: string;
@@ -89,7 +90,7 @@ async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
 }
 
 /**
- * Exports stories in Yoto format with required metadata
+ * Exports stories in Yoto format with required metadata and cover image
  */
 async function exportYoto(stories: Story[], outputPath: string, options: ExportOptions): Promise<void> {
   // First, create the base MP3 file that will contain our audio
@@ -98,6 +99,61 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
   // For Yoto-specific metadata, we create a companion JSON file with metadata
   // Yoto cards require certain metadata to identify content properly
   const metadataFilePath = outputPath.replace('.yoto', '.metadata.json');
+  
+  // Generate a cover image for the Yoto card using OpenAI
+  const timestamp = Date.now();
+  const safeTitle = options.playlistName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  const imageFilename = `${safeTitle}_yoto_cover_${timestamp}.png`;
+  const imagePath = path.join(process.cwd(), 'exports', imageFilename);
+  
+  // Prepare description for image generation
+  const imageDescription = options.description || 
+    `A playlist of ${stories.length} children's stories including: ${
+      stories.slice(0, 3).map(story => story.title).join(", ")
+    }${stories.length > 3 ? " and more" : ""}`;
+  
+  let coverImageUrl = "";
+  
+  // Generate cover image with OpenAI DALL-E if API key is available
+  if (process.env.OPENAI_API_KEY) {
+    try {
+      // Initialize OpenAI
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Create a tailored prompt for a children's story illustration
+      const prompt = `Create a colorful, child-friendly illustration for a children's story collection titled "${options.playlistName}". 
+                      The image should be appropriate for a Yoto player card with these details: ${imageDescription}. 
+                      Make it visually appealing, with bright colors and friendly characters. 
+                      The style should be appropriate for young children ages 3-8. 
+                      Square format with clear visibility at different sizes.`;
+      
+      // Generate image using DALL-E
+      const response = await openai.images.generate({
+        model: "dall-e-3", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "standard",
+      });
+      
+      if (response.data && response.data[0]?.url) {
+        // Download the image from OpenAI
+        const imageUrl = response.data[0].url;
+        const imageResponse = await fetch(imageUrl);
+        const imageData = await imageResponse.arrayBuffer();
+        
+        // Save the image
+        fs.writeFileSync(imagePath, Buffer.from(imageData));
+        
+        // Set the cover image URL for the metadata
+        coverImageUrl = `/api/exports/${imageFilename}`;
+        console.log(`Generated Yoto cover image: ${imageFilename}`);
+      }
+    } catch (error) {
+      console.error("Error generating Yoto cover image:", error);
+      // Continue without image if generation fails
+    }
+  }
   
   // Create chapters array for Yoto player to properly segment stories
   const chapters = stories.map((story, index) => {
@@ -109,7 +165,7 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
       title: story.title,
       startTime: startTimeSeconds,
       author: "StoryTunes", // Use default since story doesn't have authorName
-      coverImage: ""
+      coverImage: coverImageUrl // Use the generated cover image for all chapters
     };
   });
   
@@ -125,12 +181,14 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
     language: "en",
     totalDuration: stories.length * 60, // Simplified duration calculation
     chapters: chapters,
+    coverImage: coverImageUrl, // Add the cover image URL to the metadata
     tags: ["children", "stories", "audiobook"],
     // These properties are required by Yoto cards
     yotoSpecific: {
       cardId: `storytunes-${Date.now()}`, 
       contentVersion: "1.0",
-      recommendedAge: "3-8"
+      recommendedAge: "3-8",
+      coverImageFilename: coverImageUrl ? imageFilename : undefined
     }
   };
   
@@ -143,6 +201,25 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
   
   console.log(`Exported Yoto format to: ${outputPath}`);
   console.log(`Created Yoto metadata file: ${metadataFilePath}`);
+  
+  // Create a text file with instructions for uploading to Yoto
+  const instructionsFilePath = outputPath.replace('.yoto', '.yoto-instructions.txt');
+  const instructions = `
+=== YOTO UPLOAD INSTRUCTIONS ===
+
+Your StoryTunes collection "${options.playlistName}" has been exported for Yoto!
+
+To upload to your Yoto device:
+
+1. Upload the audio file (${path.basename(outputPath)}) to the Yoto app
+2. Upload the cover image (${coverImageUrl ? imageFilename : "N/A - Image generation failed"}) to display on your Yoto player
+3. The metadata file contains chapter information for your stories
+
+Enjoy your stories on Yoto!
+  `;
+  
+  fs.writeFileSync(instructionsFilePath, instructions);
+  console.log(`Created Yoto instructions file: ${instructionsFilePath}`);
 }
 
 /**

@@ -742,6 +742,78 @@ ${textWithoutSfx}`
     }
   });
   
+  // Generate cover image for a story
+  app.post("/api/stories/generate-image", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { title, description } = req.body;
+      
+      if (!title || !description) {
+        return res.status(400).json({
+          message: "Invalid parameters",
+          details: "Title and description are required"
+        });
+      }
+      
+      // Initialize OpenAI client
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      
+      // Create a tailored prompt for a children's story illustration
+      const prompt = `Create a colorful, child-friendly illustration for a children's story titled "${title}". 
+                      The image should be appropriate for a Yoto player card with these details: ${description}. 
+                      Make it visually appealing, with bright colors and friendly characters. 
+                      The style should be appropriate for young children ages 3-8. 
+                      Square format with clear visibility at different sizes.`;
+      
+      // Generate image using DALL-E
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: prompt,
+        n: 1,
+        size: "1024x1024",
+        quality: "standard",
+      });
+      
+      if (!response.data || !response.data[0]?.url) {
+        throw new Error("Failed to generate image");
+      }
+      
+      // Save the image to the exports directory
+      const timestamp = Date.now();
+      const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const exportDir = path.join(process.cwd(), 'exports');
+      
+      // Create export directory if it doesn't exist
+      if (!fs.existsSync(exportDir)) {
+        fs.mkdirSync(exportDir, { recursive: true });
+      }
+      
+      // Download the image from OpenAI
+      const imageUrl = response.data[0].url;
+      const imageResponse = await fetch(imageUrl);
+      const imageData = await imageResponse.arrayBuffer();
+      
+      // Save the image with a unique filename
+      const imageFilename = `${safeTitle}_cover_${timestamp}.png`;
+      const imagePath = path.join(exportDir, imageFilename);
+      
+      fs.writeFileSync(imagePath, Buffer.from(imageData));
+      
+      // Return the URL for accessing the image
+      return res.status(200).json({
+        imageUrl: `/api/exports/${imageFilename}`,
+        filename: imageFilename
+      });
+      
+    } catch (error) {
+      console.error("Image generation error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      return res.status(500).json({
+        message: "Failed to generate image",
+        details: errorMessage
+      });
+    }
+  });
+
   // Serve exported files
   app.get("/api/exports/:filename", authenticateUser, (req: Request, res: Response) => {
     const filename = req.params.filename;
@@ -766,6 +838,11 @@ ${textWithoutSfx}`
       case '.yoto':
       case '.toniebox':
         contentType = 'audio/mpeg'; // These are also MP3-based formats
+        break;
+      case '.png':
+      case '.jpg':
+      case '.jpeg':
+        contentType = `image/${ext.substring(1)}`;
         break;
     }
     

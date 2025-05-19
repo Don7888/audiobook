@@ -273,6 +273,31 @@ export default function Export() {
                         <FormDescription>
                           Choose the format that matches your playback device.
                         </FormDescription>
+                        
+                        {field.value === "yoto" && (
+                          <div className="mt-3 p-3 border border-purple-200 rounded-md bg-purple-50">
+                            <div className="flex items-start">
+                              <div className="shrink-0 mr-3">
+                                <div className="w-12 h-12 bg-purple-200 rounded-md flex items-center justify-center">
+                                  <img 
+                                    src="https://cdn-icons-png.flaticon.com/512/9492/9492239.png" 
+                                    alt="Yoto" 
+                                    className="w-8 h-8"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-medium text-purple-800">Yoto Export Includes</h4>
+                                <ul className="text-xs text-purple-700 mt-1 list-disc pl-4">
+                                  <li>Audio file with all selected stories</li>
+                                  <li>Custom cover image generated for your Yoto card</li>
+                                  <li>Metadata file with chapter markers</li>
+                                  <li>Installation instructions for Yoto app</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -405,9 +430,37 @@ export default function Export() {
           
           <TabsContent value="yoto" className="bg-white p-4 rounded-md border">
             <h3 className="font-medium text-lg mb-2">Yoto Format</h3>
-            <p className="text-gray-700">
-              Optimized for Yoto players, this format includes chapter markers for each story and is compatible with Yoto Cards. The audio file will be formatted according to Yoto's specifications with appropriate metadata.
-            </p>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="md:w-2/3">
+                <p className="text-gray-700 mb-3">
+                  Optimized for Yoto players, this format includes chapter markers for each story and is compatible with Yoto Cards. The audio file will be formatted according to Yoto's specifications with appropriate metadata.
+                </p>
+                <div className="text-sm border-l-4 border-purple-400 pl-3 py-1 bg-purple-50">
+                  <p className="font-medium text-purple-800">New Feature: Custom Cover Images</p>
+                  <p className="text-gray-700 mt-1">
+                    When you export to Yoto format, we'll automatically generate a custom cover image for your playlist that displays on your Yoto player when the card is inserted. The image is specially designed to match your stories' themes.
+                  </p>
+                </div>
+              </div>
+              <div className="md:w-1/3 flex items-center justify-center">
+                <div className="relative w-40 h-40">
+                  <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden">
+                    <img 
+                      src="https://cdn.shopify.com/s/files/1/0588/0042/1610/files/3V2A3098_1_2048x.jpg?v=1651246987" 
+                      alt="Yoto Player" 
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white rounded-xl shadow-md border-4 border-white overflow-hidden">
+                    <img 
+                      src="https://storage.googleapis.com/pai-images/4ac80495feec42a7ae4eda11af6c1732.jpeg" 
+                      alt="Custom Story Image" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="toniebox" className="bg-white p-4 rounded-md border">

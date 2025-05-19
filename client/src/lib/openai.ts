@@ -56,3 +56,23 @@ export async function saveStory(storyData: SaveStoryParams) {
     throw new Error("Failed to save story. Please try again.");
   }
 }
+
+/**
+ * Generate a cover image for a story using OpenAI
+ * @param title Story title
+ * @param description Brief description or prompt for the image
+ * @returns URL to the generated image
+ */
+export async function generateStoryImage(title: string, description: string): Promise<string> {
+  try {
+    const response = await apiRequest("POST", "/api/stories/generate-image", { 
+      title, 
+      description 
+    });
+    const data = await response.json();
+    return data.imageUrl;
+  } catch (error) {
+    console.error("Error generating story image:", error);
+    throw new Error("Failed to generate image. Please try again.");
+  }
+}
