@@ -212,10 +212,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SOUND EFFECTS ENDPOINTS
 
   // Get all sound effects
-  app.get("/api/sound-effects", async (_req: Request, res: Response) => {
+  app.get("/api/sound-effects", async (req: Request, res: Response) => {
     try {
-      const effects = await storage.getAllSoundEffects();
-      return res.status(200).json(effects);
+      const userId = req.headers['user-id'];
+      const userIdNumber = userId ? parseInt(userId as string) : null;
+      
+      // Get user's subscription tier if user ID is provided
+      let userSubscriptionTier = 'basic';
+      if (userIdNumber) {
+        const user = await storage.getUser(userIdNumber);
+        if (user) {
+          userSubscriptionTier = user.subscriptionTier;
+        }
+      }
+      
+      const allEffects = await storage.getAllSoundEffects();
+      let filteredEffects;
+      
+      // Filter sound effects based on subscription tier:
+      // - Basic: No access to sound effects
+      // - Pro: Access to shared sound effects (userId is null)
+      // - Premium: Access to shared effects + their own uploaded effects
+      if (userSubscriptionTier === 'premium') {
+        // Premium users get shared effects + their own
+        filteredEffects = allEffects.filter(effect => 
+          effect.userId === null || effect.userId === userIdNumber
+        );
+      } else if (userSubscriptionTier === 'pro') {
+        // Pro users get only shared effects
+        filteredEffects = allEffects.filter(effect => effect.userId === null);
+      } else {
+        // Basic users don't get any effects but we won't block the API,
+        // just return empty array
+        filteredEffects = [];
+      }
+      
+      return res.status(200).json(filteredEffects);
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error fetching sound effects" });
@@ -318,17 +350,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
       
+      // Check if user is premium tier
+      const userId = req.headers['user-id'];
+      if (!userId) {
+        return res.status(401).json({ message: "User ID required" });
+      }
+      
+      const user = await storage.getUser(parseInt(userId as string));
+      if (!user || user.subscriptionTier !== 'premium') {
+        return res.status(403).json({ message: "Only premium users can upload sound effects" });
+      }
+      
       const category = req.body.category || 'Other';
       const name = req.body.name || req.file.originalname.split('.')[0];
       
       // Create URL for the sound effect
       const url = `/sounds/${category}/${req.file.filename}`;
       
-      // Save to database
+      // Save to database with user ID to make it user-specific
       const effectData: InsertSoundEffect = {
         name,
         category,
-        url
+        url,
+        userId: parseInt(userId as string)
       };
       
       const newEffect = await storage.createSoundEffect(effectData);

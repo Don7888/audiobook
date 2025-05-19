@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet";
@@ -32,7 +32,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { SoundEffect } from "@shared/schema";
-import { Plus, Trash, Play, Volume2 } from "lucide-react";
+import { Plus, Trash, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // Sound effect categories
@@ -65,14 +65,14 @@ export default function SoundEffects() {
   const [isUploading, setIsUploading] = useState(false);
   
   // Initialize audio player for previewing
-  useState(() => {
+  useEffect(() => {
     const audio = new Audio();
     setPreviewAudio(audio);
     return () => {
       audio.pause();
       audio.src = "";
     };
-  });
+  }, []);
   
   // Query to fetch sound effects
   const { data: soundEffects = [], isLoading: isFetchingEffects } = useQuery<SoundEffect[]>({
@@ -145,7 +145,6 @@ export default function SoundEffects() {
       const response = await fetch("/api/sound-effects/upload", {
         method: "POST",
         body: formData,
-        // Don't set Content-Type header, browser will set it with boundary
       });
       
       if (!response.ok) {
@@ -206,6 +205,11 @@ export default function SoundEffects() {
     );
   }
   
+  // Get user's subscription tier
+  const userSubscriptionTier = user?.subscriptionTier || 'basic';
+  const isPremiumUser = userSubscriptionTier === 'premium';
+  const isProOrPremiumUser = userSubscriptionTier === 'pro' || userSubscriptionTier === 'premium';
+  
   if (!isAuthenticated) {
     return (
       <div className="container mx-auto py-12">
@@ -214,6 +218,20 @@ export default function SoundEffects() {
           <p className="mb-6">You need to be logged in to view this page.</p>
           <Button asChild className="bg-primary">
             <a href="/signin">Sign In</a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isProOrPremiumUser) {
+    return (
+      <div className="container mx-auto py-12">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold mb-4">Premium Feature</h1>
+          <p className="mb-6">Sound effects are only available on Pro and Premium plans.</p>
+          <Button asChild className="bg-primary">
+            <a href="/subscription">Upgrade Now</a>
           </Button>
         </div>
       </div>
@@ -230,96 +248,98 @@ export default function SoundEffects() {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8">
         <h1 className="text-4xl font-bold mb-4 sm:mb-0">Sound Effects</h1>
         
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto py-6 sm:text-lg">
-              <Plus className="mr-2 h-5 w-5" /> Upload Sound Effect
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Upload Sound Effect</DialogTitle>
-            </DialogHeader>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter sound effect name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Category</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
+        {isPremiumUser && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto py-6 sm:text-lg">
+                <Plus className="mr-2 h-5 w-5" /> Upload Sound Effect
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle className="text-2xl">Upload Sound Effect</DialogTitle>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
+                          <Input placeholder="Enter sound effect name" {...field} />
                         </FormControl>
-                        <SelectContent>
-                          {categories.map(category => (
-                            <SelectItem key={category} value={category}>{category}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="soundFile"
-                  render={({ field: { onChange, ...rest } }) => (
-                    <FormItem>
-                      <FormLabel>Sound File</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="file"
-                          accept="audio/*"
-                          onChange={(e) => onChange(e.target.files)}
-                          {...rest}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary"
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                      Uploading...
-                    </>
-                  ) : (
-                    "Upload Sound Effect"
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map(category => (
+                              <SelectItem key={category} value={category}>{category}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="soundFile"
+                    render={({ field: { onChange, ...rest } }) => (
+                      <FormItem>
+                        <FormLabel>Sound File</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="file"
+                            accept="audio/*"
+                            onChange={(e) => onChange(e.target.files)}
+                            {...rest}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-primary"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                        Uploading...
+                      </>
+                    ) : (
+                      "Upload Sound Effect"
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
       
       <div className="mb-6">
@@ -367,14 +387,16 @@ export default function SoundEffects() {
                 >
                   <Play size={16} className="mr-1" /> Preview
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-red-500 border-red-200 hover:bg-red-50"
-                  onClick={() => handleDelete(effect.id)}
-                >
-                  <Trash size={16} className="mr-1" /> Delete
-                </Button>
+                {isPremiumUser && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-red-500 border-red-200 hover:bg-red-50"
+                    onClick={() => handleDelete(effect.id)}
+                  >
+                    <Trash size={16} className="mr-1" /> Delete
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -385,7 +407,11 @@ export default function SoundEffects() {
         <h2 className="text-2xl font-bold mb-2">About Sound Effects</h2>
         <p className="text-gray-700 mb-4">
           Sound effects can enhance your stories and make them more engaging for listeners. 
-          Upload MP3 files to use in your stories, organize them by category, and add them at specific moments.
+          {isPremiumUser ? (
+            " As a Premium user, you can upload your own custom sound effects that only you can access."
+          ) : (
+            " Pro users can access the shared library of sound effects."
+          )}
         </p>
         <p className="text-sm text-gray-500">
           Note: Sound effects are only available on Pro and Premium subscription plans.

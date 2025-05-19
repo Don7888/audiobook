@@ -54,6 +54,7 @@ export const soundEffects = pgTable("sound_effects", {
   name: varchar("name", { length: 100 }).notNull(),
   category: varchar("category", { length: 50 }).notNull(),
   url: text("url").notNull(),
+  userId: integer("user_id"), // NULL for shared effects, user ID for Premium user uploaded effects
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
