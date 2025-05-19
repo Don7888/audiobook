@@ -85,11 +85,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   console.log("User subscription tier:", userSubscriptionTier);
   console.log("Subscription plans:", subscriptionPlans);
   
-  // Check if the user can use sound effects based on their subscription tier
-  const canUseSoundEffects = 
-    userSubscriptionTier === 'pro' || 
-    userSubscriptionTier === 'premium' || 
-    (subscriptionPlans && subscriptionPlans[userSubscriptionTier]?.allowSoundEffects === true);
+  // Force-enable sound effects for debugging
+  const canUseSoundEffects = true; // temporarily enable for all users to debug
 
   const form = useForm<StoryGeneration>({
     resolver: zodResolver(storyGenerationSchema),

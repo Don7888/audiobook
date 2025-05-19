@@ -50,6 +50,9 @@ export default function SignUp() {
     setIsLoading(true);
     
     try {
+      // Log the subscription tier being used for registration
+      console.log("Registering with subscription tier:", subscriptionTier);
+      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
