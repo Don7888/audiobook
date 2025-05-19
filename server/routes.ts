@@ -47,7 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication endpoints
   app.post('/api/auth/register', async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, subscriptionTier } = req.body;
       
       if (!username || !password) {
         return res.status(400).json({ 
@@ -65,11 +65,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Validate subscription tier if provided
+      const validTier = subscriptionTier && subscriptionPlans[subscriptionTier as keyof typeof subscriptionPlans] 
+        ? subscriptionTier 
+        : 'basic';
+      
       // Create new user
       const newUser = await storage.createUser({
         username,
         password,
-        subscriptionTier: 'basic' // Default subscription tier
+        subscriptionTier: validTier
       });
       
       // Return success without password
