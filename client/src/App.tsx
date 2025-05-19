@@ -13,6 +13,7 @@ import AudioDownload from "@/pages/AudioDownload";
 import SignIn from "@/pages/SignIn";
 import SignUp from "@/pages/SignUp";
 import Characters from "@/pages/Characters";
+import SoundEffects from "@/pages/SoundEffects";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/signin" component={SignIn} />
       <Route path="/signup" component={SignUp} />
       <Route path="/characters" component={Characters} />
+      <Route path="/sound-effects" component={SoundEffects} />
       <Route component={NotFound} />
     </Switch>
   );

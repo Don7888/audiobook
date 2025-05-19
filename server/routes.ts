@@ -262,6 +262,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete a sound effect
+  app.delete("/api/sound-effects/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteSoundEffect(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Sound effect not found" });
+      }
+      
+      return res.status(200).json({ message: "Sound effect deleted successfully" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error deleting sound effect" });
+    }
+  });
+  
   // Set up storage for sound effect uploads
   const soundEffectsStorage = multer.diskStorage({
     destination: function (req, file, cb) {
