@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as path from 'path';
 import { mapVoiceToOpenAI, generateAudio } from './tts';
+import { exportStories } from './export';
 // Basic authentication middleware
 const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   // Get the user ID from session/token
