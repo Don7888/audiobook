@@ -61,21 +61,10 @@ export class MemStorage implements IStorage {
 
   private async initializeSampleSoundEffects() {
     const sampleEffects: InsertSoundEffect[] = [
-      { name: "Rain", category: "Weather", url: "/sounds/rain.mp3" },
-      { name: "Thunder", category: "Weather", url: "/sounds/thunder.mp3" },
-      { name: "Wind", category: "Weather", url: "/sounds/wind.mp3" },
-      { name: "Fire", category: "Environment", url: "/sounds/fire.mp3" },
-      { name: "Forest", category: "Environment", url: "/sounds/forest.mp3" },
-      { name: "Ocean", category: "Environment", url: "/sounds/ocean.mp3" },
-      { name: "Birds", category: "Animals", url: "/sounds/birds.mp3" },
-      { name: "Cat", category: "Animals", url: "/sounds/cat.mp3" },
-      { name: "Dog", category: "Animals", url: "/sounds/dog.mp3" },
-      { name: "Laughter", category: "Human", url: "/sounds/laughter.mp3" },
-      { name: "Gasp", category: "Human", url: "/sounds/gasp.mp3" },
-      { name: "Doorbell", category: "Household", url: "/sounds/doorbell.mp3" },
-      { name: "Door Creak", category: "Household", url: "/sounds/door-creak.mp3" },
-      { name: "Magic Spell", category: "Fantasy", url: "/sounds/magic-spell.mp3" },
-      { name: "Dragon Roar", category: "Fantasy", url: "/sounds/dragon-roar.mp3" },
+      { name: "Rain", category: "Weather", url: "/sounds/Weather/rain.mp3" },
+      { name: "Thunder", category: "Weather", url: "/sounds/Weather/thunder.mp3" },
+      { name: "Cat", category: "Animals", url: "/sounds/Animals/cat.mp3" },
+      { name: "Magic Spell", category: "Fantasy", url: "/sounds/Fantasy/magic-spell.mp3" },
     ];
 
     for (const effect of sampleEffects) {
