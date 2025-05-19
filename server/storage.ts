@@ -61,22 +61,40 @@ export class MemStorage implements IStorage {
 
   private async initializeSampleSoundEffects() {
     const sampleEffects: InsertSoundEffect[] = [
+      // Weather category
       { name: "Rain", category: "Weather", url: "/sounds/Weather/rain.mp3", userId: null },
       { name: "Thunder", category: "Weather", url: "/sounds/Weather/thunder.mp3", userId: null },
       { name: "Wind", category: "Weather", url: "/sounds/Weather/wind.mp3", userId: null },
+      
+      // Animals category
+      { name: "Birds Chirping", category: "Animals", url: "/sounds/Animals/birds_chirping.mp3", userId: null },
+      { name: "Birds", category: "Animals", url: "/sounds/Animals/birds.mp3", userId: null },
       { name: "Cat", category: "Animals", url: "/sounds/Animals/cat.mp3", userId: null },
       { name: "Dog Barking", category: "Animals", url: "/sounds/Animals/dog-bark.mp3", userId: null },
-      { name: "Birds Chirping", category: "Animals", url: "/sounds/Animals/birds.mp3", userId: null },
-      { name: "Magic Spell", category: "Fantasy", url: "/sounds/Fantasy/magic-spell.mp3", userId: null },
+      
+      // Environment category
+      { name: "Forest", category: "Environment", url: "/sounds/Environment/forest.mp3", userId: null },
+      { name: "Ocean Waves", category: "Environment", url: "/sounds/Environment/ocean-waves.mp3", userId: null },
+      { name: "Sea", category: "Environment", url: "/sounds/Environment/Sea.mp3", userId: null },
+      
+      // Fantasy category
       { name: "Dragon Roar", category: "Fantasy", url: "/sounds/Fantasy/dragon-roar.mp3", userId: null },
+      { name: "Magic Spell", category: "Fantasy", url: "/sounds/Fantasy/magic-spell.mp3", userId: null },
+      { name: "Magic Twinkle", category: "Fantasy", url: "/sounds/Fantasy/magic_twinkle.mp3", userId: null },
+      { name: "Rocket", category: "Fantasy", url: "/sounds/Fantasy/rocket.mp3", userId: null },
+      { name: "Twinkle", category: "Fantasy", url: "/sounds/Fantasy/Twinkle.mp3", userId: null },
+      
+      // Household category
+      { name: "Clock Ticking", category: "Household", url: "/sounds/Household/clock-tick.mp3", userId: null },
+      { name: "Door Creaking", category: "Household", url: "/sounds/Household/door-creak.mp3", userId: null },
+      
+      // Human category
       { name: "Footsteps", category: "Human", url: "/sounds/Human/footsteps.mp3", userId: null },
       { name: "Laughter", category: "Human", url: "/sounds/Human/laugh.mp3", userId: null },
-      { name: "Door Creaking", category: "Household", url: "/sounds/Household/door-creak.mp3", userId: null },
-      { name: "Clock Ticking", category: "Household", url: "/sounds/Household/clock-tick.mp3", userId: null },
-      { name: "Ocean Waves", category: "Environment", url: "/sounds/Environment/ocean-waves.mp3", userId: null },
-      { name: "Forest Sounds", category: "Environment", url: "/sounds/Environment/forest.mp3", userId: null },
-      { name: "Success Jingle", category: "Other", url: "/sounds/Other/success.mp3", userId: null },
+      
+      // Other category
       { name: "Alert Sound", category: "Other", url: "/sounds/Other/alert.mp3", userId: null },
+      { name: "Success Jingle", category: "Other", url: "/sounds/Other/success.mp3", userId: null },
     ];
 
     for (const effect of sampleEffects) {
