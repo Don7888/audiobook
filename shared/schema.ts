@@ -33,6 +33,21 @@ export const insertUserSchema = createInsertSchema(users).pick({
   subscriptionTier: true,
 });
 
+// Character schema
+export const characters = pgTable("characters", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  appearance: text("appearance").notNull(),
+  personality: text("personality").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertCharacterSchema = createInsertSchema(characters).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Sound effects schema
 export const soundEffects = pgTable("sound_effects", {
   id: serial("id").primaryKey(),
@@ -60,6 +75,7 @@ export const stories = pgTable("stories", {
   narrator: varchar("narrator", { length: 50 }).notNull(),
   audioUrl: text("audio_url").notNull(),
   soundEffects: json("sound_effects").$type<SoundEffectPlacement[]>(),
+  characterIds: json("character_ids").$type<number[]>().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -110,9 +126,25 @@ export const subscriptionPlans = {
   }
 };
 
+// Schema for character creation
+export const characterCreationSchema = z.object({
+  name: z.string().min(1, "Character name is required"),
+  appearance: z.string().min(5, "Please describe the character's appearance"),
+  personality: z.string().min(5, "Please describe the character's personality"),
+});
+
+// Schema for story generation with character selection
+export const storyWithCharactersSchema = storyGenerationSchema.extend({
+  characterIds: z.array(z.number()).optional(),
+});
+
 // Export Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Character = typeof characters.$inferSelect;
+export type InsertCharacter = z.infer<typeof insertCharacterSchema>;
+export type CharacterCreation = z.infer<typeof characterCreationSchema>;
 
 export type SoundEffect = typeof soundEffects.$inferSelect;
 export type InsertSoundEffect = z.infer<typeof insertSoundEffectSchema>;
@@ -120,5 +152,6 @@ export type InsertSoundEffect = z.infer<typeof insertSoundEffectSchema>;
 export type Story = typeof stories.$inferSelect;
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type StoryGeneration = z.infer<typeof storyGenerationSchema>;
+export type StoryWithCharacters = z.infer<typeof storyWithCharactersSchema>;
 export type SoundEffectPlacement = z.infer<typeof soundEffectPlacementSchema>;
 export type SubscriptionTier = z.infer<typeof subscriptionTierEnum>;

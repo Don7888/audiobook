@@ -1,6 +1,7 @@
 import { 
   users, type User, type InsertUser, 
   stories, type Story, type InsertStory,
+  characters, type Character, type InsertCharacter,
   soundEffects, type SoundEffect, type InsertSoundEffect,
   type SoundEffectPlacement
 } from "@shared/schema";
@@ -19,6 +20,13 @@ export interface IStorage {
   updateStory(id: number, story: Partial<InsertStory>): Promise<Story | undefined>;
   deleteStory(id: number): Promise<boolean>;
   getAllStories(): Promise<Story[]>;
+  
+  // Character methods
+  getCharacter(id: number): Promise<Character | undefined>;
+  getCharactersByUserId(userId: number): Promise<Character[]>;
+  createCharacter(character: InsertCharacter): Promise<Character>;
+  updateCharacter(id: number, character: Partial<InsertCharacter>): Promise<Character | undefined>;
+  deleteCharacter(id: number): Promise<boolean>;
   
   // Sound effect methods
   getSoundEffect(id: number): Promise<SoundEffect | undefined>;
