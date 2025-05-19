@@ -63,8 +63,20 @@ export class MemStorage implements IStorage {
     const sampleEffects: InsertSoundEffect[] = [
       { name: "Rain", category: "Weather", url: "/sounds/Weather/rain.mp3" },
       { name: "Thunder", category: "Weather", url: "/sounds/Weather/thunder.mp3" },
+      { name: "Wind", category: "Weather", url: "/sounds/Weather/wind.mp3" },
       { name: "Cat", category: "Animals", url: "/sounds/Animals/cat.mp3" },
+      { name: "Dog Barking", category: "Animals", url: "/sounds/Animals/dog-bark.mp3" },
+      { name: "Birds Chirping", category: "Animals", url: "/sounds/Animals/birds.mp3" },
       { name: "Magic Spell", category: "Fantasy", url: "/sounds/Fantasy/magic-spell.mp3" },
+      { name: "Dragon Roar", category: "Fantasy", url: "/sounds/Fantasy/dragon-roar.mp3" },
+      { name: "Footsteps", category: "Human", url: "/sounds/Human/footsteps.mp3" },
+      { name: "Laughter", category: "Human", url: "/sounds/Human/laugh.mp3" },
+      { name: "Door Creaking", category: "Household", url: "/sounds/Household/door-creak.mp3" },
+      { name: "Clock Ticking", category: "Household", url: "/sounds/Household/clock-tick.mp3" },
+      { name: "Ocean Waves", category: "Environment", url: "/sounds/Environment/ocean-waves.mp3" },
+      { name: "Forest Sounds", category: "Environment", url: "/sounds/Environment/forest.mp3" },
+      { name: "Success Jingle", category: "Other", url: "/sounds/Other/success.mp3" },
+      { name: "Alert Sound", category: "Other", url: "/sounds/Other/alert.mp3" },
     ];
 
     for (const effect of sampleEffects) {
