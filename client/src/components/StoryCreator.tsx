@@ -880,7 +880,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 <div className="flex justify-end">
                   <Button 
                     type="submit" 
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
+                    className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
                     disabled={isGenerating}
                   >
                     {isGenerating ? (
