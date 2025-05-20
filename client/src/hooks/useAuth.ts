@@ -8,39 +8,28 @@ export interface AuthUser {
 }
 
 export function useAuth() {
-  const [userId, setUserId] = useState<number | null>(
-    localStorage.getItem("userId") ? Number(localStorage.getItem("userId")) : null
-  );
+  // TEMPORARY: Always set userId to 1 for development
+  const [userId, setUserId] = useState<number>(1);
   
+  // Auto-set the userId in localStorage if not present
+  if (!localStorage.getItem("userId")) {
+    localStorage.setItem("userId", "1");
+  }
+  
+  // TEMPORARY: Return a default premium user without making actual API calls
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      if (!userId) return null;
-      
-      try {
-        const response = await fetch('/api/auth/user', {
-          headers: {
-            'user-id': userId.toString(),
-          }
-        });
-        
-        if (!response.ok) {
-          if (response.status === 401) {
-            // User is not authenticated
-            localStorage.removeItem("userId");
-            setUserId(null);
-            return null;
-          }
-          throw new Error('Failed to fetch user data');
-        }
-        
-        return await response.json();
-      } catch (error) {
-        console.error("Auth error:", error);
-        return null;
-      }
+      // Always return a premium user with ID 1
+      return {
+        id: 1,
+        username: "TemporaryUser",
+        subscriptionTier: "premium",
+        email: "temp@example.com",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
     },
-    enabled: !!userId,
     staleTime: 60000, // 1 minute
     retryOnMount: true,
     refetchOnWindowFocus: true
@@ -51,9 +40,10 @@ export function useAuth() {
     setUserId(userData.id);
   };
   
+  // TEMPORARY: Make logout a no-op to prevent accidental logout 
   const logout = () => {
-    localStorage.removeItem("userId");
-    setUserId(null);
+    // No-op in temporary mode - we always stay logged in
+    console.log("Logout attempted but ignored in temporary mode");
   };
   
   return {
