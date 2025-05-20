@@ -48,6 +48,7 @@ const playlistSchema = z.object({
 type PlaylistFormValues = z.infer<typeof playlistSchema>;
 
 export default function Export() {
+  // Add responsive styles to ensure buttons are visible on mobile
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
@@ -387,12 +388,13 @@ export default function Export() {
                           Your Yuto package has been created with custom cover art and individual tracks.
                         </p>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                        <div className="flex flex-col space-y-3 mb-4">
                           <Button 
                             onClick={() => downloadExportedFile(exportResults.downloadUrl!, exportResults.filename || "yuto-export.yuto")}
-                            className="bg-purple-600 hover:bg-purple-700"
+                            className="bg-purple-600 hover:bg-purple-700 w-full py-5 text-base"
+                            size="lg"
                           >
-                            <Download className="mr-2 h-4 w-4" />
+                            <Download className="mr-2 h-5 w-5" />
                             Download Audiobook
                           </Button>
                           
@@ -400,9 +402,10 @@ export default function Export() {
                             <Button 
                               onClick={() => downloadExportedFile(exportResults.tracksUrl!, "yuto-tracks.zip")}
                               variant="outline"
-                              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50 w-full py-5 text-base"
+                              size="lg"
                             >
-                              <Download className="mr-2 h-4 w-4" />
+                              <Download className="mr-2 h-5 w-5" />
                               Download Individual Tracks
                             </Button>
                           )}
