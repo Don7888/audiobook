@@ -57,7 +57,6 @@ export default function Export() {
   // Query to fetch user's stories
   const { data: stories = [], isLoading: isLoadingStories } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
-    enabled: isAuthenticated,
     staleTime: 30000,
   });
   
@@ -96,7 +95,7 @@ export default function Export() {
       
       // Prepare stories for export
       const storiesToExport = stories.filter(story => 
-        values.stories.includes(story.id.toString())
+        selectedStories.includes(story.id.toString())
       );
       
       if (storiesToExport.length === 0) {
@@ -119,7 +118,7 @@ export default function Export() {
           playlistName: values.name,
           description: values.description,
           format: values.format,
-          storyIds: values.stories.map(id => parseInt(id))
+          storyIds: selectedStories.map(id => parseInt(id))
         })
       });
       
