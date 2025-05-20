@@ -11,6 +11,7 @@ import { Wand2, BookOpen, Headphones, VolumeX, Volume2, Loader2, LogIn, UserPlus
 import { generateStory, generateAudio, GeneratedStory } from "@/lib/openai";
 import StoryPreview from "./StoryPreview";
 import SoundEffectSelector from "./SoundEffectSelector";
+import AudioPlayer from "./AudioPlayer";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { useQuery } from "@tanstack/react-query";
@@ -1024,15 +1025,14 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       {/* Audio player for this story */}
                       <div className="p-4 border-b bg-white">
                         {audioUrl ? (
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <audio 
-                              controls 
-                              src={audioUrl}
+                          <div className="flex flex-col gap-4">
+                            <AudioPlayer 
+                              audioUrl={audioUrl}
+                              storyText={story.content}
                               className="w-full"
-                              preload="auto"
                             />
                             
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 justify-end">
                               {storyId > 0 ? (
                                 <Button 
                                   type="button" 
