@@ -221,7 +221,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   };
 
   // Handle generation of a single story
-  const handleSingleStoryGeneration = async (data: StoryGeneration) => {
+  const handleSingleStory = async (data: StoryGeneration) => {
     try {
       if (!isAuthenticated || !userId) {
         toast({
@@ -303,7 +303,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const handleSubmit = async (data: StoryGeneration) => {
     // For single story generation
     if (activeTab === "prompt") {
-      await handleSingleStoryGeneration(data);
+      await handleSingleStory(data);
     } 
     // For batch story generation
     else if (activeTab === "batch") {
@@ -1101,7 +1101,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     type="button" 
                     className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
                     disabled={isGenerating}
-                    onClick={handleBatchGenerate}
+                    onClick={async () => {
                       // Check if there's at least one valid prompt
                       const batchPrompts = form.getValues("batchPrompts") || [];
                       const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
@@ -1137,8 +1137,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           }).filter(Boolean).join('\n\n');
                         }
                         
-                        // Create story params for all prompts
-                        const storyRequests = validPrompts.map(item => ({
+                        // Create full story parameters for each prompt
+                        const storyParamsList = validPrompts.map(item => ({
                           prompt: characterDetails ? 
                             `${item.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}` : 
                             item.prompt,
@@ -1146,12 +1146,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           storyLength: formData.storyLength,
                           storyType: formData.storyType,
                           narrator: formData.narrator,
-                          userId: userId,
-                          characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
+                          batchMode: true,
+                          batchCount: validPrompts.length,
+                          includeSoundEffects: formData.includeSoundEffects,
+                          batchPrompts: []
                         }));
                         
-                        // Generate all stories in parallel using batch function
-                        const generatedStories = await generateStoriesBatch(storyRequests, 2);
+                        setBatchProgress(10);
+                        
+                        // Generate all stories in parallel (2 at a time for optimal speed)
+                        console.log("Starting parallel story generation with concurrency of 2");
+                        const generatedStories = await generateStoriesBatch(storyParamsList, 2);
                         setBatchProgress(validPrompts.length / 2);
                         
                         toast({
@@ -1159,7 +1164,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           description: `Created ${generatedStories.length} stories. Now generating audio...`,
                         });
                         
-                        // Generate all audio files in parallel using batch function
+                        // Generate all audio files in parallel (2 at a time for optimal speed)
+                        console.log("Starting parallel audio generation with concurrency of 2");
                         const audioParams = generatedStories.map(story => ({
                           text: story.content,
                           voice: formData.narrator,
@@ -1170,7 +1176,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         const audioUrls = await generateAudioBatch(audioParams, 2);
                         setBatchProgress(validPrompts.length);
                         
-                        // Save stories and collect IDs
+                        toast({
+                          title: "Audio Generated",
+                          description: "Now saving stories to your library...",
+                        });
+                        
+                        // Save stories to database
                         const storyIds: number[] = [];
                         
                         for (let i = 0; i < generatedStories.length; i++) {
