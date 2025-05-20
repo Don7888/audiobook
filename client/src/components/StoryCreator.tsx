@@ -636,18 +636,39 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             </Form>
           </TabsContent>
           
-
-          
           <TabsContent value="preview" className="p-0">
             {generatedStory && audioUrl && (
               <>
                 <StoryPreview 
                   story={generatedStory} 
                   audioUrl={audioUrl} 
-                  onEdit={() => setActiveTab("edit")}
                   soundEffects={soundEffects}
                   characterIds={selectedCharacters}
                 />
+                
+                <div className="p-6 border-t border-gray-200">
+                  <h3 className="font-heading font-semibold text-xl mb-4">Edit Story Content</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <FormLabel className="block font-heading font-semibold mb-2">Title:</FormLabel>
+                      <Textarea 
+                        value={generatedStory.title} 
+                        onChange={(e) => setGeneratedStory({...generatedStory, title: e.target.value})}
+                        className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20"
+                      />
+                    </div>
+                    
+                    <div>
+                      <FormLabel className="block font-heading font-semibold mb-2">Content:</FormLabel>
+                      <Textarea 
+                        value={generatedStory.content} 
+                        onChange={(e) => setGeneratedStory({...generatedStory, content: e.target.value})}
+                        className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20"
+                        rows={8}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 {canUseSoundEffects && (
                   <div className="px-6 pb-6">
