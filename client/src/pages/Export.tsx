@@ -384,7 +384,7 @@ export default function Export() {
                         </div>
                         
                         <p className="text-sm text-gray-700 mb-3">
-                          Your Yoto package has been created with custom cover art and individual tracks.
+                          Your Yuto package has been created with custom cover art and individual tracks.
                         </p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
