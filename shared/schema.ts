@@ -85,7 +85,7 @@ export const insertStorySchema = createInsertSchema(stories).omit({
   createdAt: true,
 });
 
-// Schema for story generation with sound effects option
+// Schema for story generation with sound effects option and batch features
 export const storyGenerationSchema = z.object({
   prompt: z.string().min(10, "Please enter a longer story idea"),
   ageRange: z.string(),
@@ -93,6 +93,8 @@ export const storyGenerationSchema = z.object({
   storyType: z.string(),
   narrator: z.string(),
   includeSoundEffects: z.boolean().optional().default(false),
+  batchMode: z.boolean().optional().default(false),
+  batchCount: z.number().min(1).max(10).optional().default(3),
 });
 
 // Schema for sound effect placement

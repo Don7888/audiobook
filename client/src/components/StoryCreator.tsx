@@ -222,18 +222,11 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               <Wand2 className="mr-2" /> Story Prompt
             </TabsTrigger>
             <TabsTrigger 
-              value="edit" 
-              className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
-              disabled={!generatedStory}
-            >
-              <BookOpen className="mr-2" /> Edit Story
-            </TabsTrigger>
-            <TabsTrigger 
               value="preview" 
               className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
               disabled={!generatedStory}
             >
-              <Headphones className="mr-2" /> Audio Settings
+              <Headphones className="mr-2" /> Audio & Effects
             </TabsTrigger>
           </TabsList>
           
@@ -391,6 +384,61 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                             variant="outline"
                             size="sm"
                             onClick={() => setBatchCount(Math.min(10, batchCount + 1))}
+                            className="h-8 w-8 p-0"
+                          >+</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Premium Feature - Batch Story Generation */}
+                {userData?.subscriptionTier === "premium" && (
+                  <div className="mb-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+                    <h3 className="font-medium text-lg text-purple-800 mb-2">Premium Feature: Batch Story Generation</h3>
+                    <p className="text-sm text-gray-700 mb-3">
+                      As a premium user, you can generate multiple stories at once with the same prompt.
+                    </p>
+                    
+                    <div className="flex items-center mb-4">
+                      <Switch 
+                        id="batch-mode"
+                        checked={!!form.getValues("batchMode")} 
+                        onCheckedChange={(checked) => {
+                          form.setValue("batchMode", checked);
+                        }}
+                        className="data-[state=checked]:bg-purple-600"
+                      />
+                      <label htmlFor="batch-mode" className="ml-2 text-sm font-medium">
+                        Enable Batch Story Generation
+                      </label>
+                    </div>
+                    
+                    {form.getValues("batchMode") && (
+                      <div className="mt-2">
+                        <label className="block text-sm font-medium mb-1">Number of Stories to Generate (1-10):</label>
+                        <div className="flex items-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const current = form.getValues("batchCount") || 3;
+                              form.setValue("batchCount", Math.max(1, current - 1));
+                            }}
+                            className="h-8 w-8 p-0"
+                          >-</Button>
+                          <div className="mx-2 px-3 py-1 bg-white rounded-md border text-center min-w-[40px]">
+                            {form.getValues("batchCount") || 3}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const current = form.getValues("batchCount") || 3;
+                              form.setValue("batchCount", Math.min(10, current + 1));
+                            }}
                             className="h-8 w-8 p-0"
                           >+</Button>
                         </div>
