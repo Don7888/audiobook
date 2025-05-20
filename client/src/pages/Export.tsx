@@ -128,8 +128,8 @@ export default function Export() {
       
       const data = await response.json();
       
-      // If it's a Yoto export, remember both the main download and individual tracks
-      if (values.format === "yoto") {
+      // If it's a Yuto export, remember both the main download and individual tracks
+      if (values.format === "yuto") {
         setExportResults({
           downloadUrl: data.downloadUrl,
           tracksUrl: data.individualTracks || undefined,
@@ -433,10 +433,10 @@ export default function Export() {
                         </div>
                       </div>
                     </div>
-                  ) : form.watch("format") === "yoto" ? (
+                  ) : form.watch("format") === "yuto" ? (
                     <div className="space-y-3">
                       <div className="bg-white p-3 rounded-md border border-purple-100">
-                        <p className="text-xs text-gray-600 mb-2">When exporting for Yoto format, you'll receive:</p>
+                        <p className="text-xs text-gray-600 mb-2">When exporting for Yuto format, you'll receive:</p>
                         <div className="grid gap-2">
                           <Button 
                             type="submit"

@@ -7,7 +7,7 @@ import OpenAI from 'openai';
 interface ExportOptions {
   playlistName: string;
   description?: string;
-  format: 'mp3' | 'yoto' | 'toniebox' | 'audible';
+  format: 'mp3' | 'yuto' | 'toniebox' | 'audible';
   storyIds: number[];
 }
 
@@ -97,14 +97,14 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
   // First, create the base MP3 file that will contain our audio
   await exportMp3(stories, outputPath);
   
-  // For Yoto-specific metadata, we create a companion JSON file with metadata
-  // Yoto cards require certain metadata to identify content properly
-  const metadataFilePath = outputPath.replace('.yoto', '.metadata.json');
+  // For Yuto-specific metadata, we create a companion JSON file with metadata
+  // Yuto cards require certain metadata to identify content properly
+  const metadataFilePath = outputPath.replace('.yuto', '.metadata.json');
   
-  // Generate a cover image for the Yoto card using OpenAI
+  // Generate a cover image for the Yuto card using OpenAI
   const timestamp = Date.now();
   const safeTitle = options.playlistName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-  const imageFilename = `${safeTitle}_yoto_cover_${timestamp}.png`;
+  const imageFilename = `${safeTitle}_yuto_cover_${timestamp}.png`;
   const imagePath = path.join(process.cwd(), 'exports', imageFilename);
   
   // Prepare description for image generation
