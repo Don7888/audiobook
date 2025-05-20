@@ -403,21 +403,21 @@ Your StoryTunes collection "${options.playlistName}" has been exported for Yuto!
 Options for using with your Yuto player:
 
 OPTION 1: USE AS SINGLE AUDIOBOOK
-1. Upload the audio file (${outputBasename}) to the Yoto app
-2. Upload the cover image (${coverFilename}) to display on your Yoto player
+1. Upload the audio file (${outputBasename}) to the Yuto app
+2. Upload the cover image (${coverFilename}) to display on your Yuto player
 3. The metadata file contains chapter information for your stories
 
 OPTION 2: USE AS INDIVIDUAL TRACKS
 1. Download and unzip the tracks package (${zipFilename})
 2. Each track has its own ID3 tags and cover image
-3. Upload each track individually to your Yoto player
+3. Upload each track individually to your Yuto player
 4. Tracks are numbered in sequence for easy organization
 
-Enjoy your stories on Yoto!
+Enjoy your stories on Yuto!
   `;
   
   fs.writeFileSync(instructionsFilePath, instructions);
-  console.log(`Created Yoto instructions file: ${instructionsFilePath}`);
+  console.log(`Created Yuto instructions file: ${instructionsFilePath}`);
 }
 
 /**
