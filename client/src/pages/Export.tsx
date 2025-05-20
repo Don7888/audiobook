@@ -389,7 +389,7 @@ export default function Export() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
                           <Button 
-                            onClick={() => downloadExportedFile(exportResults.downloadUrl!, exportResults.filename || "yoto-export.yoto")}
+                            onClick={() => downloadExportedFile(exportResults.downloadUrl!, exportResults.filename || "yuto-export.yuto")}
                             className="bg-purple-600 hover:bg-purple-700"
                           >
                             <Download className="mr-2 h-4 w-4" />
@@ -398,7 +398,7 @@ export default function Export() {
                           
                           {exportResults.tracksUrl && (
                             <Button 
-                              onClick={() => downloadExportedFile(exportResults.tracksUrl!, "yoto-tracks.zip")}
+                              onClick={() => downloadExportedFile(exportResults.tracksUrl!, "yuto-tracks.zip")}
                               variant="outline"
                               className="border-purple-300 text-purple-700 hover:bg-purple-50"
                             >
@@ -569,7 +569,7 @@ export default function Export() {
         <Tabs defaultValue="mp3" className="w-full">
           <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="mp3">MP3</TabsTrigger>
-            <TabsTrigger value="yoto">Yoto</TabsTrigger>
+            <TabsTrigger value="yuto">Yuto</TabsTrigger>
             <TabsTrigger value="toniebox">Toniebox</TabsTrigger>
             <TabsTrigger value="audible">Audible</TabsTrigger>
           </TabsList>
@@ -581,17 +581,17 @@ export default function Export() {
             </p>
           </TabsContent>
           
-          <TabsContent value="yoto" className="bg-white p-4 rounded-md border">
-            <h3 className="font-medium text-lg mb-2">Yoto Format</h3>
+          <TabsContent value="yuto" className="bg-white p-4 rounded-md border">
+            <h3 className="font-medium text-lg mb-2">Yuto Format</h3>
             <div className="flex flex-col md:flex-row gap-4">
               <div className="md:w-2/3">
                 <p className="text-gray-700 mb-3">
-                  Optimized for Yoto players, this format includes chapter markers for each story and is compatible with Yoto Cards. The audio file will be formatted according to Yoto's specifications with appropriate metadata.
+                  Optimized for Yuto players, this format includes chapter markers for each story and is compatible with Yuto Cards. The audio file will be formatted according to Yuto's specifications with appropriate metadata.
                 </p>
                 <div className="text-sm border-l-4 border-purple-400 pl-3 py-1 bg-purple-50">
                   <p className="font-medium text-purple-800">New Feature: Custom Cover Images</p>
                   <p className="text-gray-700 mt-1">
-                    When you export to Yoto format, we'll automatically generate a custom cover image for your playlist that displays on your Yoto player when the card is inserted. The image is specially designed to match your stories' themes.
+                    When you export to Yuto format, we'll automatically generate a custom cover image for your playlist that displays on your Yuto player when the card is inserted. The image is specially designed to match your stories' themes.
                   </p>
                 </div>
               </div>
