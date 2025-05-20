@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Wand2, BookOpen, Headphones, VolumeX, Volume2, Loader2, LogIn, UserPlus } from "lucide-react";
-import { generateStory, generateAudio, GeneratedStory } from "@/lib/openai";
+import { generateStory, generateAudio, generateStoriesBatch, generateAudioBatch, GeneratedStory } from "@/lib/openai";
 import StoryPreview from "./StoryPreview";
 import SoundEffectSelector from "./SoundEffectSelector";
 import AudioPlayer from "./AudioPlayer";
@@ -190,82 +190,73 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           return;
         }
         
-        for (let i = 0; i < validPrompts.length; i++) {
-          // Create copy of storyParams with this specific prompt
-          const promptParams = {
-            ...storyParams,
-            prompt: validPrompts[i].prompt
-          };
-          
-          // Append character information to this prompt if available
-          if (characterDetails) {
-            promptParams.prompt = `${promptParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
-          }
-          
-          // Generate story for this prompt
-          const storyResponse = await generateStory(promptParams);
-          
-          // Generate audio for the story
-          const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
-          
-          // Save each story to the library automatically
-          try {
-            const response = await fetch('/api/stories', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                title: storyResponse.title,
-                text: storyResponse.content,
-                prompt: validPrompts[i].prompt,
-                ageRange: data.ageRange,
-                storyLength: data.storyLength,
-                storyType: data.storyType,
-                narrator: data.narrator,
-                audioUrl: audioUrl,
-                userId: userId,
-                characterIds: selectedCharacters
-              }),
-            });
-            
-            if (!response.ok) {
-              console.error(`Failed to save batch story ${i+1}:`, await response.text());
-            }
-          } catch (error) {
-            console.error(`Error saving batch story ${i+1}:`, error);
-          }
-          
-          batchResults.push(storyResponse);
-          setBatchProgress(i + 1);
-        }
+        toast({
+          title: "Starting Batch Generation",
+          description: `Generating ${validPrompts.length} stories in parallel. This will be much faster!`,
+        });
         
-        // Generate audio for all stories in the batch
-        if (batchResults.length > 0) {
-          const audioUrls: string[] = [];
+        // Prepare all story params for parallel processing
+        const storyParamsList = validPrompts.map(item => {
+          let promptWithCharacters = item.prompt;
+          
+          // Add character details if available
+          if (characterDetails) {
+            promptWithCharacters = `${promptWithCharacters}\n\nPlease include the following characters in the story:\n${characterDetails}`;
+          }
+          
+          return {
+            ...storyParams,
+            prompt: promptWithCharacters
+          };
+        });
+        
+        try {
+          // Generate all stories in parallel (2 at a time)
+          const generatedStories = await generateStoriesBatch(storyParamsList, 2);
+          batchResults.push(...generatedStories);
+          setBatchProgress(validPrompts.length);
+          
+          // Prepare audio generation parameters
+          const audioParamsList = generatedStories.map((story, index) => ({
+            text: story.content,
+            voice: data.narrator, 
+            userId: userId,
+            title: story.title
+          }));
+          
+          toast({
+            title: "Generating Audio",
+            description: "Creating audio files in parallel for all stories.",
+          });
+          
+          // Generate all audio files in parallel (2 at a time)
+          const audioUrls = await generateAudioBatch(audioParamsList, 2);
+          
+          // Save all stories to the database
           const storyIds: number[] = [];
           
-          // First generate all audio files
-          for (let i = 0; i < batchResults.length; i++) {
+          toast({
+            title: "Saving Stories",
+            description: "Saving all stories to your library...",
+          });
+          
+          // Save each story with its audio
+          for (let i = 0; i < generatedStories.length; i++) {
             try {
-              const audioUrl = await generateAudio(batchResults[i].content, data.narrator, userId, batchResults[i].title);
-              audioUrls.push(audioUrl);
-              
-              // Try to save the story to get an ID
               const response = await fetch('/api/stories', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  title: batchResults[i].title,
-                  text: batchResults[i].content,
+                  title: generatedStories[i].title,
+                  text: generatedStories[i].content,
                   prompt: validPrompts[i].prompt,
                   ageRange: data.ageRange,
                   storyLength: data.storyLength,
                   storyType: data.storyType,
                   narrator: data.narrator,
-                  audioUrl: audioUrl,
+                  audioUrl: audioUrls[i],
                   userId: userId,
                   characterIds: selectedCharacters
                 }),
@@ -279,13 +270,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 storyIds.push(-1);
               }
             } catch (error) {
-              console.error(`Error generating audio for batch story ${i+1}:`, error);
-              audioUrls.push('');
+              console.error(`Error saving batch story ${i+1}:`, error);
               storyIds.push(-1);
             }
-            
-            // Update progress for each story generated
-            setBatchProgress(i + 1);
           }
           
           // Store the batch results

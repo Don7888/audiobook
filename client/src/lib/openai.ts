@@ -22,6 +22,83 @@ export async function generateStory(storyParams: StoryGeneration): Promise<Gener
   }
 }
 
+/**
+ * Generate multiple stories in batch by running requests in parallel
+ * @param storyParamsList Array of story generation parameters
+ * @param concurrency How many stories to generate in parallel (default: 2)
+ * @returns An array of generated stories
+ */
+export async function generateStoriesBatch(
+  storyParamsList: StoryGeneration[], 
+  concurrency: number = 2
+): Promise<GeneratedStory[]> {
+  // Create batches based on the concurrency level
+  const results: GeneratedStory[] = [];
+  const batches = [];
+  
+  // Split the params into batches
+  for (let i = 0; i < storyParamsList.length; i += concurrency) {
+    batches.push(storyParamsList.slice(i, i + concurrency));
+  }
+  
+  // Process each batch in parallel
+  for (const batch of batches) {
+    try {
+      // Run each batch concurrently
+      const batchResults = await Promise.all(
+        batch.map(params => generateStory(params))
+      );
+      
+      // Add the results to our final array
+      results.push(...batchResults);
+    } catch (error) {
+      console.error("Error in batch story generation:", error);
+      throw error;
+    }
+  }
+  
+  return results;
+}
+
+/**
+ * Generate audio for multiple stories in batch by running requests in parallel
+ * @param stories Array of stories with text and voice settings
+ * @param concurrency How many audio files to generate in parallel (default: 2)
+ * @returns Array of audio URLs
+ */
+export async function generateAudioBatch(
+  stories: { text: string; voice: string; title?: string; userId?: number }[],
+  concurrency: number = 2
+): Promise<string[]> {
+  const results: string[] = [];
+  const batches = [];
+  
+  // Split the stories into batches
+  for (let i = 0; i < stories.length; i += concurrency) {
+    batches.push(stories.slice(i, i + concurrency));
+  }
+  
+  // Process each batch in parallel
+  for (const batch of batches) {
+    try {
+      // Run each batch concurrently
+      const batchResults = await Promise.all(
+        batch.map(({ text, voice, userId, title }) => 
+          generateAudio(text, voice, userId, title)
+        )
+      );
+      
+      // Add the results to our final array
+      results.push(...batchResults);
+    } catch (error) {
+      console.error("Error in batch audio generation:", error);
+      throw error;
+    }
+  }
+  
+  return results;
+}
+
 export async function generateAudio(text: string, voice: string = "female-gentle", userId?: number, title?: string): Promise<string> {
   try {
     const response = await apiRequest("POST", "/api/stories/generate-audio", { text, voice, userId, title });
