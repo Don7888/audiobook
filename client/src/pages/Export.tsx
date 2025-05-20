@@ -41,7 +41,7 @@ import { Link } from "wouter";
 const playlistSchema = z.object({
   name: z.string().min(2, { message: "Playlist name must be at least 2 characters" }),
   description: z.string().optional(),
-  format: z.enum(["mp3", "yoto", "toniebox", "audible"]),
+  format: z.enum(["mp3", "yuto", "toniebox", "audible"]),
   stories: z.array(z.string()).min(1, { message: "Select at least one story" })
 });
 
@@ -297,7 +297,7 @@ export default function Export() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="mp3">MP3 (Standard Audio)</SelectItem>
-                            <SelectItem value="yoto">Yoto Format</SelectItem>
+                            <SelectItem value="yuto">Yuto Format</SelectItem>
                             <SelectItem value="toniebox">Toniebox Format</SelectItem>
                             <SelectItem value="audible">Audible Format</SelectItem>
                           </SelectContent>
@@ -306,27 +306,27 @@ export default function Export() {
                           Choose the format that matches your playback device.
                         </FormDescription>
                         
-                        {field.value === "yoto" && (
+                        {field.value === "yuto" && (
                           <div className="mt-3 p-3 border border-purple-200 rounded-md bg-purple-50">
                             <div className="flex items-start">
                               <div className="shrink-0 mr-3">
                                 <div className="w-12 h-12 bg-purple-200 rounded-md flex items-center justify-center">
                                   <img 
                                     src="https://cdn-icons-png.flaticon.com/512/9492/9492239.png" 
-                                    alt="Yoto" 
+                                    alt="Yuto" 
                                     className="w-8 h-8"
                                   />
                                 </div>
                               </div>
                               <div className="flex-1">
-                                <h4 className="text-sm font-medium text-purple-800">Yoto Export Includes</h4>
+                                <h4 className="text-sm font-medium text-purple-800">Yuto Export Includes</h4>
                                 <ul className="text-xs text-purple-700 mt-1 list-disc pl-4">
                                   <li>Audio file with all selected stories</li>
-                                  <li>Custom cover image generated for your Yoto card</li>
+                                  <li>Custom cover image generated for your Yuto card</li>
                                   <li>Metadata file with chapter markers</li>
                                   <li className="font-medium">Individual tracks with custom ID3 tags</li>
                                   <li className="font-medium">Unique 600x600 JPEG cover art for each track</li>
-                                  <li>Installation instructions for Yoto app</li>
+                                  <li>Installation instructions for Yuto app</li>
                                 </ul>
                                 <div className="mt-2 bg-white rounded p-2 border border-purple-200">
                                   <p className="text-xs text-gray-700 mb-1 font-medium">Two Export Options:</p>
@@ -373,7 +373,7 @@ export default function Export() {
                     )}
                   </div>
                   
-                  {exportResults.downloadUrl && form.watch("format") === "yoto" ? (
+                  {exportResults.downloadUrl && form.watch("format") === "yuto" ? (
                     <div className="space-y-3">
                       <div className="bg-green-50 p-4 rounded-md border border-green-200">
                         <div className="flex items-center text-green-700 mb-2">

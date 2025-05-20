@@ -48,8 +48,8 @@ export async function exportStories(options: ExportOptions): Promise<{ downloadU
     case 'mp3':
       await exportMp3(stories, filePath);
       break;
-    case 'yoto':
-      await exportYoto(stories, filePath, options);
+    case 'yuto':
+      await exportYuto(stories, filePath, options);
       break;
     case 'toniebox':
       await exportToniebox(stories, filePath, options);
@@ -90,10 +90,10 @@ async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
 }
 
 /**
- * Exports stories in Yoto format with required metadata and cover image
+ * Exports stories in Yuto format with required metadata and cover image
  * Also creates individual tracks with ID3 tags and custom cover art
  */
-async function exportYoto(stories: Story[], outputPath: string, options: ExportOptions): Promise<void> {
+async function exportYuto(stories: Story[], outputPath: string, options: ExportOptions): Promise<void> {
   // First, create the base MP3 file that will contain our audio
   await exportMp3(stories, outputPath);
   
