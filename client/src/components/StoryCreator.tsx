@@ -863,36 +863,6 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   />
                 </div>
                 
-                {/* Story prompts section */}
-                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 border border-gray-200 rounded-xl p-4">
-                  <h4 className="font-heading font-semibold text-lg sticky top-0 bg-white py-2">Story Prompts</h4>
-                  
-                  {batchPromptFields.map((field, index) => (
-                    <div key={field.id} className="p-4 bg-white rounded-xl border-2 border-gray-200">
-                      <div className="flex justify-between items-center mb-2">
-                        <h5 className="font-medium">Story #{index + 1}</h5>
-                      </div>
-                      <FormField
-                        control={form.control}
-                        name={`batchPrompts.${index}.prompt`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Story Idea:</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                {...field}
-                                rows={3}
-                                className="w-full rounded-lg border-2 border-gray-200 p-3"
-                                placeholder="Describe your story idea here..."
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </div>
-                
                 {/* Characters section */}
                 {userCharacters.length > 0 && (
                   <div className="space-y-4 border rounded-lg p-4 mb-6">
@@ -935,6 +905,36 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </div>
                   </div>
                 )}
+                
+                {/* Story prompts section */}
+                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 border border-gray-200 rounded-xl p-4">
+                  <h4 className="font-heading font-semibold text-lg sticky top-0 bg-white py-2">Story Prompts</h4>
+                  
+                  {batchPromptFields.map((field, index) => (
+                    <div key={field.id} className="p-4 bg-white rounded-xl border-2 border-gray-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <h5 className="font-medium">Story #{index + 1}</h5>
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name={`batchPrompts.${index}.prompt`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Story Idea:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                rows={3}
+                                className="w-full rounded-lg border-2 border-gray-200 p-3"
+                                placeholder="Describe your story idea here..."
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ))}
+                </div>
                 
                 <div className="flex justify-end">
                   <Button 
@@ -1024,15 +1024,15 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       {/* Audio player for this story */}
                       <div className="p-4 border-b bg-white">
                         {audioUrl ? (
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <audio 
                               controls 
                               src={audioUrl}
-                              className="w-full max-w-md"
-                              controlsList="nodownload"
+                              className="w-full"
+                              preload="auto"
                             />
                             
-                            <div className="flex space-x-2">
+                            <div className="flex flex-wrap gap-2">
                               {storyId > 0 ? (
                                 <Button 
                                   type="button" 
