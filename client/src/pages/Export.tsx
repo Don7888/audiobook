@@ -286,14 +286,29 @@ export default function Export() {
                                   />
                                 </div>
                               </div>
-                              <div>
+                              <div className="flex-1">
                                 <h4 className="text-sm font-medium text-purple-800">Yoto Export Includes</h4>
                                 <ul className="text-xs text-purple-700 mt-1 list-disc pl-4">
                                   <li>Audio file with all selected stories</li>
                                   <li>Custom cover image generated for your Yoto card</li>
                                   <li>Metadata file with chapter markers</li>
+                                  <li className="font-medium">Individual tracks with custom ID3 tags</li>
+                                  <li className="font-medium">Unique 600x600 JPEG cover art for each track</li>
                                   <li>Installation instructions for Yoto app</li>
                                 </ul>
+                                <div className="mt-2 bg-white rounded p-2 border border-purple-200">
+                                  <p className="text-xs text-gray-700 mb-1 font-medium">Two Export Options:</p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="border border-purple-100 rounded p-1.5 bg-purple-50">
+                                      <p className="text-xs text-purple-900 font-medium">1. Complete Audiobook</p>
+                                      <p className="text-xs text-gray-600">Single file with chapters</p>
+                                    </div>
+                                    <div className="border border-purple-100 rounded p-1.5 bg-purple-50">
+                                      <p className="text-xs text-purple-900 font-medium">2. Individual Tracks</p>
+                                      <p className="text-xs text-gray-600">Each story as separate file</p>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -326,23 +341,69 @@ export default function Export() {
                     )}
                   </div>
                   
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                    disabled={isExporting || selectedStories.length === 0}
-                  >
-                    {isExporting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="mr-2 h-4 w-4" />
-                        Export Playlist
-                      </>
-                    )}
-                  </Button>
+                  {form.watch("format") === "yoto" ? (
+                    <div className="space-y-3">
+                      <div className="bg-white p-3 rounded-md border border-purple-100">
+                        <p className="text-xs text-gray-600 mb-2">When exporting for Yoto format, you'll receive:</p>
+                        <div className="grid gap-2">
+                          <Button 
+                            type="submit"
+                            className="w-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center"
+                            disabled={isExporting || selectedStories.length === 0}
+                          >
+                            {isExporting ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Exporting...
+                              </>
+                            ) : (
+                              <>
+                                <Download className="mr-2 h-4 w-4" />
+                                Export Complete Package
+                              </>
+                            )}
+                          </Button>
+                          <p className="text-xs text-center text-gray-500">The download will include both a complete audiobook and individual tracks</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <div className="text-center">
+                          <p className="text-xs font-medium text-gray-700 mb-1">Main Features</p>
+                          <ul className="text-xs text-left text-gray-600 space-y-1 pl-5 list-disc">
+                            <li>ID3 tagged tracks</li>
+                            <li>Individual cover art</li>
+                            <li>Yoto-ready format</li>
+                          </ul>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-medium text-gray-700 mb-1">File Formats</p>
+                          <ul className="text-xs text-left text-gray-600 space-y-1 pl-5 list-disc">
+                            <li>MP3 audio files</li>
+                            <li>600x600 JPEG covers</li>
+                            <li>ZIP package</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                      disabled={isExporting || selectedStories.length === 0}
+                    >
+                      {isExporting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="mr-2 h-4 w-4" />
+                          Export Playlist
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </form>
               </Form>
             </CardContent>

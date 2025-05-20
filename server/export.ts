@@ -91,6 +91,7 @@ async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
 
 /**
  * Exports stories in Yoto format with required metadata and cover image
+ * Also creates individual tracks with ID3 tags and custom cover art
  */
 async function exportYoto(stories: Story[], outputPath: string, options: ExportOptions): Promise<void> {
   // First, create the base MP3 file that will contain our audio
@@ -113,6 +114,7 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
     }${stories.length > 3 ? " and more" : ""}`;
   
   let coverImageUrl = "";
+  let coverImageBuffer: Buffer | null = null;
   
   // Generate cover image with OpenAI DALL-E if API key is available
   if (process.env.OPENAI_API_KEY) {
@@ -142,8 +144,11 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
         const imageResponse = await fetch(imageUrl);
         const imageData = await imageResponse.arrayBuffer();
         
-        // Save the image
-        fs.writeFileSync(imagePath, Buffer.from(imageData));
+        // Save the image as a buffer
+        coverImageBuffer = Buffer.from(imageData);
+        
+        // Save the image to disk
+        fs.writeFileSync(imagePath, coverImageBuffer);
         
         // Set the cover image URL for the metadata
         coverImageUrl = `/api/exports/${imageFilename}`;
@@ -154,6 +159,183 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
       // Continue without image if generation fails
     }
   }
+  
+  // Generate individual tracks with ID3 tags and cover art
+  const tracksDir = path.join(process.cwd(), 'exports', `${safeTitle}_tracks_${timestamp}`);
+  if (!fs.existsSync(tracksDir)) {
+    fs.mkdirSync(tracksDir, { recursive: true });
+  }
+  
+  // Import the required modules for ID3 tagging and image processing
+  const NodeID3 = require('node-id3');
+  const sharp = require('sharp');
+  
+  // Create a ZIP file for all the tracks
+  const archiver = require('archiver');
+  const zipOutput = fs.createWriteStream(path.join(process.cwd(), 'exports', `${safeTitle}_tracks_${timestamp}.zip`));
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  
+  // Pipe the archive to the file
+  archive.pipe(zipOutput);
+  
+  // Track the promises for individual track processing
+  const trackPromises = [];
+  
+  // Process each story as an individual track
+  for (let i = 0; i < stories.length; i++) {
+    const story = stories[i];
+    
+    // Skip stories without audio URLs
+    if (!story.audioUrl) {
+      console.log(`Story "${story.title}" doesn't have an audio URL. Skipping...`);
+      continue;
+    }
+    
+    // Process track asynchronously
+    const trackPromise = (async () => {
+      try {
+        // Create a safe filename for the track
+        const safeStoryTitle = story.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const trackFilename = `${i+1}_${safeStoryTitle}.mp3`;
+        const trackPath = path.join(tracksDir, trackFilename);
+        
+        // Get audio file source path
+        const audioSourcePath = path.join(process.cwd(), 'public', story.audioUrl.replace(/^\//, ''));
+        
+        if (!fs.existsSync(audioSourcePath)) {
+          console.log(`Audio file for story "${story.title}" not found: ${audioSourcePath}`);
+          return;
+        }
+        
+        // Copy the audio file to the tracks directory
+        fs.copyFileSync(audioSourcePath, trackPath);
+        
+        // Generate individual cover art for this track
+        let trackImageBuffer: Buffer | null = null;
+        let trackImagePath: string | null = null;
+        
+        // Use the story-specific prompt for image generation if possible
+        if (process.env.OPENAI_API_KEY) {
+          try {
+            const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+            
+            // Create a specific prompt for this story
+            const trackImagePrompt = `Create a colorful, child-friendly illustration for a children's story titled "${story.title}". 
+                                      The image should be appropriate for a Yoto player.
+                                      Make it visually appealing, with bright colors and friendly characters. 
+                                      Style should be suitable for young children ages 3-8.
+                                      Square format with clear visibility.
+                                      Based on this story: ${story.text.substring(0, 100)}...`;
+            
+            // Generate image using DALL-E
+            const response = await openai.images.generate({
+              model: "dall-e-3",
+              prompt: trackImagePrompt,
+              n: 1,
+              size: "1024x1024",
+              quality: "standard",
+            });
+            
+            if (response.data && response.data[0]?.url) {
+              // Download the image
+              const imageUrl = response.data[0].url;
+              const imageResponse = await fetch(imageUrl);
+              const imageData = await imageResponse.arrayBuffer();
+              
+              // Save the original image
+              trackImageBuffer = Buffer.from(imageData);
+              trackImagePath = path.join(tracksDir, `${safeStoryTitle}_cover.png`);
+              fs.writeFileSync(trackImagePath, trackImageBuffer);
+              
+              // Resize the image to 600x600 and convert to JPEG for ID3 tag
+              const resizedImagePath = path.join(tracksDir, `${safeStoryTitle}_cover_600x600.jpg`);
+              await sharp(trackImageBuffer)
+                .resize(600, 600)
+                .jpeg({ quality: 90 })
+                .toFile(resizedImagePath);
+              
+              // Use the resized image for ID3 tag
+              trackImagePath = resizedImagePath;
+            }
+          } catch (error) {
+            console.error(`Error generating cover for track "${story.title}":`, error);
+            // Fall back to main cover image if individual generation fails
+            trackImageBuffer = coverImageBuffer;
+            if (coverImageBuffer) {
+              trackImagePath = path.join(tracksDir, `${safeStoryTitle}_fallback_cover.jpg`);
+              
+              // Resize the image to 600x600 and convert to JPEG for ID3 tag
+              await sharp(coverImageBuffer)
+                .resize(600, 600)
+                .jpeg({ quality: 90 })
+                .toFile(trackImagePath);
+            }
+          }
+        } else if (coverImageBuffer) {
+          // Fall back to main cover image
+          trackImagePath = path.join(tracksDir, `${safeStoryTitle}_fallback_cover.jpg`);
+          
+          // Resize the image to 600x600 and convert to JPEG for ID3 tag
+          await sharp(coverImageBuffer)
+            .resize(600, 600)
+            .jpeg({ quality: 90 })
+            .toFile(trackImagePath);
+        }
+        
+        // Add ID3 tags to the track
+        const tags = {
+          title: story.title,
+          artist: "StoryTunes", // Use username when available
+          album: options.playlistName,
+          APIC: trackImagePath ? { 
+            mime: "image/jpeg",
+            type: { id: 3, name: "front cover" },
+            description: `Cover for ${story.title}`,
+            imageBuffer: fs.readFileSync(trackImagePath) 
+          } : undefined, // Attach cover art if available
+          TRCK: `${i+1}/${stories.length}`, // Track number
+          TPOS: "1/1", // Disc number
+          comment: {
+            language: "eng",
+            text: story.text.substring(0, 200) + "..."
+          },
+          TCON: "Children's Stories", // Genre
+          TYER: new Date().getFullYear().toString() // Year
+        };
+        
+        // Write ID3 tags to the file
+        NodeID3.write(tags, trackPath);
+        
+        // Add the file to the ZIP archive if path is valid
+        try {
+          archive.file(trackPath, { name: trackFilename });
+          
+          // If there's a cover image, add it to the ZIP as well
+          if (trackImagePath && typeof trackImagePath === 'string') {
+            const coverImageBasename = path.basename(trackImagePath);
+            archive.file(trackImagePath, { name: coverImageBasename });
+          }
+        } catch (error) {
+          console.error(`Error adding file to archive: ${error}`);
+        }
+        
+        console.log(`Created track: ${trackFilename} with ID3 tags`);
+      } catch (error) {
+        console.error(`Error processing track for story "${story.title}":`, error);
+      }
+    })();
+    
+    trackPromises.push(trackPromise);
+  }
+  
+  // Wait for all tracks to be processed
+  await Promise.all(trackPromises);
+  
+  // Finalize the ZIP archive
+  await archive.finalize();
+  
+  // Add the ZIP file URL to the result
+  const zipUrl = `/api/exports/${path.basename(zipOutput.path)}`;
   
   // Create chapters array for Yoto player to properly segment stories
   const chapters = stories.map((story, index) => {
@@ -182,6 +364,7 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
     totalDuration: stories.length * 60, // Simplified duration calculation
     chapters: chapters,
     coverImage: coverImageUrl, // Add the cover image URL to the metadata
+    individualTracks: zipUrl, // Add the URL for downloading individual tracks
     tags: ["children", "stories", "audiobook"],
     // These properties are required by Yoto cards
     yotoSpecific: {
@@ -201,6 +384,7 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
   
   console.log(`Exported Yoto format to: ${outputPath}`);
   console.log(`Created Yoto metadata file: ${metadataFilePath}`);
+  console.log(`Created individual tracks ZIP file: ${zipOutput.path}`);
   
   // Create a text file with instructions for uploading to Yoto
   const instructionsFilePath = outputPath.replace('.yoto', '.yoto-instructions.txt');
@@ -209,11 +393,18 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
 
 Your StoryTunes collection "${options.playlistName}" has been exported for Yoto!
 
-To upload to your Yoto device:
+Options for using with your Yoto player:
 
+OPTION 1: USE AS SINGLE AUDIOBOOK
 1. Upload the audio file (${path.basename(outputPath)}) to the Yoto app
 2. Upload the cover image (${coverImageUrl ? imageFilename : "N/A - Image generation failed"}) to display on your Yoto player
 3. The metadata file contains chapter information for your stories
+
+OPTION 2: USE AS INDIVIDUAL TRACKS
+1. Download and unzip the tracks package (${path.basename(zipOutput.path)})
+2. Each track has its own ID3 tags and cover image
+3. Upload each track individually to your Yoto player
+4. Tracks are numbered in sequence for easy organization
 
 Enjoy your stories on Yoto!
   `;
