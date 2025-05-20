@@ -64,7 +64,7 @@ export default function Export() {
   const form = useForm<PlaylistFormValues>({
     resolver: zodResolver(playlistSchema),
     defaultValues: {
-      name: "",
+      name: "My Story Collection",
       description: "",
       format: "mp3",
       stories: []
@@ -609,12 +609,21 @@ export default function Export() {
                 
                 <div className="mt-4">
                   <Button 
-                    type="submit"
+                    type="button"
                     className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
                     size="lg"
+                    onClick={() => {
+                      form.setValue("format", "yuto");
+                      form.handleSubmit(onSubmit)();
+                    }}
+                    disabled={isExporting || selectedStories.length === 0}
                   >
-                    <Download className="mr-2 h-5 w-5" />
-                    Export to Yuto Format
+                    {isExporting && form.getValues().format === "yuto" ? (
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-5 w-5" />
+                    )}
+                    {isExporting && form.getValues().format === "yuto" ? "Exporting..." : "Export to Yuto Format"}
                   </Button>
                   <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
                 </div>
@@ -648,12 +657,21 @@ export default function Export() {
                   Formatted specifically for Toniebox audio players. This format includes the necessary metadata for Creative-Tonies and will work with your Toniebox player once transferred to your Tonie.
                 </p>
                 <Button 
-                  type="submit"
+                  type="button"
                   className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
                   size="lg"
+                  onClick={() => {
+                    form.setValue("format", "toniebox");
+                    form.handleSubmit(onSubmit)();
+                  }}
+                  disabled={isExporting || selectedStories.length === 0}
                 >
-                  <Download className="mr-2 h-5 w-5" />
-                  Export to Toniebox Format
+                  {isExporting && form.getValues().format === "toniebox" ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-5 w-5" />
+                  )}
+                  {isExporting && form.getValues().format === "toniebox" ? "Exporting..." : "Export to Toniebox Format"}
                 </Button>
                 <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
               </div>
@@ -678,12 +696,21 @@ export default function Export() {
                   Created to be compatible with Audible's AAX format, this export includes chapter markers, cover art (generated from the story content), and proper metadata for easy listening on Audible-compatible devices.
                 </p>
                 <Button 
-                  type="submit"
+                  type="button"
                   className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
                   size="lg"
+                  onClick={() => {
+                    form.setValue("format", "audible");
+                    form.handleSubmit(onSubmit)();
+                  }}
+                  disabled={isExporting || selectedStories.length === 0}
                 >
-                  <Download className="mr-2 h-5 w-5" />
-                  Export to Audible Format
+                  {isExporting && form.getValues().format === "audible" ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-5 w-5" />
+                  )}
+                  {isExporting && form.getValues().format === "audible" ? "Exporting..." : "Export to Audible Format"}
                 </Button>
                 <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
               </div>
