@@ -85,6 +85,11 @@ export const insertStorySchema = createInsertSchema(stories).omit({
   createdAt: true,
 });
 
+// Schema for an individual batch story prompt
+export const batchPromptSchema = z.object({
+  prompt: z.string().min(10, "Please enter a longer story idea"),
+});
+
 // Schema for story generation with sound effects option and batch features
 export const storyGenerationSchema = z.object({
   prompt: z.string().min(10, "Please enter a longer story idea"),
@@ -95,6 +100,7 @@ export const storyGenerationSchema = z.object({
   includeSoundEffects: z.boolean().optional().default(false),
   batchMode: z.boolean().optional().default(false),
   batchCount: z.number().min(1).max(10).optional().default(3),
+  batchPrompts: z.array(batchPromptSchema).optional().default([]),
 });
 
 // Schema for sound effect placement

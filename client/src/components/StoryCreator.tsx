@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { StoryGeneration, storyGenerationSchema, SoundEffectPlacement, type Character } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
@@ -100,9 +100,43 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       storyLength: "Short (2-3 min)",
       storyType: "Adventure",
       narrator: "Female - Gentle",
-      includeSoundEffects: false
+      includeSoundEffects: false,
+      batchMode: false,
+      batchCount: 3,
+      batchPrompts: [
+        { prompt: "" },
+        { prompt: "" },
+        { prompt: "" }
+      ]
     }
   });
+  
+  const { fields: batchPromptFields, append: appendBatchPrompt, remove: removeBatchPrompt } = useFieldArray({
+    control: form.control,
+    name: "batchPrompts"
+  });
+  
+  // Manage batch prompts count 
+  useEffect(() => {
+    const currentCount = form.getValues("batchCount") || 3;
+    const currentPrompts = form.getValues("batchPrompts") || [];
+    
+    // Add empty prompts if we need more
+    if (currentPrompts.length < currentCount) {
+      const toAdd = currentCount - currentPrompts.length;
+      for (let i = 0; i < toAdd; i++) {
+        appendBatchPrompt({ prompt: "" });
+      }
+    }
+    
+    // Remove excess prompts if we have too many
+    if (currentPrompts.length > currentCount) {
+      const toRemove = currentPrompts.length - currentCount;
+      for (let i = 0; i < toRemove; i++) {
+        removeBatchPrompt(currentPrompts.length - 1 - i);
+      }
+    }
+  }, [form.watch("batchCount"), appendBatchPrompt, removeBatchPrompt]);
 
   const handleGenerateStory = async (data: StoryGeneration) => {
     try {
@@ -125,28 +159,48 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       };
       
       // Find character details for selected characters to include in prompt
+      let characterDetails = "";
       if (selectedCharacters.length > 0) {
-        const characterDetails = selectedCharacters.map(id => {
+        characterDetails = selectedCharacters.map(id => {
           const character = userCharacters.find((c: Character) => c.id === id);
           return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
         }).filter(Boolean).join('\n\n');
-        
-        // Append character information to the prompt
-        if (characterDetails) {
-          storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
-        }
       }
       
-      // Check if we're in batch mode
-      if (data.batchMode) {
-        // For Premium users: Generate multiple stories at once
-        const batchSize = data.batchCount || 3;
+      // Check if we're in batch mode (active tab is "batch")
+      if (activeTab === "batch") {
+        // For Premium users: Generate multiple stories with different prompts
+        const batchPrompts = data.batchPrompts || [];
         const batchResults: GeneratedStory[] = [];
         setBatchProgress(0);
         
-        for (let i = 0; i < batchSize; i++) {
-          // Generate each story
-          const storyResponse = await generateStory(storyParams);
+        // Filter out empty prompts
+        const validPrompts = batchPrompts.filter(item => item.prompt.trim().length >= 10);
+        
+        if (validPrompts.length === 0) {
+          toast({
+            title: "Empty Prompts",
+            description: "Please enter at least one valid story prompt with 10+ characters.",
+            variant: "destructive"
+          });
+          setIsGenerating(false);
+          return;
+        }
+        
+        for (let i = 0; i < validPrompts.length; i++) {
+          // Create copy of storyParams with this specific prompt
+          const promptParams = {
+            ...storyParams,
+            prompt: validPrompts[i].prompt
+          };
+          
+          // Append character information to this prompt if available
+          if (characterDetails) {
+            promptParams.prompt = `${promptParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
+          }
+          
+          // Generate story for this prompt
+          const storyResponse = await generateStory(promptParams);
           
           // Generate audio for the story
           const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
@@ -161,7 +215,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               body: JSON.stringify({
                 title: storyResponse.title,
                 text: storyResponse.content,
-                prompt: data.prompt,
+                prompt: validPrompts[i].prompt,
                 ageRange: data.ageRange,
                 storyLength: data.storyLength,
                 storyType: data.storyType,
@@ -218,7 +272,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           description: `Successfully created ${batchResults.length} stories. All have been saved to your library.`,
         });
       } else {
-        // Standard single story generation
+        // Standard single story generation from the prompt tab
+        
+        // Append character information to the prompt if available
+        if (characterDetails) {
+          storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
+        }
         
         // Generate the story text
         const storyResponse = await generateStory(storyParams);
@@ -305,6 +364,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             >
               <Wand2 className="mr-2" /> Story Prompt
             </TabsTrigger>
+            {(userData?.subscriptionTier === "premium" || true) && ( /* forcing visibility for testing */
+              <TabsTrigger 
+                value="batch" 
+                className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 7h12v7H8z"></path>
+                  <path d="M4 11h12v7H4z"></path>
+                  <path d="M16 15h4v5h-4z"></path>
+                </svg> Batch Create
+              </TabsTrigger>
+            )}
             <TabsTrigger 
               value="preview" 
               className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
@@ -476,72 +547,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   </div>
                 )}
                 
-                {/* Premium Feature - Batch Story Generation */}
-                {(userData?.subscriptionTier === "premium" || true) && ( /* forcing visibility for testing */
-                  <div className="mb-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
-                    <h3 className="font-medium text-lg text-purple-800 mb-2">Premium Feature: Batch Story Generation</h3>
-                    <p className="text-sm text-gray-700 mb-3">
-                      Generate multiple stories at once with the same prompt.
-                    </p>
-                    
-                    <div className="flex items-center mb-4">
-                      <FormField
-                        control={form.control}
-                        name="batchMode"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-2">
-                            <FormControl>
-                              <Switch 
-                                id="batch-mode"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-purple-600"
-                              />
-                            </FormControl>
-                            <FormLabel className="ml-2 text-sm font-medium" htmlFor="batch-mode">
-                              Enable Batch Story Generation
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    {form.watch("batchMode") && (
-                      <div className="mt-2">
-                        <FormField
-                          control={form.control}
-                          name="batchCount"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="block text-sm font-medium mb-1">Number of Stories (1-10):</FormLabel>
-                              <div className="flex items-center">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => field.onChange(Math.max(1, field.value - 1))}
-                                  className="h-8 w-8 p-0"
-                                >-</Button>
-                                <FormControl>
-                                  <div className="mx-2 px-3 py-1 bg-white rounded-md border text-center min-w-[40px]">
-                                    {field.value}
-                                  </div>
-                                </FormControl>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => field.onChange(Math.min(10, field.value + 1))}
-                                  className="h-8 w-8 p-0"
-                                >+</Button>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Batch story generation has been moved to its own tab */}
                 
                 <FormField
                   control={form.control}
@@ -628,6 +634,268 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       <>
                         Generate Story
                         <Wand2 className="ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </TabsContent>
+          
+          <TabsContent value="batch" className="p-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleGenerateStory)} className="space-y-6">
+                <div className="mb-4">
+                  <h3 className="font-heading font-bold text-xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                    Batch Story Creation
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Create up to 10 different stories at once. Each story will have a different prompt but share the same settings.
+                  </p>
+                  
+                  {/* Common settings section */}
+                  <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+                    <h4 className="font-medium text-lg mb-4">Common Settings for All Stories</h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                      <FormField
+                        control={form.control}
+                        name="ageRange"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-medium">Age Range:</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="w-full rounded-lg border">
+                                  <SelectValue placeholder="Select age range" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="3-5 years">3-5 years</SelectItem>
+                                <SelectItem value="6-8 years">6-8 years</SelectItem>
+                                <SelectItem value="9-12 years">9-12 years</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="storyLength"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-medium">Story Length:</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="w-full rounded-lg border">
+                                  <SelectValue placeholder="Select story length" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Short (2-3 min)">Short (2-3 min)</SelectItem>
+                                <SelectItem value="Medium (5-7 min)">Medium (5-7 min)</SelectItem>
+                                <SelectItem value="Long (10-15 min)">Long (10-15 min)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="narrator"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="font-medium">Narrator Voice:</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="w-full rounded-lg border">
+                                  <SelectValue placeholder="Select narrator" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Female - Gentle">Female - Gentle</SelectItem>
+                                <SelectItem value="Male - Cheerful">Male - Cheerful</SelectItem>
+                                <SelectItem value="Female - Animated">Female - Animated</SelectItem>
+                                <SelectItem value="Male - Storyteller">Male - Storyteller</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="storyType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Story Type:</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-full rounded-lg border">
+                                <SelectValue placeholder="Select story type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Adventure">Adventure</SelectItem>
+                              <SelectItem value="Fantasy">Fantasy</SelectItem>
+                              <SelectItem value="Educational">Educational</SelectItem>
+                              <SelectItem value="Bedtime">Bedtime</SelectItem>
+                              <SelectItem value="Moral Lesson">Moral Lesson</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    {canUseSoundEffects && (
+                      <FormField
+                        control={form.control}
+                        name="includeSoundEffects"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-2 mt-4">
+                            <FormControl>
+                              <Switch 
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-medium">
+                              Include Sound Effects in all stories
+                            </FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Batch count control */}
+                <div className="mb-6">
+                  <FormField
+                    control={form.control}
+                    name="batchCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-lg font-semibold mb-2">Number of Stories to Generate:</FormLabel>
+                        <div className="flex items-center mb-4">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                            className="h-9 w-9 p-0 rounded-md"
+                          >-</Button>
+                          <FormControl>
+                            <div className="mx-4 px-4 py-2 bg-white rounded-md border border-gray-300 text-center font-medium text-lg min-w-[50px]">
+                              {field.value}
+                            </div>
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => field.onChange(Math.min(10, field.value + 1))}
+                            className="h-9 w-9 p-0 rounded-md"
+                          >+</Button>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                {/* Story prompts section */}
+                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 border border-gray-200 rounded-xl p-4">
+                  <h4 className="font-heading font-semibold text-lg sticky top-0 bg-white py-2">Story Prompts</h4>
+                  
+                  {batchPromptFields.map((field, index) => (
+                    <div key={field.id} className="p-4 bg-white rounded-xl border-2 border-gray-200">
+                      <div className="flex justify-between items-center mb-2">
+                        <h5 className="font-medium">Story #{index + 1}</h5>
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name={`batchPrompts.${index}.prompt`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Story Idea:</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                rows={3}
+                                className="w-full rounded-lg border-2 border-gray-200 p-3"
+                                placeholder="Describe your story idea here..."
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Characters section */}
+                {userCharacters.length > 0 && (
+                  <div className="space-y-4 border rounded-lg p-4 mb-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="font-heading font-semibold text-lg">Include Characters in All Stories</h3>
+                      <Link href="/characters">
+                        <Button type="button" variant="outline" size="sm" className="flex items-center">
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Manage Characters
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                      {userCharacters.map((character: Character) => (
+                        <div key={character.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-slate-50">
+                          <Checkbox 
+                            id={`batch-character-${character.id}`}
+                            checked={selectedCharacters.includes(character.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedCharacters([...selectedCharacters, character.id]);
+                              } else {
+                                setSelectedCharacters(selectedCharacters.filter(id => id !== character.id));
+                              }
+                            }}
+                          />
+                          <div>
+                            <label
+                              htmlFor={`batch-character-${character.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {character.name}
+                            </label>
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {character.personality}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end">
+                  <Button 
+                    type="submit" 
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        {batchProgress > 0 ? `Generating ${batchProgress} of ${form.getValues("batchCount")}...` : "Generating..."}
+                      </>
+                    ) : (
+                      <>
+                        Generate Batch 
+                        <svg xmlns="http://www.w3.org/2000/svg" className="ml-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M8 7h12v7H8z"></path>
+                          <path d="M4 11h12v7H4z"></path>
+                          <path d="M16 15h4v5h-4z"></path>
+                        </svg>
                       </>
                     )}
                   </Button>
