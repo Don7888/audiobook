@@ -289,45 +289,7 @@ export default function Export() {
                           Choose the format that matches your playback device.
                         </FormDescription>
                         
-                        {field.value === "yuto" && (
-                          <div className="mt-3 p-3 border border-purple-200 rounded-md bg-purple-50">
-                            <div className="flex items-start">
-                              <div className="shrink-0 mr-3">
-                                <div className="w-12 h-12 bg-purple-200 rounded-md flex items-center justify-center">
-                                  <img 
-                                    src="https://cdn-icons-png.flaticon.com/512/9492/9492239.png" 
-                                    alt="Yuto" 
-                                    className="w-8 h-8"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex-1">
-                                <h4 className="text-sm font-medium text-purple-800">Yuto Export Includes</h4>
-                                <ul className="text-xs text-purple-700 mt-1 list-disc pl-4">
-                                  <li>Audio file with all selected stories</li>
-                                  <li>Custom cover image generated for your Yuto card</li>
-                                  <li>Metadata file with chapter markers</li>
-                                  <li className="font-medium">Individual tracks with custom ID3 tags</li>
-                                  <li className="font-medium">Unique 600x600 JPEG cover art for each track</li>
-                                  <li>Installation instructions for Yuto app</li>
-                                </ul>
-                                <div className="mt-2 bg-white rounded p-2 border border-purple-200">
-                                  <p className="text-xs text-gray-700 mb-1 font-medium">Two Export Options:</p>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="border border-purple-100 rounded p-1.5 bg-purple-50">
-                                      <p className="text-xs text-purple-900 font-medium">1. Complete Audiobook</p>
-                                      <p className="text-xs text-gray-600">Single file with chapters</p>
-                                    </div>
-                                    <div className="border border-purple-100 rounded p-1.5 bg-purple-50">
-                                      <p className="text-xs text-purple-900 font-medium">2. Individual Tracks</p>
-                                      <p className="text-xs text-gray-600">Each story as separate file</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+
                       </FormItem>
                     )}
                   />
