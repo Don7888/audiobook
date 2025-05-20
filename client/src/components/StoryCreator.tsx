@@ -32,6 +32,10 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [audioDuration, setAudioDuration] = useState(0);
   const [soundEffectSuggestions, setSoundEffectSuggestions] = useState<Array<{ description: string; timing: string; }>>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<number[]>([]);
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchCount, setBatchCount] = useState(3);
+  const [batchProgress, setBatchProgress] = useState(0);
+  const [batchStories, setBatchStories] = useState<GeneratedStory[]>([]);
   const { toast } = useToast();
   const { user, isAuthenticated, userId } = useAuth();
 
@@ -347,6 +351,53 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
                   />
                 </div>
+                
+                {/* Batch Generation for Premium Users */}
+                {userData?.subscriptionTier === "premium" && (
+                  <div className="mt-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
+                    <h3 className="text-lg font-semibold text-purple-800 mb-2">Premium Feature: Batch Story Generation</h3>
+                    <p className="text-sm text-gray-700 mb-3">
+                      As a premium user, you can generate multiple stories at once with the same prompt.
+                    </p>
+                    
+                    <div className="flex items-center mb-4">
+                      <Switch 
+                        checked={batchMode} 
+                        onCheckedChange={(checked) => setBatchMode(checked)}
+                        id="batch-mode"
+                        className="data-[state=checked]:bg-purple-600"
+                      />
+                      <label htmlFor="batch-mode" className="ml-2 text-sm font-medium">
+                        Enable Batch Story Generation
+                      </label>
+                    </div>
+                    
+                    {batchMode && (
+                      <div className="mt-2">
+                        <label className="block text-sm font-medium mb-1">Number of Stories to Generate (1-10):</label>
+                        <div className="flex items-center">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBatchCount(Math.max(1, batchCount - 1))}
+                            className="h-8 w-8 p-0"
+                          >-</Button>
+                          <div className="mx-2 px-3 py-1 bg-white rounded-md border text-center min-w-[40px]">
+                            {batchCount}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBatchCount(Math.min(10, batchCount + 1))}
+                            className="h-8 w-8 p-0"
+                          >+</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
                 <FormField
                   control={form.control}

@@ -108,21 +108,21 @@ export const subscriptionPlans = {
     price: 0,
     maxStories: 3,
     allowSoundEffects: false,
-    maxAudioLength: 5 * 60, // 5 minutes in seconds
+    maxAudioLength: 300, // 5 minutes in seconds
     description: "Create up to 3 stories with basic features"
   },
   pro: {
     price: 9.99,
     maxStories: 50,
     allowSoundEffects: true,
-    maxAudioLength: 15 * 60, // 15 minutes in seconds
+    maxAudioLength: 900, // 15 minutes in seconds
     description: "Create up to 50 stories with sound effects"
   },
   premium: {
     price: 19.99,
     maxStories: -1, // Unlimited
     allowSoundEffects: true,
-    maxAudioLength: 30 * 60, // 30 minutes in seconds
+    maxAudioLength: 1800, // 30 minutes in seconds
     description: "Unlimited stories with premium features"
   }
 };
