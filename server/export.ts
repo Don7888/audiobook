@@ -367,8 +367,8 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
     coverImage: coverImageUrl, // Add the cover image URL to the metadata
     individualTracks: zipUrl, // Add the URL for downloading individual tracks
     tags: ["children", "stories", "audiobook"],
-    // These properties are required by Yoto cards
-    yotoSpecific: {
+    // These properties are required by Yuto cards
+    yutoSpecific: {
       cardId: `storytunes-${Date.now()}`, 
       contentVersion: "1.0",
       recommendedAge: "3-8",
@@ -377,30 +377,30 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
   };
   
   // Write the metadata file
-  fs.writeFileSync(metadataFilePath, JSON.stringify(yotoMetadata, null, 2));
+  fs.writeFileSync(metadataFilePath, JSON.stringify(yutoMetadata, null, 2));
   
   // In a real implementation, we would also:
   // 1. Embed ID3 tags into the MP3 file with chapter markers
-  // 2. Create a proper Yoto package structure with images and config
+  // 2. Create a proper Yuto package structure with images and config
   
-  console.log(`Exported Yoto format to: ${outputPath}`);
-  console.log(`Created Yoto metadata file: ${metadataFilePath}`);
+  console.log(`Exported Yuto format to: ${outputPath}`);
+  console.log(`Created Yuto metadata file: ${metadataFilePath}`);
   console.log(`Created individual tracks ZIP file: ${zipOutput.path}`);
   
-  // Create a text file with instructions for uploading to Yoto
-  const instructionsFilePath = outputPath.replace('.yoto', '.yoto-instructions.txt');
+  // Create a text file with instructions for uploading to Yuto
+  const instructionsFilePath = outputPath.replace('.yuto', '.yuto-instructions.txt');
   
   // Safely get the filename for instructions
-  const outputBasename = typeof outputPath === 'string' ? path.basename(outputPath) : 'yoto-audiobook.yoto';
+  const outputBasename = typeof outputPath === 'string' ? path.basename(outputPath) : 'yuto-audiobook.yuto';
   const zipFilename = `${safeTitle}_tracks_${timestamp}.zip`;
   const coverFilename = coverImageUrl ? imageFilename : "N/A - Image generation failed";
   
   const instructions = `
-=== YOTO UPLOAD INSTRUCTIONS ===
+=== YUTO UPLOAD INSTRUCTIONS ===
 
-Your StoryTunes collection "${options.playlistName}" has been exported for Yoto!
+Your StoryTunes collection "${options.playlistName}" has been exported for Yuto!
 
-Options for using with your Yoto player:
+Options for using with your Yuto player:
 
 OPTION 1: USE AS SINGLE AUDIOBOOK
 1. Upload the audio file (${outputBasename}) to the Yoto app
