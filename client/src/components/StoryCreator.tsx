@@ -879,9 +879,29 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 
                 <div className="flex justify-end">
                   <Button 
-                    type="submit" 
+                    type="button" 
                     className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
                     disabled={isGenerating}
+                    onClick={() => {
+                      // Check if there's at least one valid prompt
+                      const batchPrompts = form.getValues("batchPrompts") || [];
+                      const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
+                      
+                      if (validPrompts.length === 0) {
+                        toast({
+                          title: "Empty Prompts",
+                          description: "Please enter at least one valid story prompt with 10+ characters.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      
+                      // Set the batchMode explicitly to true to ensure it's processed correctly
+                      form.setValue("batchMode", true);
+                      
+                      // Handle the form submission manually
+                      form.handleSubmit(handleGenerateStory)();
+                    }}
                   >
                     {isGenerating ? (
                       <>
