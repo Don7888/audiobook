@@ -941,7 +941,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     type="button" 
                     className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
                     disabled={isGenerating}
-                    onClick={() => {
+                    onClick={async () => {
                       // Check if there's at least one valid prompt
                       const batchPrompts = form.getValues("batchPrompts") || [];
                       const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
@@ -955,11 +955,29 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         return;
                       }
                       
-                      // Set the batchMode explicitly to true to ensure it's processed correctly
-                      form.setValue("batchMode", true);
-                      
-                      // Handle the form submission manually
-                      form.handleSubmit(handleGenerateStory)();
+                      try {
+                        // Set actively generating state
+                        setIsGenerating(true);
+                        toast({
+                          title: "Starting Batch Generation",
+                          description: `Generating ${validPrompts.length} stories. This may take a few minutes.`,
+                        });
+                        
+                        // Use handleGenerateStory directly with form data
+                        const formData = form.getValues();
+                        formData.batchMode = true; // Ensure batch mode is enabled
+                        
+                        // Get all form values to pass to the story generation handler
+                        await handleGenerateStory(formData);
+                      } catch (error) {
+                        console.error("Error in batch generation:", error);
+                        toast({
+                          title: "Error",
+                          description: error instanceof Error ? error.message : "Failed to generate batch stories. Please try again.",
+                          variant: "destructive"
+                        });
+                        setIsGenerating(false);
+                      }
                     }}
                   >
                     {isGenerating ? (
@@ -1078,7 +1096,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                                         body: JSON.stringify({
                                           title: story.title,
                                           text: story.content,
-                                          prompt: story.prompt || "",
+                                          prompt: form.getValues("batchPrompts")[index]?.prompt || "",
                                           ageRange: form.getValues("ageRange"),
                                           storyLength: form.getValues("storyLength"),
                                           storyType: form.getValues("storyType"),
