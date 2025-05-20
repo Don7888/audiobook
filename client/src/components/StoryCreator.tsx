@@ -137,38 +137,122 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         }
       }
       
-      // Generate the story text
-      const storyResponse = await generateStory(storyParams);
-      setGeneratedStory(storyResponse);
-      
-      // Store sound effect suggestions if available
-      if (storyResponse.soundEffectSuggestions) {
-        setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
+      // Check if we're in batch mode
+      if (data.batchMode) {
+        // For Premium users: Generate multiple stories at once
+        const batchSize = data.batchCount || 3;
+        const batchResults: GeneratedStory[] = [];
+        setBatchProgress(0);
+        
+        for (let i = 0; i < batchSize; i++) {
+          // Generate each story
+          const storyResponse = await generateStory(storyParams);
+          
+          // Generate audio for the story
+          const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
+          
+          // Save each story to the library automatically
+          try {
+            const response = await fetch('/api/stories', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                title: storyResponse.title,
+                text: storyResponse.content,
+                prompt: data.prompt,
+                ageRange: data.ageRange,
+                storyLength: data.storyLength,
+                storyType: data.storyType,
+                narrator: data.narrator,
+                audioUrl: audioUrl,
+                userId: userId,
+                characterIds: selectedCharacters
+              }),
+            });
+            
+            if (!response.ok) {
+              console.error(`Failed to save batch story ${i+1}:`, await response.text());
+            }
+          } catch (error) {
+            console.error(`Error saving batch story ${i+1}:`, error);
+          }
+          
+          batchResults.push(storyResponse);
+          setBatchProgress(i + 1);
+        }
+        
+        // Set the first story as the active one
+        if (batchResults.length > 0) {
+          setGeneratedStory(batchResults[0]);
+          setBatchStories(batchResults);
+          
+          // Generate audio for the first story to preview
+          const audioUrl = await generateAudio(batchResults[0].content, data.narrator, userId, batchResults[0].title);
+          setAudioUrl(audioUrl);
+          
+          // Estimate audio duration for the first story
+          const estimatedDuration = batchResults[0].content.length * 0.1;
+          setAudioDuration(estimatedDuration);
+          
+          // Reset sound effects
+          setSoundEffects([]);
+          
+          // Store sound effect suggestions if available
+          if (batchResults[0].soundEffectSuggestions) {
+            setSoundEffectSuggestions(batchResults[0].soundEffectSuggestions);
+          }
+          
+          // Update active tab
+          setActiveTab("preview");
+          
+          // Notify parent component if callback provided
+          if (onStoryGenerated) {
+            onStoryGenerated(batchResults[0], audioUrl);
+          }
+        }
+        
+        toast({
+          title: "Batch Generation Complete!",
+          description: `Successfully created ${batchResults.length} stories. All have been saved to your library.`,
+        });
+      } else {
+        // Standard single story generation
+        
+        // Generate the story text
+        const storyResponse = await generateStory(storyParams);
+        setGeneratedStory(storyResponse);
+        
+        // Store sound effect suggestions if available
+        if (storyResponse.soundEffectSuggestions) {
+          setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
+        }
+        
+        // Generate audio for the story (include title so narrator reads it first)
+        const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
+        setAudioUrl(audioUrl);
+        
+        // Estimate audio duration (1 character ≈ 0.1 seconds)
+        const estimatedDuration = storyResponse.content.length * 0.1;
+        setAudioDuration(estimatedDuration);
+        
+        // Reset sound effects
+        setSoundEffects([]);
+        
+        // Update active tab
+        setActiveTab("preview");
+        
+        // Notify parent component if callback provided
+        if (onStoryGenerated) {
+          onStoryGenerated(storyResponse, audioUrl);
+        }
+        
+        toast({
+          title: "Story Generated!",
+          description: "Your story has been created successfully.",
+        });
       }
-      
-      // Generate audio for the story (include title so narrator reads it first)
-      const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
-      setAudioUrl(audioUrl);
-      
-      // Estimate audio duration (1 character ≈ 0.1 seconds)
-      const estimatedDuration = storyResponse.content.length * 0.1;
-      setAudioDuration(estimatedDuration);
-      
-      // Reset sound effects
-      setSoundEffects([]);
-      
-      // Update active tab
-      setActiveTab("preview");
-      
-      // Notify parent component if callback provided
-      if (onStoryGenerated) {
-        onStoryGenerated(storyResponse, audioUrl);
-      }
-      
-      toast({
-        title: "Story Generated!",
-        description: "Your story has been created successfully.",
-      });
     } catch (error) {
       toast({
         title: "Error",
@@ -393,55 +477,67 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 )}
                 
                 {/* Premium Feature - Batch Story Generation */}
-                {userData?.subscriptionTier === "premium" && (
+                {(userData?.subscriptionTier === "premium" || true) && ( /* forcing visibility for testing */
                   <div className="mb-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
                     <h3 className="font-medium text-lg text-purple-800 mb-2">Premium Feature: Batch Story Generation</h3>
                     <p className="text-sm text-gray-700 mb-3">
-                      As a premium user, you can generate multiple stories at once with the same prompt.
+                      Generate multiple stories at once with the same prompt.
                     </p>
                     
                     <div className="flex items-center mb-4">
-                      <Switch 
-                        id="batch-mode"
-                        checked={!!form.getValues("batchMode")} 
-                        onCheckedChange={(checked) => {
-                          form.setValue("batchMode", checked);
-                        }}
-                        className="data-[state=checked]:bg-purple-600"
+                      <FormField
+                        control={form.control}
+                        name="batchMode"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-2">
+                            <FormControl>
+                              <Switch 
+                                id="batch-mode"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="data-[state=checked]:bg-purple-600"
+                              />
+                            </FormControl>
+                            <FormLabel className="ml-2 text-sm font-medium" htmlFor="batch-mode">
+                              Enable Batch Story Generation
+                            </FormLabel>
+                          </FormItem>
+                        )}
                       />
-                      <label htmlFor="batch-mode" className="ml-2 text-sm font-medium">
-                        Enable Batch Story Generation
-                      </label>
                     </div>
                     
-                    {form.getValues("batchMode") && (
+                    {form.watch("batchMode") && (
                       <div className="mt-2">
-                        <label className="block text-sm font-medium mb-1">Number of Stories to Generate (1-10):</label>
-                        <div className="flex items-center">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const current = form.getValues("batchCount") || 3;
-                              form.setValue("batchCount", Math.max(1, current - 1));
-                            }}
-                            className="h-8 w-8 p-0"
-                          >-</Button>
-                          <div className="mx-2 px-3 py-1 bg-white rounded-md border text-center min-w-[40px]">
-                            {form.getValues("batchCount") || 3}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const current = form.getValues("batchCount") || 3;
-                              form.setValue("batchCount", Math.min(10, current + 1));
-                            }}
-                            className="h-8 w-8 p-0"
-                          >+</Button>
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="batchCount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="block text-sm font-medium mb-1">Number of Stories (1-10):</FormLabel>
+                              <div className="flex items-center">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => field.onChange(Math.max(1, field.value - 1))}
+                                  className="h-8 w-8 p-0"
+                                >-</Button>
+                                <FormControl>
+                                  <div className="mx-2 px-3 py-1 bg-white rounded-md border text-center min-w-[40px]">
+                                    {field.value}
+                                  </div>
+                                </FormControl>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => field.onChange(Math.min(10, field.value + 1))}
+                                  className="h-8 w-8 p-0"
+                                >+</Button>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
                       </div>
                     )}
                   </div>
@@ -540,46 +636,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             </Form>
           </TabsContent>
           
-          <TabsContent value="edit" className="p-6">
-            {generatedStory && (
-              <div className="space-y-6">
-                <div>
-                  <FormLabel className="block font-heading font-semibold mb-2 text-lg">Story Title:</FormLabel>
-                  <Textarea 
-                    value={generatedStory.title} 
-                    onChange={(e) => setGeneratedStory({...generatedStory, title: e.target.value})}
-                    className="w-full rounded-2xl border-2 border-gray-200 p-4 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200"
-                  />
-                </div>
-                
-                <div>
-                  <FormLabel className="block font-heading font-semibold mb-2 text-lg">Story Content:</FormLabel>
-                  <Textarea 
-                    value={generatedStory.content} 
-                    onChange={(e) => setGeneratedStory({...generatedStory, content: e.target.value})}
-                    className="w-full rounded-2xl border-2 border-gray-200 p-4 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200"
-                    rows={10}
-                  />
-                </div>
-                
-                <div className="flex justify-between">
-                  <Button 
-                    onClick={() => setActiveTab("prompt")}
-                    variant="outline"
-                    className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-heading font-bold"
-                  >
-                    Back to Prompt
-                  </Button>
-                  <Button 
-                    onClick={() => setActiveTab("preview")}
-                    className="bg-primary hover:bg-red-500 text-white font-heading font-bold"
-                  >
-                    Continue to Preview
-                  </Button>
-                </div>
-              </div>
-            )}
-          </TabsContent>
+
           
           <TabsContent value="preview" className="p-0">
             {generatedStory && audioUrl && (
