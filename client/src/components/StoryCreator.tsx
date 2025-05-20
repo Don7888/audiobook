@@ -36,6 +36,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [batchCount, setBatchCount] = useState(3);
   const [batchProgress, setBatchProgress] = useState(0);
   const [batchStories, setBatchStories] = useState<GeneratedStory[]>([]);
+  const [batchAudios, setBatchAudios] = useState<string[]>([]);
+  const [batchStoriesIds, setBatchStoriesIds] = useState<number[]>([]);
   const { toast } = useToast();
   const { user, isAuthenticated, userId } = useAuth();
 
@@ -237,34 +239,79 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           setBatchProgress(i + 1);
         }
         
-        // Set the first story as the active one
+        // Generate audio for all stories in the batch
         if (batchResults.length > 0) {
-          setGeneratedStory(batchResults[0]);
-          setBatchStories(batchResults);
+          const audioUrls: string[] = [];
+          const storyIds: number[] = [];
           
-          // Generate audio for the first story to preview
-          const audioUrl = await generateAudio(batchResults[0].content, data.narrator, userId, batchResults[0].title);
-          setAudioUrl(audioUrl);
-          
-          // Estimate audio duration for the first story
-          const estimatedDuration = batchResults[0].content.length * 0.1;
-          setAudioDuration(estimatedDuration);
-          
-          // Reset sound effects
-          setSoundEffects([]);
-          
-          // Store sound effect suggestions if available
-          if (batchResults[0].soundEffectSuggestions) {
-            setSoundEffectSuggestions(batchResults[0].soundEffectSuggestions);
+          // First generate all audio files
+          for (let i = 0; i < batchResults.length; i++) {
+            try {
+              const audioUrl = await generateAudio(batchResults[i].content, data.narrator, userId, batchResults[i].title);
+              audioUrls.push(audioUrl);
+              
+              // Try to save the story to get an ID
+              const response = await fetch('/api/stories', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  title: batchResults[i].title,
+                  text: batchResults[i].content,
+                  prompt: validPrompts[i].prompt,
+                  ageRange: data.ageRange,
+                  storyLength: data.storyLength,
+                  storyType: data.storyType,
+                  narrator: data.narrator,
+                  audioUrl: audioUrl,
+                  userId: userId,
+                  characterIds: selectedCharacters
+                }),
+              });
+              
+              if (response.ok) {
+                const savedStory = await response.json();
+                storyIds.push(savedStory.id);
+              } else {
+                console.error(`Failed to save batch story ${i+1}:`, await response.text());
+                storyIds.push(-1);
+              }
+            } catch (error) {
+              console.error(`Error generating audio for batch story ${i+1}:`, error);
+              audioUrls.push('');
+              storyIds.push(-1);
+            }
+            
+            // Update progress for each story generated
+            setBatchProgress(i + 1);
           }
           
-          // Update active tab
-          setActiveTab("preview");
+          // Store the batch results
+          setGeneratedStory(batchResults[0]);  // First story for main preview
+          setBatchStories(batchResults);       // All generated stories
+          setBatchAudios(audioUrls);           // Audio URLs for each story
+          setBatchStoriesIds(storyIds);        // Database IDs for saved stories
           
-          // Notify parent component if callback provided
-          if (onStoryGenerated) {
-            onStoryGenerated(batchResults[0], audioUrl);
+          // Set the first audio for the main player
+          if (audioUrls.length > 0 && audioUrls[0]) {
+            setAudioUrl(audioUrls[0]);
+            
+            // Estimate audio duration for the first story
+            const estimatedDuration = batchResults[0].content.length * 0.1;
+            setAudioDuration(estimatedDuration);
+            
+            // Reset sound effects
+            setSoundEffects([]);
+            
+            // Store sound effect suggestions if available
+            if (batchResults[0].soundEffectSuggestions) {
+              setSoundEffectSuggestions(batchResults[0].soundEffectSuggestions);
+            }
           }
+          
+          // Create a dedicated tab for batch results
+          setActiveTab("batch-results");
         }
         
         toast({
@@ -383,6 +430,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             >
               <Headphones className="mr-2" /> Audio & Effects
             </TabsTrigger>
+            {batchStories.length > 0 && (
+              <TabsTrigger 
+                value="batch-results" 
+                className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 6h16" />
+                  <path d="M4 12h16" />
+                  <path d="M4 18h16" />
+                </svg> Batch Results ({batchStories.length})
+              </TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="prompt" className="p-6">
@@ -922,6 +981,184 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 </div>
               </form>
             </Form>
+          </TabsContent>
+          
+          <TabsContent value="batch-results" className="p-6">
+            <div className="space-y-8">
+              <div className="mb-4">
+                <h3 className="font-heading font-bold text-xl mb-2">Batch Generation Results</h3>
+                <p className="text-gray-600 mb-4">
+                  Here are all the stories generated in this batch. You can listen to each one and save or delete them.
+                </p>
+              </div>
+              
+              {batchStories.length > 0 ? (
+                batchStories.map((story, index) => {
+                  const audioUrl = batchAudios[index] || '';
+                  const storyId = batchStoriesIds[index] || -1;
+                  
+                  return (
+                    <div key={index} className="border border-gray-200 rounded-xl overflow-hidden mb-6">
+                      <div className="bg-gray-50 p-4 border-b">
+                        <h4 className="font-heading font-semibold text-lg">{story.title}</h4>
+                      </div>
+                      
+                      {/* Audio player for this story */}
+                      <div className="p-4 border-b bg-white">
+                        {audioUrl ? (
+                          <div className="flex items-center justify-between">
+                            <audio 
+                              controls 
+                              src={audioUrl}
+                              className="w-full max-w-md"
+                              controlsList="nodownload"
+                            />
+                            
+                            <div className="flex space-x-2">
+                              {storyId > 0 ? (
+                                <Button 
+                                  type="button" 
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/stories/${storyId}`, {
+                                        method: 'DELETE'
+                                      });
+                                      
+                                      if (response.ok) {
+                                        // Update the local state to remove this story
+                                        const newBatchStories = [...batchStories];
+                                        const newBatchAudios = [...batchAudios];
+                                        const newBatchIds = [...batchStoriesIds];
+                                        
+                                        newBatchStories.splice(index, 1);
+                                        newBatchAudios.splice(index, 1);
+                                        newBatchIds.splice(index, 1);
+                                        
+                                        setBatchStories(newBatchStories);
+                                        setBatchAudios(newBatchAudios);
+                                        setBatchStoriesIds(newBatchIds);
+                                        
+                                        toast({
+                                          title: "Story Deleted",
+                                          description: "Story has been removed from your library",
+                                        });
+                                      } else {
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to delete the story. Please try again.",
+                                          variant: "destructive"
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "An error occurred while deleting the story.",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              ) : (
+                                <Button 
+                                  type="button" 
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={async () => {
+                                    try {
+                                      // Save the story to the database
+                                      const response = await fetch('/api/stories', {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                          title: story.title,
+                                          text: story.content,
+                                          prompt: story.prompt || "",
+                                          ageRange: form.getValues("ageRange"),
+                                          storyLength: form.getValues("storyLength"),
+                                          storyType: form.getValues("storyType"),
+                                          narrator: form.getValues("narrator"),
+                                          audioUrl: audioUrl,
+                                          userId: userId,
+                                          characterIds: selectedCharacters
+                                        }),
+                                      });
+                                      
+                                      if (response.ok) {
+                                        const savedStory = await response.json();
+                                        
+                                        // Update the ID in our state
+                                        const newIds = [...batchStoriesIds];
+                                        newIds[index] = savedStory.id;
+                                        setBatchStoriesIds(newIds);
+                                        
+                                        toast({
+                                          title: "Story Saved",
+                                          description: "Story has been saved to your library",
+                                        });
+                                      } else {
+                                        toast({
+                                          title: "Error",
+                                          description: "Failed to save the story. Please try again.",
+                                          variant: "destructive"
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "An error occurred while saving the story.",
+                                        variant: "destructive"
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Save
+                                </Button>
+                              )}
+                              
+                              <Button 
+                                type="button" 
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Set this story as the current story for editing
+                                  setGeneratedStory(story);
+                                  setAudioUrl(audioUrl);
+                                  setActiveTab("preview");
+                                }}
+                              >
+                                Edit & Add Effects
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center py-4 text-gray-500">
+                            Audio failed to generate for this story.
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Story content summary */}
+                      <div className="p-4 bg-white">
+                        <div className="max-h-32 overflow-y-auto text-sm text-gray-700">
+                          {story.content.substring(0, 300)}
+                          {story.content.length > 300 && '...'}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No stories have been generated yet. Use the Batch Create tab to generate multiple stories.
+                </div>
+              )}
+            </div>
           </TabsContent>
           
           <TabsContent value="preview" className="p-0">
