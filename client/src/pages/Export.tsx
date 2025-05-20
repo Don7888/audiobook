@@ -234,7 +234,7 @@ export default function Export() {
             </p>
             <Button 
               type="button"
-              className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
+              className="w-full bg-red-600 hover:bg-red-700 mb-2 py-6 text-lg"
               size="lg"
               onClick={() => {
                 form.setValue("format", "mp3");
