@@ -124,7 +124,7 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
       
       // Create a tailored prompt for a children's story illustration
       const prompt = `Create a colorful, child-friendly illustration for a children's story collection titled "${options.playlistName}". 
-                      The image should be appropriate for a Yoto player card with these details: ${imageDescription}. 
+                      The image should be appropriate for a Yuto player card with these details: ${imageDescription}. 
                       Make it visually appealing, with bright colors and friendly characters. 
                       The style should be appropriate for young children ages 3-8. 
                       Square format with clear visibility at different sizes.`;
@@ -152,10 +152,10 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
         
         // Set the cover image URL for the metadata
         coverImageUrl = `/api/exports/${imageFilename}`;
-        console.log(`Generated Yoto cover image: ${imageFilename}`);
+        console.log(`Generated Yuto cover image: ${imageFilename}`);
       }
     } catch (error) {
-      console.error("Error generating Yoto cover image:", error);
+      console.error("Error generating Yuto cover image:", error);
       // Continue without image if generation fails
     }
   }
@@ -221,7 +221,7 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
             
             // Create a specific prompt for this story
             const trackImagePrompt = `Create a colorful, child-friendly illustration for a children's story titled "${story.title}". 
-                                      The image should be appropriate for a Yoto player.
+                                      The image should be appropriate for a Yuto player.
                                       Make it visually appealing, with bright colors and friendly characters. 
                                       Style should be suitable for young children ages 3-8.
                                       Square format with clear visibility.
@@ -338,7 +338,7 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
   const zipFileName = typeof zipOutput.path === 'string' ? path.basename(zipOutput.path) : `${safeTitle}_tracks_${timestamp}.zip`;
   const zipUrl = `/api/exports/${zipFileName}`;
   
-  // Create chapters array for Yoto player to properly segment stories
+  // Create chapters array for Yuto player to properly segment stories
   const chapters = stories.map((story, index) => {
     // Calculate start time - in a real implementation this would be based on 
     // actual audio duration of previous stories
@@ -352,8 +352,8 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
     };
   });
   
-  // Create Yoto-compatible metadata structure
-  const yotoMetadata = {
+  // Create Yuto-compatible metadata structure
+  const yutoMetadata = {
     contentType: "audiobook",
     contentId: `storytunes-${Date.now()}`,
     title: options.playlistName,
