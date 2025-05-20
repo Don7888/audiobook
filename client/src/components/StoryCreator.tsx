@@ -220,7 +220,86 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     }
   };
 
-  // Submit handler for the StoryCreator form
+  // Handle generation of a single story
+  const handleSingleStoryGeneration = async (data: StoryGeneration) => {
+    try {
+      if (!isAuthenticated || !userId) {
+        toast({
+          title: "Authentication Required",
+          description: "You need to sign in to create stories",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setIsGenerating(true);
+      
+      // Add user ID and selected characters
+      const storyParams = {
+        ...data,
+        userId: userId,
+        characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
+      };
+      
+      // Find character details for selected characters to include in prompt
+      let characterDetails = "";
+      if (selectedCharacters.length > 0) {
+        characterDetails = selectedCharacters.map(id => {
+          const character = userCharacters.find((c: Character) => c.id === id);
+          return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
+        }).filter(Boolean).join('\n\n');
+      }
+      
+      // Add character information to the prompt
+      if (characterDetails) {
+        storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
+      }
+      
+      // Generate the story text
+      const storyResponse = await generateStory(storyParams);
+      setGeneratedStory(storyResponse);
+      
+      // Store sound effect suggestions if available
+      if (storyResponse.soundEffectSuggestions) {
+        setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
+      }
+      
+      // Generate audio for the story
+      const storyAudioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
+      setAudioUrl(storyAudioUrl);
+      
+      // Estimate audio duration (1 character ≈ 0.1 seconds)
+      const estimatedDuration = storyResponse.content.length * 0.1;
+      setAudioDuration(estimatedDuration);
+      
+      // Reset sound effects
+      setSoundEffects([]);
+      
+      // Switch to preview tab
+      setActiveTab("preview");
+      
+      // Notify parent component if callback provided
+      if (onStoryGenerated) {
+        onStoryGenerated(storyResponse, storyAudioUrl);
+      }
+      
+      toast({
+        title: "Story Generated!",
+        description: "Your story has been created successfully."
+      });
+    } catch (error) {
+      console.error("Error in single story generation:", error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate the story. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+  
+  // Submit handler for the form
   const handleSubmit = async (data: StoryGeneration) => {
     // For single story generation
     if (activeTab === "prompt") {
@@ -228,12 +307,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     } 
     // For batch story generation
     else if (activeTab === "batch") {
-      await handleBatchGeneration(data);
+      await handleBatchGenerate();
     }
   };
   
-  // Batch story generation handler - optimized for speed with parallel processing
-  const handleBatchGeneration = async (data: StoryGeneration) => {
+  // Batch generation handler - uses the optimized parallel processing for speed
+  const handleBatchGenerate = async () => {
     try {
       if (!isAuthenticated || !userId) {
         toast({
@@ -1022,7 +1101,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     type="button" 
                     className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
                     disabled={isGenerating}
-                    onClick={async () => {
+                    onClick={handleBatchGenerate}
                       // Check if there's at least one valid prompt
                       const batchPrompts = form.getValues("batchPrompts") || [];
                       const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
