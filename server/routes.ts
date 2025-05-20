@@ -725,7 +725,7 @@ ${textWithoutSfx}`
       const result = await exportStories({
         playlistName,
         description,
-        format: format as 'mp3' | 'yoto' | 'toniebox' | 'audible',
+        format: format as 'mp3' | 'yuto' | 'toniebox' | 'audible',
         storyIds
       });
       
@@ -833,7 +833,7 @@ ${textWithoutSfx}`
       case '.audible':
         contentType = 'audio/vnd.audible.aax';
         break;
-      case '.yoto':
+      case '.yuto':
       case '.toniebox':
         contentType = 'audio/mpeg'; // These are also MP3-based formats
         break;
