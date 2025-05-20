@@ -71,6 +71,13 @@ export default function Export() {
     }
   });
   
+  // State for download links from export
+  const [exportResults, setExportResults] = useState<{
+    downloadUrl?: string;
+    tracksUrl?: string;
+    filename?: string;
+  }>({});
+  
   // Handle form submission
   const onSubmit = async (values: PlaylistFormValues) => {
     if (!isAuthenticated) {
@@ -84,6 +91,7 @@ export default function Export() {
     
     try {
       setIsExporting(true);
+      setExportResults({});
       
       // Prepare stories for export
       const storiesToExport = stories.filter(story => 
@@ -120,23 +128,37 @@ export default function Export() {
       
       const data = await response.json();
       
-      // Trigger download
-      const downloadLink = document.createElement("a");
-      downloadLink.href = data.downloadUrl;
-      downloadLink.download = data.filename || `${values.name}.${values.format}`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      
-      // Show success message
-      toast({
-        title: "Export successful",
-        description: `Your playlist "${values.name}" has been exported as ${values.format.toUpperCase()}`,
-      });
-      
-      // Reset form
-      form.reset();
-      setSelectedStories([]);
+      // If it's a Yoto export, remember both the main download and individual tracks
+      if (values.format === "yoto") {
+        setExportResults({
+          downloadUrl: data.downloadUrl,
+          tracksUrl: data.individualTracks || undefined,
+          filename: data.filename
+        });
+        
+        toast({
+          title: "Yoto Export successful",
+          description: "Your stories have been exported in Yoto format with individual tracks and custom cover art",
+          duration: 5000,
+        });
+      } else {
+        // For other formats, trigger immediate download
+        const downloadLink = document.createElement("a");
+        downloadLink.href = data.downloadUrl;
+        downloadLink.download = data.filename || `${values.name}.${values.format}`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        toast({
+          title: "Export successful",
+          description: `Your playlist "${values.name}" has been exported as ${values.format.toUpperCase()}`,
+        });
+        
+        // Reset form for non-Yoto formats
+        form.reset();
+        setSelectedStories([]);
+      }
       
     } catch (error) {
       console.error("Export error:", error);
@@ -148,6 +170,16 @@ export default function Export() {
     } finally {
       setIsExporting(false);
     }
+  };
+  
+  // Function to download the exported file
+  const downloadExportedFile = (url: string, filename: string) => {
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
   };
   
   // Handle story selection
@@ -341,7 +373,67 @@ export default function Export() {
                     )}
                   </div>
                   
-                  {form.watch("format") === "yoto" ? (
+                  {exportResults.downloadUrl && form.watch("format") === "yoto" ? (
+                    <div className="space-y-3">
+                      <div className="bg-green-50 p-4 rounded-md border border-green-200">
+                        <div className="flex items-center text-green-700 mb-2">
+                          <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <h3 className="font-medium">Export Complete!</h3>
+                        </div>
+                        
+                        <p className="text-sm text-gray-700 mb-3">
+                          Your Yoto package has been created with custom cover art and individual tracks.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+                          <Button 
+                            onClick={() => downloadExportedFile(exportResults.downloadUrl!, exportResults.filename || "yoto-export.yoto")}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Audiobook
+                          </Button>
+                          
+                          {exportResults.tracksUrl && (
+                            <Button 
+                              onClick={() => downloadExportedFile(exportResults.tracksUrl!, "yoto-tracks.zip")}
+                              variant="outline"
+                              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Download Individual Tracks
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <div className="text-xs text-gray-600 bg-white p-2 rounded border mt-2">
+                          <p className="font-medium mb-1">What's included in the individual tracks:</p>
+                          <ul className="list-disc pl-4 space-y-1">
+                            <li>Individual MP3 files with ID3 tags</li>
+                            <li>Custom 600x600 JPEG cover art for each track</li>
+                            <li>Properly numbered tracks for easy upload to Yoto</li>
+                            <li>Installation guide for Yoto player</li>
+                          </ul>
+                        </div>
+                        
+                        <div className="flex justify-end mt-3">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setExportResults({});
+                              form.reset();
+                              setSelectedStories([]);
+                            }}
+                          >
+                            Create New Export
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : form.watch("format") === "yoto" ? (
                     <div className="space-y-3">
                       <div className="bg-white p-3 rounded-md border border-purple-100">
                         <p className="text-xs text-gray-600 mb-2">When exporting for Yoto format, you'll receive:</p>

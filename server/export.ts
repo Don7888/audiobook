@@ -335,7 +335,8 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
   await archive.finalize();
   
   // Add the ZIP file URL to the result
-  const zipUrl = `/api/exports/${path.basename(zipOutput.path)}`;
+  const zipFileName = typeof zipOutput.path === 'string' ? path.basename(zipOutput.path) : `${safeTitle}_tracks_${timestamp}.zip`;
+  const zipUrl = `/api/exports/${zipFileName}`;
   
   // Create chapters array for Yoto player to properly segment stories
   const chapters = stories.map((story, index) => {
@@ -388,6 +389,12 @@ async function exportYoto(stories: Story[], outputPath: string, options: ExportO
   
   // Create a text file with instructions for uploading to Yoto
   const instructionsFilePath = outputPath.replace('.yoto', '.yoto-instructions.txt');
+  
+  // Safely get the filename for instructions
+  const outputBasename = typeof outputPath === 'string' ? path.basename(outputPath) : 'yoto-audiobook.yoto';
+  const zipFilename = `${safeTitle}_tracks_${timestamp}.zip`;
+  const coverFilename = coverImageUrl ? imageFilename : "N/A - Image generation failed";
+  
   const instructions = `
 === YOTO UPLOAD INSTRUCTIONS ===
 
@@ -396,12 +403,12 @@ Your StoryTunes collection "${options.playlistName}" has been exported for Yoto!
 Options for using with your Yoto player:
 
 OPTION 1: USE AS SINGLE AUDIOBOOK
-1. Upload the audio file (${path.basename(outputPath)}) to the Yoto app
-2. Upload the cover image (${coverImageUrl ? imageFilename : "N/A - Image generation failed"}) to display on your Yoto player
+1. Upload the audio file (${outputBasename}) to the Yoto app
+2. Upload the cover image (${coverFilename}) to display on your Yoto player
 3. The metadata file contains chapter information for your stories
 
 OPTION 2: USE AS INDIVIDUAL TRACKS
-1. Download and unzip the tracks package (${path.basename(zipOutput.path)})
+1. Download and unzip the tracks package (${zipFilename})
 2. Each track has its own ID3 tags and cover image
 3. Upload each track individually to your Yoto player
 4. Tracks are numbered in sequence for easy organization
