@@ -220,9 +220,42 @@ export default function Export() {
       
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Export Stories</h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 mb-4">
           Create playlists and export your stories in various formats.
         </p>
+        
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl">About Exports</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 mb-4">
+              Export your stories in various formats for different devices. Select your stories from the panel on the right, then click the button below to download them as a single file.
+            </p>
+            <Button 
+              type="button"
+              className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
+              size="lg"
+              onClick={() => {
+                form.setValue("format", "mp3");
+                form.handleSubmit(onSubmit)();
+              }}
+              disabled={isExporting || selectedStories.length === 0}
+            >
+              {isExporting ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-5 w-5" />
+              )}
+              {isExporting ? "Exporting..." : "Export Selected Stories"}
+            </Button>
+            <p className="text-xs text-center text-gray-500">
+              {selectedStories.length > 0 ? 
+                `${selectedStories.length} ${selectedStories.length === 1 ? 'story' : 'stories'} selected for export` : 
+                'Select at least one story to enable export'}
+            </p>
+          </CardContent>
+        </Card>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

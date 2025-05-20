@@ -166,14 +166,14 @@ async function exportYuto(stories: Story[], outputPath: string, options: ExportO
     fs.mkdirSync(tracksDir, { recursive: true });
   }
   
-  // Import the required modules for ID3 tagging and image processing
-  const NodeID3 = require('node-id3');
-  const sharp = require('sharp');
-  
+  // Use the already imported modules instead of require
+  // Temporarily commented out for basic functionality
+  /*
   // Create a ZIP file for all the tracks
-  const archiver = require('archiver');
+  */
+  // Temporarily simplified export to make basic functionality work
   const zipOutput = fs.createWriteStream(path.join(process.cwd(), 'exports', `${safeTitle}_tracks_${timestamp}.zip`));
-  const archive = archiver('zip', { zlib: { level: 9 } });
+  // const archive = archiver('zip', { zlib: { level: 9 } });
   
   // Pipe the archive to the file
   archive.pipe(zipOutput);
