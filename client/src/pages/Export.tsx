@@ -208,25 +208,7 @@ export default function Export() {
     );
   }
   
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto py-12">
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              You need to be signed in to export stories.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link href="/signin">Sign In</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  // With our authentication bypass, we always proceed as authenticated
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -578,9 +560,27 @@ export default function Export() {
           
           <TabsContent value="mp3" className="bg-white p-4 rounded-md border">
             <h3 className="font-medium text-lg mb-2">MP3 Format</h3>
-            <p className="text-gray-700">
-              The standard audio format that works on virtually all devices. Your stories will be exported as a single MP3 file containing all selected stories in the order you've selected them. Sound effects will be included.
-            </p>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="md:w-2/3">
+                <p className="text-gray-700 mb-4">
+                  The standard audio format that works on virtually all devices. Your stories will be exported as a single MP3 file containing all selected stories in the order you've selected them. Sound effects will be included.
+                </p>
+                <Button 
+                  type="submit"
+                  className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
+                  size="lg"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  Export to MP3 Format
+                </Button>
+                <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
+              </div>
+              <div className="md:w-1/3 flex items-center justify-center">
+                <div className="w-32 h-32 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Music2 className="h-16 w-16 text-purple-600" />
+                </div>
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="yuto" className="bg-white p-4 rounded-md border">
@@ -596,13 +596,25 @@ export default function Export() {
                     When you export to Yuto format, we'll automatically generate a custom cover image for your playlist that displays on your Yuto player when the card is inserted. The image is specially designed to match your stories' themes.
                   </p>
                 </div>
+                
+                <div className="mt-4">
+                  <Button 
+                    type="submit"
+                    className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
+                    size="lg"
+                  >
+                    <Download className="mr-2 h-5 w-5" />
+                    Export to Yuto Format
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
+                </div>
               </div>
               <div className="md:w-1/3 flex items-center justify-center">
                 <div className="relative w-40 h-40">
                   <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden">
                     <img 
                       src="https://cdn.shopify.com/s/files/1/0588/0042/1610/files/3V2A3098_1_2048x.jpg?v=1651246987" 
-                      alt="Yoto Player" 
+                      alt="Yuto Player" 
                       className="object-cover w-full h-full"
                     />
                   </div>
@@ -620,16 +632,60 @@ export default function Export() {
           
           <TabsContent value="toniebox" className="bg-white p-4 rounded-md border">
             <h3 className="font-medium text-lg mb-2">Toniebox Format</h3>
-            <p className="text-gray-700">
-              Formatted specifically for Toniebox audio players. This format includes the necessary metadata for Creative-Tonies and will work with your Toniebox player once transferred to your Tonie.
-            </p>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="md:w-2/3">
+                <p className="text-gray-700 mb-4">
+                  Formatted specifically for Toniebox audio players. This format includes the necessary metadata for Creative-Tonies and will work with your Toniebox player once transferred to your Tonie.
+                </p>
+                <Button 
+                  type="submit"
+                  className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
+                  size="lg"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  Export to Toniebox Format
+                </Button>
+                <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
+              </div>
+              <div className="md:w-1/3 flex items-center justify-center">
+                <div className="w-32 h-32 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-16 w-16 text-blue-600">
+                    <path d="M4 2v20l2-1.33L8 22l2-1.33L12 22l2-1.33L16 22l2-1.33L20 22V2L4 2z" />
+                    <circle cx="12" cy="12" r="5" />
+                    <path d="M12 8v8" />
+                    <path d="M8 10h8" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </TabsContent>
           
           <TabsContent value="audible" className="bg-white p-4 rounded-md border">
             <h3 className="font-medium text-lg mb-2">Audible Format</h3>
-            <p className="text-gray-700">
-              Created to be compatible with Audible's AAX format, this export includes chapter markers, cover art (generated from the story content), and proper metadata for easy listening on Audible-compatible devices.
-            </p>
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="md:w-2/3">
+                <p className="text-gray-700 mb-4">
+                  Created to be compatible with Audible's AAX format, this export includes chapter markers, cover art (generated from the story content), and proper metadata for easy listening on Audible-compatible devices.
+                </p>
+                <Button 
+                  type="submit"
+                  className="w-full bg-purple-600 hover:bg-purple-700 mb-2 py-6 text-lg"
+                  size="lg"
+                >
+                  <Download className="mr-2 h-5 w-5" />
+                  Export to Audible Format
+                </Button>
+                <p className="text-xs text-gray-500 text-center">Select your stories first, then click to export</p>
+              </div>
+              <div className="md:w-1/3 flex items-center justify-center">
+                <div className="w-32 h-32 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-16 w-16 text-orange-600">
+                    <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
