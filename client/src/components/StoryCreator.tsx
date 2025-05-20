@@ -359,44 +359,6 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       setIsGenerating(false);
     }
   };
-          if (audioUrls.length > 0 && audioUrls[0]) {
-            setAudioUrl(audioUrls[0]);
-            
-            // Estimate audio duration for the first story
-            const estimatedDuration = batchResults[0].content.length * 0.1;
-            setAudioDuration(estimatedDuration);
-            
-            // Reset sound effects
-            setSoundEffects([]);
-            
-            // Store sound effect suggestions if available
-            if (batchResults[0].soundEffectSuggestions) {
-              setSoundEffectSuggestions(batchResults[0].soundEffectSuggestions);
-            }
-          }
-          
-          // Create a dedicated tab for batch results
-          setActiveTab("batch-results");
-        }
-        
-        toast({
-          title: "Batch Generation Complete!",
-          description: `Successfully created ${batchResults.length} stories. All have been saved to your library.`,
-        });
-      } else {
-        // Standard single story generation from the prompt tab
-        
-        // Append character information to the prompt if available
-        if (characterDetails) {
-          storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
-        }
-        
-        // Generate the story text
-        const storyResponse = await generateStory(storyParams);
-        setGeneratedStory(storyResponse);
-        
-        // Store sound effect suggestions if available
-        if (storyResponse.soundEffectSuggestions) {
           setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
         }
         
@@ -1021,13 +983,19 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       }
                       
                       try {
-                        // Set actively generating state
+                        // Set generating state
                         setIsGenerating(true);
                         
-                        // Prepare all story parameters 
+                        // Get form data
                         const formData = form.getValues();
                         
-                        // Find character details for selected characters to include in prompt
+                        // Prepare for batch generation
+                        toast({
+                          title: "Starting Batch Generation",
+                          description: `Generating ${validPrompts.length} stories in parallel. This will be faster!`,
+                        });
+                        
+                        // Find character details to include in each prompt
                         let characterDetails = "";
                         if (selectedCharacters.length > 0) {
                           characterDetails = selectedCharacters.map(id => {
@@ -1036,62 +1004,48 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           }).filter(Boolean).join('\n\n');
                         }
                         
-                        // Create parameters for each story with characters included
-                        const storyParamsList = validPrompts.map(item => {
-                          let promptWithCharacters = item.prompt;
-                          if (characterDetails) {
-                            promptWithCharacters = `${promptWithCharacters}\n\nPlease include the following characters in the story:\n${characterDetails}`;
-                          }
-                          
-                          return {
-                            ...formData,
-                            prompt: promptWithCharacters,
-                            userId: userId,
-                            characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
-                          };
-                        });
+                        // Create story params for all prompts
+                        const storyParamsList = validPrompts.map(item => ({
+                          prompt: characterDetails ? 
+                            `${item.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}` : 
+                            item.prompt,
+                          ageRange: formData.ageRange,
+                          storyLength: formData.storyLength,
+                          storyType: formData.storyType,
+                          narrator: formData.narrator,
+                          userId: userId,
+                          characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
+                        }));
                         
-                        // Show initial progress toast
-                        toast({
-                          title: "Starting Batch Generation",
-                          description: `Generating ${validPrompts.length} stories in parallel (this will be much faster!)`,
-                        });
-                        
-                        // STEP 1: Generate all stories in parallel
+                        // Generate all stories in parallel (faster)
                         const generatedStories = await generateStoriesBatch(storyParamsList, 2);
-                        setBatchProgress(Math.floor(validPrompts.length / 2));
+                        setBatchProgress(validPrompts.length / 2);
                         
                         toast({
                           title: "Stories Generated",
                           description: `Created ${generatedStories.length} stories. Now generating audio...`,
                         });
                         
-                        // STEP 2: Generate all audio files in parallel
+                        // Generate all audio files in parallel (faster)
                         const audioParams = generatedStories.map(story => ({
                           text: story.content,
                           voice: formData.narrator,
-                          userId,
+                          userId: userId,
                           title: story.title
                         }));
                         
                         const audioUrls = await generateAudioBatch(audioParams, 2);
                         setBatchProgress(validPrompts.length);
                         
-                        toast({
-                          title: "Audio Generated",
-                          description: "Saving stories to your library...",
-                        });
-                        
-                        // STEP 3: Save all stories 
+                        // Save all stories
                         const storyIds: number[] = [];
                         
                         for (let i = 0; i < generatedStories.length; i++) {
                           try {
+                            // Save each story to the backend
                             const response = await fetch('/api/stories', {
                               method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
+                              headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({
                                 title: generatedStories[i].title,
                                 text: generatedStories[i].content,
@@ -1101,45 +1055,44 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                                 storyType: formData.storyType,
                                 narrator: formData.narrator,
                                 audioUrl: audioUrls[i],
-                                userId,
+                                userId: userId,
                                 characterIds: selectedCharacters
-                              }),
+                              })
                             });
                             
                             if (response.ok) {
                               const savedStory = await response.json();
                               storyIds.push(savedStory.id);
                             } else {
-                              console.error(`Failed to save batch story ${i+1}:`, await response.text());
+                              console.error(`Failed to save batch story ${i+1}`);
                               storyIds.push(-1);
                             }
                           } catch (error) {
-                            console.error(`Error saving batch story ${i+1}:`, error);
+                            console.error(`Error saving story ${i+1}:`, error);
                             storyIds.push(-1);
                           }
                         }
                         
-                        // STEP 4: Store all batch results for display
+                        // Store results for display
                         setBatchStories(generatedStories);
                         setBatchAudios(audioUrls);
                         setBatchStoriesIds(storyIds);
                         
-                        // STEP 5: Switch to the batch results tab
-                        setActiveTab("batch-results");
-                        
-                        // Show success message
+                        // Success notification
                         toast({
                           title: "Batch Generation Complete!",
-                          description: `Successfully created ${generatedStories.length} stories. All have been saved to your library.`,
+                          description: `Successfully created ${generatedStories.length} stories.`,
                         });
+                        
+                        // Switch to results tab
+                        setActiveTab("batch-results");
                       } catch (error) {
-                        console.error("Error in batch generation:", error);
+                        console.error("Error generating batch stories:", error);
                         toast({
-                          title: "Error",
-                          description: error instanceof Error ? error.message : "Failed to generate batch stories. Please try again.",
+                          title: "Generation Failed",
+                          description: error instanceof Error ? error.message : "Failed to generate stories",
                           variant: "destructive"
                         });
-                        setIsGenerating(false);
                       } finally {
                         setIsGenerating(false);
                       }
