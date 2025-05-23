@@ -797,11 +797,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 <div className="space-y-6">
                   <StoryPreview
                     story={generatedStory}
-                    audioUrl={audioUrl}
+                    audioUrl={audioUrl || ""}
                     soundEffects={soundEffects}
-                    audioDuration={audioDuration}
-                    soundEffectSuggestions={soundEffectSuggestions}
-                    userId={userId}
+                    characterIds={selectedCharacters}
                   />
 
                   <Tabs defaultValue="audio" className="w-full">
@@ -826,8 +824,10 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           />
 
                           <SoundEffectSelector
-                            storyText={generatedStory.content}
-                            onSoundEffectsChange={handleSoundEffectsChange}
+                            audioUrl={audioUrl || ""}
+                            duration={audioDuration}
+                            soundEffects={soundEffects}
+                            onChange={handleSoundEffectsChange}
                             suggestions={soundEffectSuggestions}
                           />
                         </div>
