@@ -283,7 +283,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       }
 
       // Generate the story (include character IDs for saving)
-      const storyResponse = await generateStory({ ...data, prompt: fullPrompt, userId, characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined });
+      const storyResponse = await generateStory({ ...data, prompt: fullPrompt });
       setGeneratedStory(storyResponse);
 
       // Store sound effect suggestions if available
