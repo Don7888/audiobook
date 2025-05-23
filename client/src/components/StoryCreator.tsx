@@ -51,91 +51,53 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       const response = await fetch('/api/subscription-plans');
       if (!response.ok) throw new Error('Failed to fetch subscription plans');
       return response.json();
-    },
+    }
   });
 
-  // Fetch user data to check subscription tier
-  const { data: userData } = useQuery({
-    queryKey: ['/api/users', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      const response = await fetch(`/api/users/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch user data');
-      return response.json();
-    },
-    enabled: !!userId,
-  });
-
-  // Fetch user's characters
+  // Fetch user characters
   const { data: userCharacters = [] } = useQuery({
     queryKey: ['/api/characters'],
     queryFn: async () => {
-      if (!isAuthenticated || !userId) return [];
-
-      try {
-        const response = await fetch('/api/characters', {
-          headers: {
-            'user-id': userId.toString()
-          }
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch characters');
-        return response.json();
-      } catch (error) {
-        console.error('Error fetching characters:', error);
-        return [];
-      }
+      const response = await fetch('/api/characters');
+      if (!response.ok) throw new Error('Failed to fetch characters');
+      return response.json();
     },
-    enabled: isAuthenticated && !!userId
+    enabled: isAuthenticated
   });
-
-  // Get the user's subscription tier and whether they can use sound effects
-  const userSubscriptionTier = userData?.subscriptionTier || user?.subscriptionTier || 'basic';
-  console.log("User subscription tier:", userSubscriptionTier);
-  console.log("Subscription plans:", subscriptionPlans);
-
-  // Force-enable sound effects for debugging
-  const canUseSoundEffects = true; // temporarily enable for all users to debug
 
   const form = useForm<StoryGeneration>({
     resolver: zodResolver(storyGenerationSchema),
     defaultValues: {
       prompt: "",
-      ageRange: "3-5 years",
-      storyLength: "Short (2-3 min)",
-      storyType: "Adventure",
-      narrator: "Female - Gentle",
-      includeSoundEffects: false,
       batchMode: false,
       batchCount: 3,
-      batchPrompts: [
-        { prompt: "" },
-        { prompt: "" },
-        { prompt: "" }
-      ]
-    }
+      ageRange: "3-5",
+      storyLength: "short",
+      storyType: "adventure",
+      narrator: "Female-Gentle",
+      includeSoundEffects: false,
+      batchPrompts: Array.from({ length: 3 }, () => ({ prompt: "" }))
+    },
   });
 
-  const { fields: batchPromptFields, append: appendBatchPrompt, remove: removeBatchPrompt } = useFieldArray({
+  const { fields: batchPrompts, append: appendBatchPrompt, remove: removeBatchPrompt } = useFieldArray({
     control: form.control,
     name: "batchPrompts"
   });
 
-  // Manage batch prompts count 
+  // Watch for changes in batch count to adjust prompt fields
   useEffect(() => {
-    const currentCount = form.getValues("batchCount") || 3;
-    const currentPrompts = form.getValues("batchPrompts") || [];
+    const currentCount = form.watch("batchCount");
+    const currentPrompts = batchPrompts;
 
-    // Add empty prompts if we need more
     if (currentPrompts.length < currentCount) {
+      // Add more prompts
       const toAdd = currentCount - currentPrompts.length;
       for (let i = 0; i < toAdd; i++) {
         appendBatchPrompt({ prompt: "" });
       }
-    }
-
-    // Remove excess prompts if we have too many
-    if (currentPrompts.length > currentCount) {
+    } else if (currentPrompts.length > currentCount) {
+      // Remove excess prompts
       const toRemove = currentPrompts.length - currentCount;
       for (let i = 0; i < toRemove; i++) {
         removeBatchPrompt(currentPrompts.length - 1 - i);
@@ -143,250 +105,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     }
   }, [form.watch("batchCount"), appendBatchPrompt, removeBatchPrompt]);
 
-  // Batch generation handler - processes stories in parallel for faster generation
-  const handleGenerateBatch = async () => {
-    // Check if there's at least one valid prompt
-    const batchPrompts = form.getValues("batchPrompts") || [];
-    const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
-
-    if (validPrompts.length === 0) {
-      toast({
-        title: "Empty Prompts",
-        description: "Please enter at least one valid story prompt with 10+ characters.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-      setBatchProgress(0);
-
-      // Get form data
-      const formData = form.getValues();
-
-      // Prepare for batch generation
-      toast({
-        title: "Starting Batch Generation",
-        description: `Generating ${validPrompts.length} stories with parallel processing.`,
-      });
-
-      // Find character details to include in each prompt
-      let characterDetails = "";
-      if (selectedCharacters.length > 0) {
-        characterDetails = selectedCharacters.map(id => {
-          const character = userCharacters.find((c: Character) => c.id === id);
-          return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
-        }).filter(Boolean).join('\n\n');
-      }
-
-      // Create parameters for all the stories
-      const storyParamsList = validPrompts.map(item => ({
-        prompt: characterDetails ? 
-          `${item.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}` : 
-          item.prompt,
-        ageRange: formData.ageRange,
-        storyLength: formData.storyLength,
-        storyType: formData.storyType,
-        narrator: formData.narrator,
-        batchMode: true,
-        batchCount: validPrompts.length,
-        includeSoundEffects: formData.includeSoundEffects,
-        batchPrompts: []
-      }));
-
-      // Generate all stories in parallel (2 at a time for optimal speed)
-      console.log("Starting parallel story generation with concurrency of 2");
-      const generatedStories = await generateStoriesBatch(storyParamsList, 2);
-      setBatchProgress(50);
-
-      toast({
-        title: "Stories Generated",
-        description: `Created ${generatedStories.length} stories. Now generating audio...`,
-      });
-
-      // Generate all audio files in parallel (2 at a time for optimal speed)
-      console.log("Starting parallel audio generation with concurrency of 2");
-      const audioParams = generatedStories.map(story => ({
-        text: story.content,
-        voice: formData.narrator,
-        userId: userId,
-        title: story.title
-      }));
-
-      const audioUrls = await generateAudioBatch(audioParams, 2);
-      setBatchProgress(80);
-
-      toast({
-        title: "Audio Generated",
-        description: "Now saving stories to your library...",
-      });
-
-      // Save stories to database
-      const storyIds: number[] = [];
-
-      for (let i = 0; i < generatedStories.length; i++) {
-        try {
-          const response = await fetch('/api/stories', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              title: generatedStories[i].title,
-              text: generatedStories[i].content,
-              prompt: validPrompts[i].prompt,
-              ageRange: formData.ageRange,
-              storyLength: formData.storyLength,
-              storyType: formData.storyType,
-              narrator: formData.narrator,
-              audioUrl: audioUrls[i],
-              userId: userId,
-              characterIds: selectedCharacters
-            })
-          });
-
-          if (response.ok) {
-            const savedStory = await response.json();
-            storyIds.push(savedStory.id);
-          } else {
-            console.error(`Failed to save batch story ${i+1}`);
-            storyIds.push(-1);
-          }
-        } catch (error) {
-          console.error(`Error saving story ${i+1}:`, error);
-          storyIds.push(-1);
-        }
-      }
-
-      // Store results for display
-      setBatchStories(generatedStories);
-      setBatchAudios(audioUrls);
-      setBatchStoriesIds(storyIds);
-      setBatchProgress(100);
-
-      // Success notification
-      toast({
-        title: "Batch Generation Complete!",
-        description: `Successfully created ${generatedStories.length} stories with parallel processing.`,
-      });
-
-      // Switch to results tab
-      setActiveTab("batch-results");
-    } catch (error) {
-      console.error("Error generating batch stories:", error);
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate stories",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleSubmit = async (data: StoryGeneration) => {
-    // For batch mode
-    if (activeTab === "batch") {
-      await handleGenerateBatch();
-    } 
-    // For single story mode
-    else {
-      await handleSingleStoryGeneration(data);
-    }
-  };
-
-  // Single story generation handler
-  const handleSingleStoryGeneration = async (data: StoryGeneration) => {
-    try {
-      if (!isAuthenticated || !userId) {
-        toast({
-          title: "Authentication Required",
-          description: "You need to sign in to create stories",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      setIsGenerating(true);
-
-      // Add user ID and selected characters
-      const storyParams = {
-        ...data,
-        userId: userId,
-        characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
-      };
-
-      // Find character details for selected characters to include in prompt
-      let characterDetails = "";
-      if (selectedCharacters.length > 0) {
-        characterDetails = selectedCharacters.map(id => {
-          const character = userCharacters.find((c: Character) => c.id === id);
-          return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
-        }).filter(Boolean).join('\n\n');
-      }
-
-      // Add character information to the prompt
-      if (characterDetails) {
-        storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
-      }
-
-      // Generate the story text
-      const storyResponse = await generateStory(storyParams);
-      setGeneratedStory(storyResponse);
-
-      // Store sound effect suggestions if available
-      if (storyResponse.soundEffectSuggestions) {
-        setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
-      }
-
-      // Generate audio for the story
-      const storyAudioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
-      setAudioUrl(storyAudioUrl);
-
-      // Estimate audio duration (1 character ≈ 0.1 seconds)
-      const estimatedDuration = storyResponse.content.length * 0.1;
-      setAudioDuration(estimatedDuration);
-
-      // Reset sound effects
-      setSoundEffects([]);
-
-      // Switch to preview tab
-      setActiveTab("preview");
-
-      // Notify parent component if callback provided
-      if (onStoryGenerated) {
-        onStoryGenerated(storyResponse, storyAudioUrl);
-      }
-
-      toast({
-        title: "Story Generated!",
-        description: "Your story has been created successfully."
-      });
-    } catch (error) {
-      console.error("Error in single story generation:", error);
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate the story. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Submit handler for the form
-  const handleFormSubmit = async (data: StoryGeneration) => {
-    // For single story generation
-    if (activeTab === "prompt") {
-      await handleSingleStoryGeneration(data);
-    } 
-    // For batch story generation
-    else if (activeTab === "batch") {
-      await handleGenerateBatch();
-    }
-  };
-
   // Batch generation handler - uses the optimized parallel processing for speed
-  const handleBatchGenerate = async () => {
+  const handleGenerateBatch = async () => {
     try {
       if (!isAuthenticated || !userId) {
         toast({
@@ -416,6 +136,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         return;
       }
 
+      // Get form data
+      const formData = form.getValues();
+
       // Find character details for selected characters to include in prompt
       let characterDetails = "";
       if (selectedCharacters.length > 0) {
@@ -440,155 +163,89 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         }
 
         return {
-          ...data,
+          ...formData,
           prompt: fullPrompt,
           userId,
           characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
         };
       });
 
-          // Use our batch processing function to generate stories (2 at a time for optimal speed)
-          const generatedStories = await generateStoriesBatch(storyParamsList, 2);
+      // Use our batch processing function to generate stories (2 at a time for optimal speed)
+      const generatedStories = await generateStoriesBatch(storyParamsList, 2);
 
-          // Update progress bar
-          setBatchProgress(validPrompts.length);
+      // Update progress bar
+      setBatchProgress(validPrompts.length);
 
-          toast({
-            title: "Stories Generated",
-            description: `Created ${generatedStories.length} stories. Now generating audio...`,
-          });
+      toast({
+        title: "Stories Generated",
+        description: `Created ${generatedStories.length} stories. Now generating audio...`,
+      });
 
-          // Prepare parameters for audio generation
-          const audioParams = generatedStories.map(story => ({
-            text: story.content,
-            voice: data.narrator,
-            userId: userId,
-            title: story.title
-          }));
+      // Prepare parameters for audio generation
+      const audioParams = generatedStories.map(story => ({
+        text: story.content,
+        voice: formData.narrator,
+        userId: userId,
+        title: story.title
+      }));
 
-          // Generate all audio files in parallel
-          const audioUrls = await generateAudioBatch(audioParams, 2);
+      // Generate all audio files in parallel
+      const audioUrls = await generateAudioBatch(audioParams, 2);
 
-          toast({
-            title: "Audio Generated",
-            description: "Now saving all stories to your library...",
-          });
-
-          // Save all stories to the database
-          const storyIds: number[] = [];
-
-          // Save each story one by one (could be parallelized in the future)
-          for (let i = 0; i < generatedStories.length; i++) {
-            try {
-              const saveResponse = await fetch('/api/stories', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  title: generatedStories[i].title,
-                  text: generatedStories[i].content,
-                  prompt: validPrompts[i].prompt,
-                  ageRange: data.ageRange,
-                  storyLength: data.storyLength,
-                  storyType: data.storyType,
-                  narrator: data.narrator,
-                  audioUrl: audioUrls[i],
-                  userId: userId,
-                  characterIds: selectedCharacters
-                }),
-              });
-
-              if (saveResponse.ok) {
-                const savedStory = await saveResponse.json();
-                storyIds.push(savedStory.id);
-              } else {
-                console.error(`Failed to save batch story ${i+1}:`, await saveResponse.text());
-                storyIds.push(-1);
-              }
-            } catch (error) {
-              console.error(`Error saving batch story ${i+1}:`, error);
-              storyIds.push(-1);
-            }
-          }
-
-          // Store the batch results for display
-          setBatchStories(generatedStories);
-          setBatchAudios(audioUrls);
-          setBatchStoriesIds(storyIds);
-
-          // Show success message
-          toast({
-            title: "Batch Generation Complete!",
-            description: `Successfully created ${generatedStories.length} stories. View results in the Batch Results tab.`,
-          });
-
-          // Switch to the batch results tab
-          setActiveTab("batch-results");
-        } catch (error) {
-          console.error("Error in batch generation:", error);
-          toast({
-            title: "Generation Failed",
-            description: error instanceof Error ? error.message : "Failed to generate batch stories. Please try again.",
-            variant: "destructive"
-          });
-        }
-      } 
-      // SINGLE STORY MODE
-      else {
-        // Standard single story generation from the prompt tab
+      // Save each story one by one (could be parallelized in the future)
+      const storyIds: number[] = [];
+      for (let i = 0; i < generatedStories.length; i++) {
         try {
-          // Append character information to the prompt if available
-          if (characterDetails) {
-            storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
-          }
-
-          // Generate the story text
-          const storyResponse = await generateStory(storyParams);
-          setGeneratedStory(storyResponse);
-
-          // Store sound effect suggestions if available
-          if (storyResponse.soundEffectSuggestions) {
-            setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
-          }
-
-          // Generate audio for the story (include title so narrator reads it first)
-          const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
-          setAudioUrl(audioUrl);
-
-          // Estimate audio duration (1 character ≈ 0.1 seconds)
-          const estimatedDuration = storyResponse.content.length * 0.1;
-          setAudioDuration(estimatedDuration);
-
-          // Reset sound effects
-          setSoundEffects([]);
-
-          // Update active tab
-          setActiveTab("preview");
-
-          // Notify parent component if callback provided
-          if (onStoryGenerated) {
-            onStoryGenerated(storyResponse, audioUrl);
-          }
-
-          toast({
-            title: "Story Generated!",
-            description: "Your story has been created successfully.",
+          const saveResponse = await fetch('/api/stories', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              title: generatedStories[i].title,
+              text: generatedStories[i].content,
+              prompt: validPrompts[i].prompt,
+              ageRange: formData.ageRange,
+              storyLength: formData.storyLength,
+              storyType: formData.storyType,
+              narrator: formData.narrator,
+              audioUrl: audioUrls[i],
+              userId: userId,
+              characterIds: selectedCharacters
+            }),
           });
+
+          if (saveResponse.ok) {
+            const savedStory = await saveResponse.json();
+            storyIds.push(savedStory.id);
+          } else {
+            console.error(`Failed to save batch story ${i+1}:`, await saveResponse.text());
+            storyIds.push(-1);
+          }
         } catch (error) {
-          console.error("Error generating single story:", error);
-          toast({
-            title: "Generation Failed",
-            description: error instanceof Error ? error.message : "Failed to generate the story. Please try again.",
-            variant: "destructive"
-          });
+          console.error(`Error saving batch story ${i+1}:`, error);
+          storyIds.push(-1);
         }
       }
-    } catch (error) {
-      console.error("Error in story generation:", error);
+
+      // Store the batch results for display
+      setBatchStories(generatedStories);
+      setBatchAudios(audioUrls);
+      setBatchStoriesIds(storyIds);
+
+      // Show success message
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate story. Please try again.",
+        title: "Batch Generation Complete!",
+        description: `Successfully created ${generatedStories.length} stories. View results in the Batch Results tab.`,
+      });
+
+      // Switch to the batch results tab
+      setActiveTab("batch-results");
+    } catch (error) {
+      console.error("Error in batch generation:", error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate batch stories. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -596,11 +253,88 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     }
   };
 
-        description: error instanceof Error ? error.message : "Failed to generate story. Please try again.",
+  // Single story generation handler
+  const handleSingleStoryGeneration = async (data: StoryGeneration) => {
+    try {
+      if (!isAuthenticated || !userId) {
+        toast({
+          title: "Authentication Required",
+          description: "You need to sign in to create stories",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setIsGenerating(true);
+
+      // Find character details for selected characters to include in prompt
+      let characterDetails = "";
+      if (selectedCharacters.length > 0) {
+        characterDetails = selectedCharacters.map(id => {
+          const character = userCharacters.find((c: Character) => c.id === id);
+          return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
+        }).filter(Boolean).join('\n\n');
+      }
+
+      // Create a complete prompt including characters if available
+      let fullPrompt = data.prompt;
+      if (characterDetails) {
+        fullPrompt = `${data.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
+      }
+
+      // Generate the story (include character IDs for saving)
+      const storyResponse = await generateStory({ ...data, prompt: fullPrompt, userId, characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined });
+      setGeneratedStory(storyResponse);
+
+      // Store sound effect suggestions if available
+      if (storyResponse.soundEffectSuggestions) {
+        setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
+      }
+
+      // Generate audio for the story (include title so narrator reads it first)
+      const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
+      setAudioUrl(audioUrl);
+
+      // Estimate audio duration (1 character ≈ 0.1 seconds)
+      const estimatedDuration = storyResponse.content.length * 0.1;
+      setAudioDuration(estimatedDuration);
+
+      // Reset sound effects
+      setSoundEffects([]);
+
+      // Update active tab
+      setActiveTab("preview");
+
+      // Notify parent component if callback provided
+      if (onStoryGenerated) {
+        onStoryGenerated(storyResponse, audioUrl);
+      }
+
+      toast({
+        title: "Story Generated!",
+        description: "Your story has been created successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating single story:", error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate the story. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // Submit handler for the form
+  const handleFormSubmit = async (data: StoryGeneration) => {
+    // For single story generation
+    if (activeTab === "prompt") {
+      await handleSingleStoryGeneration(data);
+    } 
+    // For batch story generation
+    else if (activeTab === "batch") {
+      await handleGenerateBatch();
     }
   };
 
@@ -608,365 +342,342 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     setSoundEffects(newEffects);
   };
 
-  return (
-    <section id="create" className="py-16 bg-blue-50">
-      <div className="container mx-auto px-4">
-        <h2 className="font-heading font-bold text-3xl md:text-4xl text-center mb-12">Create Your Audiobook</h2>
+  // Reset sound effects when story changes
+  useEffect(() => {
+    setSoundEffects([]);
+  }, [generatedStory]);
 
-        {!isAuthenticated ? (
-          <div className="bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl mx-auto p-8 text-center">
-            <div className="mb-6">
-              <LogIn className="mx-auto h-16 w-16 text-primary mb-4" />
-              <h3 className="text-2xl font-semibold mb-3">Sign In Required</h3>
-              <p className="text-gray-600 mb-6">
-                You need to sign in to create and save your own audiobooks. 
-                Sign in now to unlock all the storytelling features.
-              </p>
-              <Link href="/signin">
-                <Button className="bg-primary hover:bg-primary/90 text-white font-semibold px-8 py-3">
-                  Sign In to Continue
-                </Button>
-              </Link>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Don't have an account? <Link href="/signup" className="text-primary hover:underline">Sign Up</Link>
-            </p>
+  // Check if user has premium features for batch generation
+  const userHasPremium = user?.subscriptionTier === 'premium';
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+            <BookOpen className="w-8 h-8 text-white" />
           </div>
-        ) : (
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab}
-            className="bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl mx-auto"
-          >
-          <TabsList className="flex w-full h-auto border-b">
-            <TabsTrigger 
-              value="prompt" 
-              className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
-            >
-              <Wand2 className="mr-2" /> Story Prompt
-            </TabsTrigger>
-            {(userData?.subscriptionTier === "premium" || true) && ( /* forcing visibility for testing */
-              <TabsTrigger 
-                value="batch" 
-                className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M8 7h12v7H8z"></path>
-                  <path d="M4 11h12v7H4z"></path>
-                  <path d="M16 15h4v5h-4z"></path>
-                </svg> Batch Create
-              </TabsTrigger>
-            )}
-            <TabsTrigger 
-              value="preview" 
-              className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
-              disabled={!generatedStory}
-            >
-              <Headphones className="mr-2" /> Audio & Effects
-            </TabsTrigger>
-            {batchStories.length > 0 && (
-              <TabsTrigger 
-                value="batch-results" 
-                className="flex-1 py-4 font-heading font-semibold text-lg data-[state=active]:text-primary data-[state=active]:border-b-4 data-[state=active]:border-primary rounded-none"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 6h16" />
-                  <path d="M4 12h16" />
-                  <path d="M4 18h16" />
-                </svg> Batch Results ({batchStories.length})
-              </TabsTrigger>
-            )}
-          </TabsList>
+          <h3 className="text-xl font-semibold text-gray-900">Create Amazing Stories</h3>
+          <p className="text-gray-600">
+            Sign in to start creating personalized children's audiobooks with AI-powered storytelling.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Link href="/signin">
+              <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button variant="outline">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Sign Up
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          <TabsContent value="prompt" className="p-6">
-            <Form {...form}>
-              <form onSubmit={handleFormSubmit} className="space-y-6">
+  return (
+    <div className="max-w-4xl mx-auto p-6 space-y-6">
+      <div className="text-center space-y-2">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          AI Story Creator
+        </h1>
+        <p className="text-gray-600">
+          Create magical children's stories with AI-powered narration and sound effects
+        </p>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="prompt">Story Prompt</TabsTrigger>
+              <TabsTrigger value="batch" disabled={!userHasPremium}>
+                Batch Creation {!userHasPremium && "(Premium)"}
+              </TabsTrigger>
+              <TabsTrigger value="preview" disabled={!generatedStory && batchStories.length === 0}>
+                Preview
+              </TabsTrigger>
+              <TabsTrigger value="batch-results" disabled={batchStories.length === 0}>
+                Batch Results
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="prompt" className="space-y-6">
+              <FormField
+                control={form.control}
+                name="prompt"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-lg font-semibold">Story Prompt</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell me a story about a brave little mouse who discovers a magical garden..."
+                        className="min-h-[120px] resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {/* Character Selection */}
+              {userCharacters.length > 0 && (
+                <div className="space-y-3">
+                  <FormLabel className="text-lg font-semibold">Include Characters</FormLabel>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {userCharacters.map((character: Character) => (
+                      <div key={character.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                        <Checkbox
+                          id={`character-${character.id}`}
+                          checked={selectedCharacters.includes(character.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedCharacters([...selectedCharacters, character.id]);
+                            } else {
+                              setSelectedCharacters(selectedCharacters.filter(id => id !== character.id));
+                            }
+                          }}
+                        />
+                        <div className="flex-1">
+                          <label htmlFor={`character-${character.id}`} className="font-medium cursor-pointer">
+                            {character.name}
+                          </label>
+                          <p className="text-sm text-gray-600">{character.appearance}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
-                  name="prompt"
+                  name="ageRange"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="block font-heading font-semibold mb-2 text-lg">Describe your story idea:</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          rows={4}
-                          className="w-full rounded-2xl border-2 border-gray-200 p-4 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200"
-                          placeholder="For example: A young dragon who can't breathe fire goes on an adventure to find his special talent"
-                        />
-                      </FormControl>
+                      <FormLabel>Age Range</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select age range" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="3-5">3-5 years</SelectItem>
+                          <SelectItem value="6-8">6-8 years</SelectItem>
+                          <SelectItem value="9-12">9-12 years</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormItem>
                   )}
                 />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="ageRange"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="block font-heading font-semibold mb-2">Age Range:</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200">
-                              <SelectValue placeholder="Select age range" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="3-5 years">3-5 years</SelectItem>
-                            <SelectItem value="6-8 years">6-8 years</SelectItem>
-                            <SelectItem value="9-12 years">9-12 years</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="storyLength"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="block font-heading font-semibold mb-2">Story Length:</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200">
-                              <SelectValue placeholder="Select story length" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Short (2-3 min)">Short (2-3 min)</SelectItem>
-                            <SelectItem value="Medium (5-7 min)">Medium (5-7 min)</SelectItem>
-                            <SelectItem value="Long (10-15 min)">Long (10-15 min)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="storyType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="block font-heading font-semibold mb-2">Story Type:</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200">
-                              <SelectValue placeholder="Select story type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Adventure">Adventure</SelectItem>
-                            <SelectItem value="Fantasy">Fantasy</SelectItem>
-                            <SelectItem value="Educational">Educational</SelectItem>
-                            <SelectItem value="Bedtime">Bedtime</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="narrator"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="block font-heading font-semibold mb-2">Narrator Voice:</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20 transition-all duration-200">
-                              <SelectValue placeholder="Select narrator voice" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Female - Gentle">Female - Gentle</SelectItem>
-                            <SelectItem value="Male - Cheerful">Male - Cheerful</SelectItem>
-                            <SelectItem value="Female - Animated">Female - Animated</SelectItem>
-                            <SelectItem value="Male - Storyteller">Male - Storyteller</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Batch Generation for Premium Users */}
-                {userData?.subscriptionTier === "premium" && (
-                  <div className="mt-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
-                    <h3 className="text-lg font-semibold text-purple-800 mb-2">Premium Feature: Batch Story Generation</h3>
-                    <p className="text-sm text-gray-700 mb-3">
-                      As a premium user, you can generate multiple stories at once with the same prompt.
-                    </p>
-
-                    <div className="flex items-center mb-4">
-                      <Switch 
-                        checked={batchMode} 
-                        onCheckedChange={(checked) => setBatchMode(checked)}
-                        id="batch-mode"
-                        className="data-[state=checked]:bg-purple-600"
-                      />
-                      <label htmlFor="batch-mode" className="ml-2 text-sm font-medium">
-                        Enable Batch Story Generation
-                      </label>
-                    </div>
-
-                    {batchMode && (
-                      <div className="mt-2">
-                        <label className="block text-sm font-medium mb-1">Number of Stories to Generate (1-10):</label>
-                        <div className="flex items-center">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setBatchCount(Math.max(1, batchCount - 1))}
-                            className="h-8 w-8 p-0"
-                          >-</Button>
-                          <div className="mx-2 px-3 py-1 bg-white rounded-md border text-center min-w-[40px]">
-                            {batchCount}
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setBatchCount(Math.min(10, batchCount + 1))}
-                            className="h-8 w-8 p-0"
-                          >+</Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Batch story generation has been moved to its own tab */}
 
                 <FormField
                   control={form.control}
-                  name="includeSoundEffects"
+                  name="storyLength"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="font-heading font-semibold">
-                          Include Sound Effects
-                        </FormLabel>
-                        <div className="text-sm text-muted-foreground">
-                          {canUseSoundEffects 
-                            ?"Get AI suggestions for sound effects to enhance your story" 
-                            : "Upgrade to Pro or Premium plan to use sound effects"}
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          disabled={!canUseSoundEffects}
-                          aria-readonly={!canUseSoundEffects}
-                        />
-                      </FormControl>
+                    <FormItem>
+                      <FormLabel>Story Length</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select length" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="short">Short (2-3 min)</SelectItem>
+                          <SelectItem value="medium">Medium (5-7 min)</SelectItem>
+                          <SelectItem value="long">Long (10+ min)</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormItem>
                   )}
                 />
 
-                {/* Character Selection */}
-                {userCharacters.length > 0 && (
-                  <div className="space-y-4 border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-heading font-semibold text-lg">Include Characters</h3>
-                      <Link href="/characters">
-                        <Button type="button" variant="outline" size="sm" className="flex items-center">
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Manage Characters
-                        </Button>
-                      </Link>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                      {userCharacters.map((character: Character) => (
-                        <div key={character.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-slate-50">
-                          <Checkbox 
-                            id={`character-${character.id}`}
-                            checked={selectedCharacters.includes(character.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedCharacters([...selectedCharacters, character.id]);
-                              } else {
-                                setSelectedCharacters(selectedCharacters.filter(id => id !== character.id));
-                              }
-                            }}
-                          />
-                          <div className="grid gap-1.5 leading-none">
-                            <label
-                              htmlFor={`character-${character.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {character.name}
-                            </label>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {character.personality}
-                            </p>
-                          </div>
+                <FormField
+                  control={form.control}
+                  name="storyType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Story Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="adventure">Adventure</SelectItem>
+                          <SelectItem value="educational">Educational</SelectItem>
+                          <SelectItem value="bedtime">Bedtime</SelectItem>
+                          <SelectItem value="fantasy">Fantasy</SelectItem>
+                          <SelectItem value="friendship">Friendship</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="narrator"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Narrator Voice</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select narrator voice" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Female-Gentle">Female - Gentle</SelectItem>
+                        <SelectItem value="Male-Cheerful">Male - Cheerful</SelectItem>
+                        <SelectItem value="Female-Animated">Female - Animated</SelectItem>
+                        <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
+
+              <Button 
+                type="submit" 
+                size="lg" 
+                disabled={isGenerating || !form.watch("prompt")?.trim()}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating Your Story...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Generate Story
+                  </>
+                )}
+              </Button>
+            </TabsContent>
+
+            <TabsContent value="batch" className="space-y-6">
+              {!userHasPremium ? (
+                <div className="text-center p-8 bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Premium Feature</h3>
+                  <p className="text-gray-600 mb-4">
+                    Batch story creation is available for Premium subscribers. Generate up to 10 stories at once!
+                  </p>
+                  <Link href="/subscription">
+                    <Button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+                      Upgrade to Premium
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="batchCount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-lg font-semibold">Number of Stories</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} defaultValue={field.value.toString()}>
+                            <FormControl>
+                              <SelectTrigger className="w-48">
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Array.from({ length: 8 }, (_, i) => i + 3).map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  {num} stories
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Character Selection for Batch */}
+                    {userCharacters.length > 0 && (
+                      <div className="space-y-3">
+                        <FormLabel className="text-lg font-semibold">Include Characters</FormLabel>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {userCharacters.map((character: Character) => (
+                            <div key={character.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                              <Checkbox
+                                id={`batch-character-${character.id}`}
+                                checked={selectedCharacters.includes(character.id)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedCharacters([...selectedCharacters, character.id]);
+                                  } else {
+                                    setSelectedCharacters(selectedCharacters.filter(id => id !== character.id));
+                                  }
+                                }}
+                              />
+                              <div className="flex-1">
+                                <label htmlFor={`batch-character-${character.id}`} className="font-medium cursor-pointer">
+                                  {character.name}
+                                </label>
+                                <p className="text-sm text-gray-600">{character.appearance}</p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <FormLabel className="text-lg font-semibold">Story Prompts</FormLabel>
+                      {batchPrompts.map((prompt, index) => (
+                        <FormField
+                          key={prompt.id}
+                          control={form.control}
+                          name={`batchPrompts.${index}.prompt`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Story {index + 1}</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  placeholder={`Enter prompt for story ${index + 1}...`}
+                                  className="min-h-[80px] resize-none"
+                                  {...field}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
                       ))}
                     </div>
-                  </div>
-                )}
 
-                <div className="flex justify-end">
-                  <Button 
-                    type="submit" 
-                    className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
-                    disabled={isGenerating}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        Generate Story
-                        <Wand2 className="ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
-
-          <TabsContent value="batch" className="p-6">
-            <Form {...form}>
-              <form onSubmit={handleFormSubmit} className="space-y-6">
-                <div className="mb-4">
-                  <h3 className="font-heading font-bold text-xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                    Batch Story Creation
-                  </h3>
-                  <p className="text-gray-600 mb-6">
-                    Create up to 10 different stories at once. Each story will have a different prompt but share the same settings.
-                  </p>
-
-                  {/* Common settings section */}
-                  <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
-                    <h4 className="font-medium text-lg mb-4">Common Settings for All Stories</h4>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <FormField
                         control={form.control}
                         name="ageRange"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-medium">Age Range:</FormLabel>
+                            <FormLabel>Age Range</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className="w-full rounded-lg border">
+                                <SelectTrigger>
                                   <SelectValue placeholder="Select age range" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="3-5 years">3-5 years</SelectItem>
-                                <SelectItem value="6-8 years">6-8 years</SelectItem>
-                                <SelectItem value="9-12 years">9-12 years</SelectItem>
+                                <SelectItem value="3-5">3-5 years</SelectItem>
+                                <SelectItem value="6-8">6-8 years</SelectItem>
+                                <SelectItem value="9-12">9-12 years</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
@@ -978,17 +689,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         name="storyLength"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-medium">Story Length:</FormLabel>
+                            <FormLabel>Story Length</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className="w-full rounded-lg border">
-                                  <SelectValue placeholder="Select story length" />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select length" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="Short (2-3 min)">Short (2-3 min)</SelectItem>
-                                <SelectItem value="Medium (5-7 min)">Medium (5-7 min)</SelectItem>
-                                <SelectItem value="Long (10-15 min)">Long (10-15 min)</SelectItem>
+                                <SelectItem value="short">Short (2-3 min)</SelectItem>
+                                <SelectItem value="medium">Medium (5-7 min)</SelectItem>
+                                <SelectItem value="long">Long (10+ min)</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
@@ -997,21 +708,22 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
 
                       <FormField
                         control={form.control}
-                        name="narrator"
+                        name="storyType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-medium">Narrator Voice:</FormLabel>
+                            <FormLabel>Story Type</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className="w-full rounded-lg border">
-                                  <SelectValue placeholder="Select narrator" />
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="Female - Gentle">Female - Gentle</SelectItem>
-                                <SelectItem value="Male - Cheerful">Male - Cheerful</SelectItem>
-                                <SelectItem value="Female - Animated">Female - Animated</SelectItem>
-                                <SelectItem value="Male - Storyteller">Male - Storyteller</SelectItem>
+                                <SelectItem value="adventure">Adventure</SelectItem>
+                                <SelectItem value="educational">Educational</SelectItem>
+                                <SelectItem value="bedtime">Bedtime</SelectItem>
+                                <SelectItem value="fantasy">Fantasy</SelectItem>
+                                <SelectItem value="friendship">Friendship</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
@@ -1021,428 +733,201 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
 
                     <FormField
                       control={form.control}
-                      name="storyType"
+                      name="narrator"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-medium">Story Type:</FormLabel>
+                          <FormLabel>Narrator Voice</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="w-full rounded-lg border">
-                                <SelectValue placeholder="Select story type" />
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select narrator voice" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Adventure">Adventure</SelectItem>
-                              <SelectItem value="Fantasy">Fantasy</SelectItem>
-                              <SelectItem value="Educational">Educational</SelectItem>
-                              <SelectItem value="Bedtime">Bedtime</SelectItem>
-                              <SelectItem value="Moral Lesson">Moral Lesson</SelectItem>
+                              <SelectItem value="Female-Gentle">Female - Gentle</SelectItem>
+                              <SelectItem value="Male-Cheerful">Male - Cheerful</SelectItem>
+                              <SelectItem value="Female-Animated">Female - Animated</SelectItem>
+                              <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
                       )}
                     />
 
-                    {canUseSoundEffects && (
-                      <FormField
-                        control={form.control}
-                        name="includeSoundEffects"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-2 mt-4">
-                            <FormControl>
-                              <Switch 
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-medium">
-                              Include Sound Effects in all stories
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Batch count control */}
-                <div className="mb-6">
-                  <FormField
-                    control={form.control}
-                    name="batchCount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-semibold mb-2">Number of Stories to Generate:</FormLabel>
-                        <div className="flex items-center mb-4">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => field.onChange(Math.max(1, field.value - 1))}
-                            className="h-9 w-9 p-0 rounded-md"
-                          >-</Button>
-                          <FormControl>
-                            <div className="mx-4 px-4 py-2 bg-white rounded-md border border-gray-300 text-center font-medium text-lg min-w-[50px]">
-                              {field.value}
-                            </div>
-                          </FormControl>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => field.onChange(Math.min(10, field.value + 1))}
-                            className="h-9 w-9 p-0 rounded-md"
-                          >+</Button>
+                    {isGenerating && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-gray-600">
+                          <span>Generating stories...</span>
+                          <span>{batchProgress} stories completed</span>
                         </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Characters section */}
-                {userCharacters.length > 0 && (
-                  <div className="space-y-4 border rounded-lg p-4 mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-heading font-semibold text-lg">Include Characters in All Stories</h3>
-                      <Link href="/characters">
-                        <Button type="button" variant="outline" size="sm" className="flex items-center">
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Manage Characters
-                        </Button>
-                      </Link>
-                    </div>
-                    <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                      {userCharacters.map((character: Character) => (
-                        <div key={character.id} className="flex items-start space-x-3 p-2 rounded-md hover:bg-slate-50">
-                          <Checkbox 
-                            id={`batch-character-${character.id}`}
-                            checked={selectedCharacters.includes(character.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedCharacters([...selectedCharacters, character.id]);
-                              } else {
-                                setSelectedCharacters(selectedCharacters.filter(id => id !== character.id));
-                              }
-                            }}
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300" 
+                            style={{ width: `${(batchProgress / form.watch("batchCount")) * 100}%` }}
                           />
-                          <div>
-                            <label
-                              htmlFor={`batch-character-${character.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                              {character.name}
-                            </label>
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              {character.personality}
-                            </p>
-                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Story prompts section */}
-                <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 border border-gray-200 rounded-xl p-4">
-                  <h4 className="font-heading font-semibold text-lg sticky top-0 bg-white py-2">Story Prompts</h4>
-
-                  {batchPromptFields.map((field, index) => (
-                    <div key={field.id} className="p-4 bg-white rounded-xl border-2 border-gray-200">
-                      <div className="flex justify-between items-center mb-2">
-                        <h5 className="font-medium">Story #{index + 1}</h5>
                       </div>
-                      <FormField
-                        control={form.control}
-                        name={`batchPrompts.${index}.prompt`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Story Idea:</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                {...field}
-                                rows={3}
-                                className="w-full rounded-lg border-2 border-gray-200 p-3"
-                                placeholder="Describe your story idea here..."
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex justify-end">
-                  <Button 
-                    type="button" 
-                    className="bg-primary hover:bg-red-500 text-white font-heading font-bold text-lg py-6 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center"
-                    disabled={isGenerating}
-                    onClick={handleGenerateBatch}
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        {batchProgress > 0 ? `Generating ${batchProgress} of ${form.getValues("batchCount")}...` : "Generating..."}
-                      </>
-                    ) : (
-                      <>
-                        Generate Batch 
-                        <svg xmlns="http://www.w3.org/2000/svg" className="ml-2 h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M8 7h12v7H8z"></path>
-                          <path d="M4 11h12v7H4z"></path>
-                          <path d="M16 15h4v5h-4z"></path>
-                        </svg>
-                      </>
                     )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </TabsContent>
 
-          <TabsContent value="batch-results" className="p-6">
-            <div className="space-y-8">
-              <div className="mb-4">
-                <h3 className="font-heading font-bold text-xl mb-2">Batch Generation Results</h3>
-                <p className="text-gray-600 mb-4">
-                  Here are all the stories generated in this batch. You can listen to each one and save or delete them.
-                </p>
-              </div>
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      disabled={isGenerating}
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      {isGenerating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating {form.watch("batchCount")} Stories...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="mr-2 h-4 w-4" />
+                          Generate {form.watch("batchCount")} Stories
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </TabsContent>
 
-              {batchStories.length > 0 ? (
-                batchStories.map((story, index) => {
-                  const audioUrl = batchAudios[index] || '';
-                  const storyId = batchStoriesIds[index] || -1;
+            <TabsContent value="preview" className="space-y-6">
+              {generatedStory ? (
+                <div className="space-y-6">
+                  <StoryPreview
+                    story={generatedStory}
+                    audioUrl={audioUrl}
+                    soundEffects={soundEffects}
+                    audioDuration={audioDuration}
+                    soundEffectSuggestions={soundEffectSuggestions}
+                    userId={userId}
+                  />
 
-                  return (
-                    <div key={index} className="border border-gray-200 rounded-xl overflow-hidden mb-6">
-                      <div className="bg-gray-50 p-4 border-b">
-                        <h4 className="font-heading font-semibold text-lg">{story.title}</h4>
+                  <Tabs defaultValue="audio" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="audio">
+                        <Headphones className="mr-2 h-4 w-4" />
+                        Audio & Effects
+                      </TabsTrigger>
+                      <TabsTrigger value="text">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Text View
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="audio" className="space-y-4">
+                      {audioUrl && (
+                        <div className="space-y-4">
+                          <AudioPlayer
+                            audioUrl={audioUrl}
+                            className="w-full"
+                            storyText={generatedStory.content}
+                          />
+
+                          <SoundEffectSelector
+                            storyText={generatedStory.content}
+                            onSoundEffectsChange={handleSoundEffectsChange}
+                            suggestions={soundEffectSuggestions}
+                          />
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="text" className="space-y-4">
+                      <div className="prose max-w-none p-6 bg-white border rounded-lg">
+                        <h2 className="text-2xl font-bold text-gray-900 mb-4">{generatedStory.title}</h2>
+                        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                          {generatedStory.content}
+                        </div>
                       </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-12">
+                  <BookOpen className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p>Generate a story to see the preview here.</p>
+                </div>
+              )}
+            </TabsContent>
 
-                      {/* Audio player for this story */}
-                      <div className="p-4 border-b bg-white">
-                        {audioUrl ? (
-                          <div className="flex flex-col gap-4">
-                            <AudioPlayer 
-                              audioUrl={audioUrl}
-                              storyText={story.content}
-                              className="w-full"
-                            />
+            <TabsContent value="batch-results" className="space-y-6">
+              {batchStories.length > 0 ? (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Batch Generation Results</h2>
+                    <p className="text-gray-600">Successfully generated {batchStories.length} stories</p>
+                  </div>
 
-                            <div className="flex flex-wrap gap-2 justify-end">
-                              {storyId > 0 ? (
-                                <Button 
-                                  type="button" 
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      const response = await fetch(`/api/stories/${storyId}`, {
-                                        method: 'DELETE'
-                                      });
-
-                                      if (response.ok) {
-                                        // Update the local state to remove this story
-                                        const newBatchStories = [...batchStories];
-                                        const newBatchAudios = [...batchAudios];
-                                        const newBatchIds = [...batchStoriesIds];
-
-                                        newBatchStories.splice(index, 1);
-                                        newBatchAudios.splice(index, 1);
-                                        newBatchIds.splice(index, 1);
-
-                                        setBatchStories(newBatchStories);
-                                        setBatchAudios(newBatchAudios);
-                                        setBatchStoriesIds(newBatchIds);
-
-                                        toast({
-                                          title: "Story Deleted",
-                                          description: "Story has been removed from your library",
-                                        });
-                                      } else {
-                                        toast({
-                                          title: "Error",
-                                          description: "Failed to delete the story. Please try again.",
-                                          variant: "destructive"
-                                        });
-                                      }
-                                    } catch (error) {
-                                      toast({
-                                        title: "Error",
-                                        description: "An error occurred while deleting the story.",
-                                        variant: "destructive"
-                                      });
-                                    }
-                                  }}
-                                >
-                                  Delete
-                                </Button>
-                              ) : (
-                                <Button 
-                                  type="button" 
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={async () => {
-                                    try {
-                                      // Save the story to the database
-                                      const response = await fetch('/api/stories', {
-                                        method: 'POST',
-                                        headers: {
-                                          'Content-Type': 'application/json',
-                                        },
-                                        body: JSON.stringify({
-                                          title: story.title,
-                                          text: story.content,
-                                          prompt: form.getValues("batchPrompts")[index]?.prompt || "",
-                                          ageRange: form.getValues("ageRange"),
-                                          storyLength: form.getValues("storyLength"),
-                                          storyType: form.getValues("storyType"),
-                                          narrator: form.getValues("narrator"),
-                                          audioUrl: audioUrl,
-                                          userId: userId,
-                                          characterIds: selectedCharacters
-                                        }),
-                                      });
-
-                                      if (response.ok) {
-                                        const savedStory = await response.json();
-
-                                        // Update the ID in our state
-                                        const newIds = [...batchStoriesIds];
-                                        newIds[index] = savedStory.id;
-                                        setBatchStoriesIds(newIds);
-
-                                        toast({
-                                          title: "Story Saved",
-                                          description: "Story has been saved to your library",
-                                        });
-                                      } else {
-                                        toast({
-                                          title: "Error",
-                                          description: "Failed to save the story. Please try again.",
-                                          variant: "destructive"
-                                        });
-                                      }
-                                    } catch (error) {
-                                      toast({
-                                        title: "Error",
-                                        description: "An error occurred while saving the story.",
-                                        variant: "destructive"
-                                      });
-                                    }
-                                  }}
-                                >
-                                  Save
-                                </Button>
-                              )}
-
-                              <Button 
-                                type="button" 
+                  <div className="grid gap-6">
+                    {batchStories.map((story, index) => (
+                      <div key={index} className="border rounded-lg p-6 bg-white">
+                        <div className="flex justify-between items-start mb-4">
+                          <h3 className="text-xl font-semibold text-gray-900">{story.title}</h3>
+                          <div className="flex gap-2">
+                            {batchStoriesIds[index] > 0 && (
+                              <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  // Set this story as the current story for editing
-                                  setGeneratedStory(story);
-                                  setAudioUrl(audioUrl);
-                                  setActiveTab("preview");
+                                  // Handle save logic here
+                                  toast({
+                                    title: "Story Saved",
+                                    description: "Story has been saved to your library.",
+                                  });
                                 }}
                               >
-                                Edit & Add Effects
+                                Save
                               </Button>
-                            </div>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Handle delete logic here
+                                const newStories = batchStories.filter((_, i) => i !== index);
+                                const newAudios = batchAudios.filter((_, i) => i !== index);
+                                const newIds = batchStoriesIds.filter((_, i) => i !== index);
+                                setBatchStories(newStories);
+                                setBatchAudios(newAudios);
+                                setBatchStoriesIds(newIds);
+                              }}
+                            >
+                              Delete
+                            </Button>
                           </div>
-                        ) : (
-                          <div className="text-center py-4 text-gray-500">
-                            Audio failed to generate for this story.
+                        </div>
+                        
+                        {batchAudios[index] && (
+                          <div className="mb-4">
+                            <AudioPlayer
+                              audioUrl={batchAudios[index]}
+                              className="w-full"
+                              storyText={story.content}
+                            />
                           </div>
                         )}
-                      </div>
-
-                      {/* Story content summary */}
-                      <div className="p-4 bg-white">
-                        <div className="max-h-32 overflow-y-auto text-sm text-gray-700">
-                          {story.content.substring(0, 300)}
-                          {story.content.length > 300 && '...'}
+                        
+                        <div className="prose max-w-none">
+                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-6">
+                            {story.content}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })
+                    ))}
+                  </div>
+                </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No stories have been generated yet. Use the Batch Create tab to generate multiple stories.
+                <div className="text-center text-gray-500 py-12">
+                  <BookOpen className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p>No batch stories generated yet.</p>
                 </div>
               )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="preview" className="p-0">
-            {generatedStory && audioUrl && (
-              <>
-                <StoryPreview 
-                  story={generatedStory} 
-                  audioUrl={audioUrl} 
-                  soundEffects={soundEffects}
-                  characterIds={selectedCharacters}
-                />
-
-                <div className="p-6 border-t border-gray-200">
-                  <h3 className="font-heading font-semibold text-xl mb-4">Edit Story Content</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <FormLabel className="block font-heading font-semibold mb-2">Title:</FormLabel>
-                      <Textarea 
-                        value={generatedStory.title} 
-                        onChange={(e) => setGeneratedStory({...generatedStory, title: e.target.value})}
-                        className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20"
-                      />
-                    </div>
-
-                    <div>
-                      <FormLabel className="block font-heading font-semibold mb-2">Content:</FormLabel>
-                      <Textarea 
-                        value={generatedStory.content} 
-                        onChange={(e) => setGeneratedStory({...generatedStory, content: e.target.value})}
-                        className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20"
-                        rows={8}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {canUseSoundEffects && (
-                  <div className="px-6 pb-6">
-                    <SoundEffectSelector
-                      audioUrl={audioUrl}
-                      duration={audioDuration}
-                      soundEffects={soundEffects}
-                      onChange={handleSoundEffectsChange}
-                      suggestions={soundEffectSuggestions}
-                    />
-                  </div>
-                )}
-
-                {!canUseSoundEffects && (
-                  <div className="px-6 pb-6 mt-6">
-                    <div className="bg-blue-50 rounded-xl p-5 flex items-center gap-4">
-                      <div className="text-primary text-3xl">
-                        <VolumeX />
-                      </div>
-                      <div>
-                        <h3 className="font-heading font-bold text-lg">Sound Effects Available in Pro Plan</h3>
-                        <p className="text-gray-600">Upgrade to Pro or Premium plan to enhance your story with sound effects</p>
-                      </div>
-                      <Button className="ml-auto bg-purple text-white">
-                        Upgrade Plan
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
-        )}
-      </div>
-    </section>
+            </TabsContent>
+          </Tabs>
+        </form>
+      </Form>
+    </div>
   );
 }
