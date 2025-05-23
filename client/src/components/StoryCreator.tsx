@@ -558,13 +558,13 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 size="lg" 
                 disabled={isGenerating || !form.watch("prompt")?.trim()}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
                   console.log("Button clicked!");
-                  console.log("Form values:", form.getValues());
-                  console.log("Form errors:", form.formState.errors);
-                  console.log("Form is valid:", form.formState.isValid);
-                  console.log("Prompt value:", form.watch("prompt"));
-                  console.log("Is disabled:", isGenerating || !form.watch("prompt")?.trim());
+                  const formData = form.getValues();
+                  console.log("Form values:", formData);
+                  console.log("Starting story generation directly...");
+                  handleFormSubmit(formData);
                 }}
               >
                 {isGenerating ? (
