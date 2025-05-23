@@ -20,7 +20,7 @@ export default function Hero() {
                 </Button>
               </Link>
               <Link href="/characters">
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-7 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl w-full sm:w-auto">
+                <Button className="bg-red-500 hover:bg-red-600 text-white font-bold py-7 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl w-full sm:w-auto">
                   Create Characters
                 </Button>
               </Link>
