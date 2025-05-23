@@ -43,13 +43,25 @@ export async function exportStories(options: ExportOptions): Promise<{ downloadU
   const filename = `${safePlaylistName}_${timestamp}.${format}`;
   const filePath = path.join(exportDir, filename);
   
-  // Export based on format - temporarily simplify to just use MP3 format for all exports
-  // to ensure basic functionality works while we develop the more advanced formats
+  // Export based on format
   try {
-    // For now, we'll just use MP3 format for all exports to ensure it works
-    await exportMp3(stories, filePath);
+    switch (format) {
+      case 'mp3':
+        await exportMp3(stories, filePath);
+        break;
+      case 'yuto':
+        await exportYuto(stories, filePath, options);
+        break;
+      case 'toniebox':
+        await exportToniebox(stories, filePath, options);
+        break;
+      case 'audible':
+        await exportAudible(stories, filePath, options);
+        break;
+      default:
+        throw new Error(`Unsupported format: ${format}`);
+    }
     
-    // Log the export as if we processed the requested format
     console.log(`Exported stories in ${format} format to: ${filePath}`);
   } catch (error) {
     console.error(`Error exporting to ${format} format:`, error);
@@ -108,13 +120,23 @@ async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
       const exportedSize = fs.statSync(outputPath).size;
       console.log(`Exported file size: ${exportedSize} bytes`);
     } else {
-      // For multiple files, we need to concatenate them
-      // For now, we'll use the first file as a fallback
-      // In a production environment, you'd use ffmpeg to properly concatenate
-      console.log(`Using first file: ${audioFiles[0]} for export`);
-      fs.copyFileSync(audioFiles[0], outputPath);
+      // For multiple files, concatenate them into a single MP3
+      console.log(`Concatenating ${audioFiles.length} files`);
+      
+      // Read all audio files and combine them
+      const buffers: Buffer[] = [];
+      for (const audioFile of audioFiles) {
+        const buffer = fs.readFileSync(audioFile);
+        console.log(`Read ${buffer.length} bytes from ${audioFile}`);
+        buffers.push(buffer);
+      }
+      
+      // Combine all buffers
+      const combinedBuffer = Buffer.concat(buffers);
+      fs.writeFileSync(outputPath, combinedBuffer);
+      
       const exportedSize = fs.statSync(outputPath).size;
-      console.log(`Exported file size: ${exportedSize} bytes`);
+      console.log(`Combined and exported file size: ${exportedSize} bytes`);
     }
     
     console.log(`Exported MP3 to: ${outputPath}`);
