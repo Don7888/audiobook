@@ -68,21 +68,34 @@ export async function exportStories(options: ExportOptions): Promise<{ downloadU
  */
 async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
   try {
+    console.log('Starting MP3 export for stories:', stories.map(s => ({ title: s.title, audioUrl: s.audioUrl })));
+    
     // Get the audio files for each story
     const audioFiles: string[] = [];
     
     for (const story of stories) {
+      console.log(`Processing story: ${story.title}, audioUrl: ${story.audioUrl}`);
+      
       if (story.audioUrl) {
         // Extract the filename from the audio URL (e.g., "/api/stories/audio/filename.mp3")
         const audioFilename = story.audioUrl.split('/').pop();
+        console.log(`Extracted filename: ${audioFilename}`);
+        
         if (audioFilename) {
           const audioPath = path.join(process.cwd(), 'audio', audioFilename);
+          console.log(`Looking for audio file at: ${audioPath}`);
+          console.log(`File exists: ${fs.existsSync(audioPath)}`);
+          
           if (fs.existsSync(audioPath)) {
+            const fileSize = fs.statSync(audioPath).size;
+            console.log(`Found audio file: ${audioPath}, size: ${fileSize} bytes`);
             audioFiles.push(audioPath);
           }
         }
       }
     }
+    
+    console.log(`Found ${audioFiles.length} audio files:`, audioFiles);
     
     if (audioFiles.length === 0) {
       throw new Error('No audio files found for the selected stories');
@@ -90,12 +103,18 @@ async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
     
     if (audioFiles.length === 1) {
       // If only one file, just copy it
+      console.log(`Copying single file: ${audioFiles[0]} to ${outputPath}`);
       fs.copyFileSync(audioFiles[0], outputPath);
+      const exportedSize = fs.statSync(outputPath).size;
+      console.log(`Exported file size: ${exportedSize} bytes`);
     } else {
       // For multiple files, we need to concatenate them
       // For now, we'll use the first file as a fallback
       // In a production environment, you'd use ffmpeg to properly concatenate
+      console.log(`Using first file: ${audioFiles[0]} for export`);
       fs.copyFileSync(audioFiles[0], outputPath);
+      const exportedSize = fs.statSync(outputPath).size;
+      console.log(`Exported file size: ${exportedSize} bytes`);
     }
     
     console.log(`Exported MP3 to: ${outputPath}`);
