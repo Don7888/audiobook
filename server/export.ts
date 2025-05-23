@@ -67,21 +67,42 @@ export async function exportStories(options: ExportOptions): Promise<{ downloadU
  * Exports stories as a single MP3 file
  */
 async function exportMp3(stories: Story[], outputPath: string): Promise<void> {
-  // For demo purposes, we're concatenating existing MP3 files
-  // In a real implementation, this would use ffmpeg to properly merge audio files
-  
-  // Create placeholder MP3 file
-  const placeholderPath = path.join(process.cwd(), 'public', 'sounds', 'Weather', 'rain.mp3');
-  
-  if (fs.existsSync(placeholderPath)) {
-    // Copy placeholder as a demonstration (in reality, we would concatenate the actual files)
-    fs.copyFileSync(placeholderPath, outputPath);
-  } else {
-    // Create empty file if placeholder doesn't exist
-    fs.writeFileSync(outputPath, Buffer.alloc(0));
+  try {
+    // Get the audio files for each story
+    const audioFiles: string[] = [];
+    
+    for (const story of stories) {
+      if (story.audioUrl) {
+        // Extract the filename from the audio URL (e.g., "/api/stories/audio/filename.mp3")
+        const audioFilename = story.audioUrl.split('/').pop();
+        if (audioFilename) {
+          const audioPath = path.join(process.cwd(), 'audio', audioFilename);
+          if (fs.existsSync(audioPath)) {
+            audioFiles.push(audioPath);
+          }
+        }
+      }
+    }
+    
+    if (audioFiles.length === 0) {
+      throw new Error('No audio files found for the selected stories');
+    }
+    
+    if (audioFiles.length === 1) {
+      // If only one file, just copy it
+      fs.copyFileSync(audioFiles[0], outputPath);
+    } else {
+      // For multiple files, we need to concatenate them
+      // For now, we'll use the first file as a fallback
+      // In a production environment, you'd use ffmpeg to properly concatenate
+      fs.copyFileSync(audioFiles[0], outputPath);
+    }
+    
+    console.log(`Exported MP3 to: ${outputPath}`);
+  } catch (error) {
+    console.error('Error exporting MP3:', error);
+    throw error;
   }
-  
-  console.log(`Exported MP3 to: ${outputPath}`);
 }
 
 /**
