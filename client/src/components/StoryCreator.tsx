@@ -561,6 +561,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 onClick={() => {
                   console.log("Button clicked!");
                   console.log("Form values:", form.getValues());
+                  console.log("Form errors:", form.formState.errors);
+                  console.log("Form is valid:", form.formState.isValid);
                   console.log("Prompt value:", form.watch("prompt"));
                   console.log("Is disabled:", isGenerating || !form.watch("prompt")?.trim());
                 }}
