@@ -65,20 +65,20 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     },
     enabled: !!userId,
   });
-  
+
   // Fetch user's characters
   const { data: userCharacters = [] } = useQuery({
     queryKey: ['/api/characters'],
     queryFn: async () => {
       if (!isAuthenticated || !userId) return [];
-      
+
       try {
         const response = await fetch('/api/characters', {
           headers: {
             'user-id': userId.toString()
           }
         });
-        
+
         if (!response.ok) throw new Error('Failed to fetch characters');
         return response.json();
       } catch (error) {
@@ -93,7 +93,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const userSubscriptionTier = userData?.subscriptionTier || user?.subscriptionTier || 'basic';
   console.log("User subscription tier:", userSubscriptionTier);
   console.log("Subscription plans:", subscriptionPlans);
-  
+
   // Force-enable sound effects for debugging
   const canUseSoundEffects = true; // temporarily enable for all users to debug
 
@@ -115,17 +115,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       ]
     }
   });
-  
+
   const { fields: batchPromptFields, append: appendBatchPrompt, remove: removeBatchPrompt } = useFieldArray({
     control: form.control,
     name: "batchPrompts"
   });
-  
+
   // Manage batch prompts count 
   useEffect(() => {
     const currentCount = form.getValues("batchCount") || 3;
     const currentPrompts = form.getValues("batchPrompts") || [];
-    
+
     // Add empty prompts if we need more
     if (currentPrompts.length < currentCount) {
       const toAdd = currentCount - currentPrompts.length;
@@ -133,7 +133,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         appendBatchPrompt({ prompt: "" });
       }
     }
-    
+
     // Remove excess prompts if we have too many
     if (currentPrompts.length > currentCount) {
       const toRemove = currentPrompts.length - currentCount;
@@ -148,7 +148,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     // Check if there's at least one valid prompt
     const batchPrompts = form.getValues("batchPrompts") || [];
     const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
-    
+
     if (validPrompts.length === 0) {
       toast({
         title: "Empty Prompts",
@@ -157,20 +157,20 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       });
       return;
     }
-    
+
     try {
       setIsGenerating(true);
       setBatchProgress(0);
-      
+
       // Get form data
       const formData = form.getValues();
-      
+
       // Prepare for batch generation
       toast({
         title: "Starting Batch Generation",
         description: `Generating ${validPrompts.length} stories with parallel processing.`,
       });
-      
+
       // Find character details to include in each prompt
       let characterDetails = "";
       if (selectedCharacters.length > 0) {
@@ -179,7 +179,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
         }).filter(Boolean).join('\n\n');
       }
-      
+
       // Create parameters for all the stories
       const storyParamsList = validPrompts.map(item => ({
         prompt: characterDetails ? 
@@ -194,17 +194,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         includeSoundEffects: formData.includeSoundEffects,
         batchPrompts: []
       }));
-      
+
       // Generate all stories in parallel (2 at a time for optimal speed)
       console.log("Starting parallel story generation with concurrency of 2");
       const generatedStories = await generateStoriesBatch(storyParamsList, 2);
       setBatchProgress(50);
-      
+
       toast({
         title: "Stories Generated",
         description: `Created ${generatedStories.length} stories. Now generating audio...`,
       });
-      
+
       // Generate all audio files in parallel (2 at a time for optimal speed)
       console.log("Starting parallel audio generation with concurrency of 2");
       const audioParams = generatedStories.map(story => ({
@@ -213,18 +213,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         userId: userId,
         title: story.title
       }));
-      
+
       const audioUrls = await generateAudioBatch(audioParams, 2);
       setBatchProgress(80);
-      
+
       toast({
         title: "Audio Generated",
         description: "Now saving stories to your library...",
       });
-      
+
       // Save stories to database
       const storyIds: number[] = [];
-      
+
       for (let i = 0; i < generatedStories.length; i++) {
         try {
           const response = await fetch('/api/stories', {
@@ -243,7 +243,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               characterIds: selectedCharacters
             })
           });
-          
+
           if (response.ok) {
             const savedStory = await response.json();
             storyIds.push(savedStory.id);
@@ -256,19 +256,19 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           storyIds.push(-1);
         }
       }
-      
+
       // Store results for display
       setBatchStories(generatedStories);
       setBatchAudios(audioUrls);
       setBatchStoriesIds(storyIds);
       setBatchProgress(100);
-      
+
       // Success notification
       toast({
         title: "Batch Generation Complete!",
         description: `Successfully created ${generatedStories.length} stories with parallel processing.`,
       });
-      
+
       // Switch to results tab
       setActiveTab("batch-results");
     } catch (error) {
@@ -282,7 +282,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       setIsGenerating(false);
     }
   };
-  
+
   const handleSubmit = async (data: StoryGeneration) => {
     // For batch mode
     if (activeTab === "batch") {
@@ -305,16 +305,16 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         });
         return;
       }
-      
+
       setIsGenerating(true);
-      
+
       // Add user ID and selected characters
       const storyParams = {
         ...data,
         userId: userId,
         characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
       };
-      
+
       // Find character details for selected characters to include in prompt
       let characterDetails = "";
       if (selectedCharacters.length > 0) {
@@ -323,40 +323,40 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
         }).filter(Boolean).join('\n\n');
       }
-      
+
       // Add character information to the prompt
       if (characterDetails) {
         storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
       }
-      
+
       // Generate the story text
       const storyResponse = await generateStory(storyParams);
       setGeneratedStory(storyResponse);
-      
+
       // Store sound effect suggestions if available
       if (storyResponse.soundEffectSuggestions) {
         setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
       }
-      
+
       // Generate audio for the story
       const storyAudioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
       setAudioUrl(storyAudioUrl);
-      
+
       // Estimate audio duration (1 character ≈ 0.1 seconds)
       const estimatedDuration = storyResponse.content.length * 0.1;
       setAudioDuration(estimatedDuration);
-      
+
       // Reset sound effects
       setSoundEffects([]);
-      
+
       // Switch to preview tab
       setActiveTab("preview");
-      
+
       // Notify parent component if callback provided
       if (onStoryGenerated) {
         onStoryGenerated(storyResponse, storyAudioUrl);
       }
-      
+
       toast({
         title: "Story Generated!",
         description: "Your story has been created successfully."
@@ -372,19 +372,19 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       setIsGenerating(false);
     }
   };
-  
+
   // Submit handler for the form
-  const handleSubmit = async (data: StoryGeneration) => {
+  const handleFormSubmit = async (data: StoryGeneration) => {
     // For single story generation
     if (activeTab === "prompt") {
-      await handleSingleStory(data);
+      await handleSingleStoryGeneration(data);
     } 
     // For batch story generation
     else if (activeTab === "batch") {
-      await handleBatchGenerate();
+      await handleGenerateBatch();
     }
   };
-  
+
   // Batch generation handler - uses the optimized parallel processing for speed
   const handleBatchGenerate = async () => {
     try {
@@ -396,16 +396,16 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         });
         return;
       }
-      
+
       setIsGenerating(true);
-      
+
       // Get prompts from the form
-      const batchPrompts = data.batchPrompts || [];
+      const batchPrompts = form.getValues("batchPrompts") || [];
       setBatchProgress(0);
-      
+
       // Filter out empty prompts
       const validPrompts = batchPrompts.filter(item => item?.prompt?.trim().length >= 10);
-      
+
       if (validPrompts.length === 0) {
         toast({
           title: "Empty Prompts",
@@ -415,7 +415,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         setIsGenerating(false);
         return;
       }
-      
+
       // Find character details for selected characters to include in prompt
       let characterDetails = "";
       if (selectedCharacters.length > 0) {
@@ -424,13 +424,13 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           return character ? `Character ${character.name}: ${character.appearance}. Personality: ${character.personality}` : '';
         }).filter(Boolean).join('\n\n');
       }
-      
+
       // Show starting toast
       toast({
         title: "Starting Batch Generation",
         description: `Generating ${validPrompts.length} stories with parallel processing.`,
       });
-      
+
       // Create a list of story parameters from all valid prompts
       const storyParamsList = validPrompts.map(item => {
         // Create a complete prompt including characters if available
@@ -438,7 +438,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         if (characterDetails) {
           fullPrompt = `${fullPrompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
         }
-        
+
         return {
           ...data,
           prompt: fullPrompt,
@@ -446,18 +446,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
         };
       });
-          
+
           // Use our batch processing function to generate stories (2 at a time for optimal speed)
           const generatedStories = await generateStoriesBatch(storyParamsList, 2);
-          
+
           // Update progress bar
           setBatchProgress(validPrompts.length);
-          
+
           toast({
             title: "Stories Generated",
             description: `Created ${generatedStories.length} stories. Now generating audio...`,
           });
-          
+
           // Prepare parameters for audio generation
           const audioParams = generatedStories.map(story => ({
             text: story.content,
@@ -465,18 +465,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             userId: userId,
             title: story.title
           }));
-          
+
           // Generate all audio files in parallel
           const audioUrls = await generateAudioBatch(audioParams, 2);
-          
+
           toast({
             title: "Audio Generated",
             description: "Now saving all stories to your library...",
           });
-          
+
           // Save all stories to the database
           const storyIds: number[] = [];
-          
+
           // Save each story one by one (could be parallelized in the future)
           for (let i = 0; i < generatedStories.length; i++) {
             try {
@@ -498,7 +498,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   characterIds: selectedCharacters
                 }),
               });
-              
+
               if (saveResponse.ok) {
                 const savedStory = await saveResponse.json();
                 storyIds.push(savedStory.id);
@@ -511,18 +511,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               storyIds.push(-1);
             }
           }
-          
+
           // Store the batch results for display
           setBatchStories(generatedStories);
           setBatchAudios(audioUrls);
           setBatchStoriesIds(storyIds);
-          
+
           // Show success message
           toast({
             title: "Batch Generation Complete!",
             description: `Successfully created ${generatedStories.length} stories. View results in the Batch Results tab.`,
           });
-          
+
           // Switch to the batch results tab
           setActiveTab("batch-results");
         } catch (error) {
@@ -542,35 +542,35 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           if (characterDetails) {
             storyParams.prompt = `${storyParams.prompt}\n\nPlease include the following characters in the story:\n${characterDetails}`;
           }
-          
+
           // Generate the story text
           const storyResponse = await generateStory(storyParams);
           setGeneratedStory(storyResponse);
-          
+
           // Store sound effect suggestions if available
           if (storyResponse.soundEffectSuggestions) {
             setSoundEffectSuggestions(storyResponse.soundEffectSuggestions);
           }
-          
+
           // Generate audio for the story (include title so narrator reads it first)
           const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
           setAudioUrl(audioUrl);
-          
+
           // Estimate audio duration (1 character ≈ 0.1 seconds)
           const estimatedDuration = storyResponse.content.length * 0.1;
           setAudioDuration(estimatedDuration);
-          
+
           // Reset sound effects
           setSoundEffects([]);
-          
+
           // Update active tab
           setActiveTab("preview");
-          
+
           // Notify parent component if callback provided
           if (onStoryGenerated) {
             onStoryGenerated(storyResponse, audioUrl);
           }
-          
+
           toast({
             title: "Story Generated!",
             description: "Your story has been created successfully.",
@@ -612,7 +612,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     <section id="create" className="py-16 bg-blue-50">
       <div className="container mx-auto px-4">
         <h2 className="font-heading font-bold text-3xl md:text-4xl text-center mb-12">Create Your Audiobook</h2>
-        
+
         {!isAuthenticated ? (
           <div className="bg-white rounded-3xl shadow-lg overflow-hidden max-w-4xl mx-auto p-8 text-center">
             <div className="mb-6">
@@ -677,10 +677,10 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               </TabsTrigger>
             )}
           </TabsList>
-          
+
           <TabsContent value="prompt" className="p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleGenerateStory)} className="space-y-6">
+              <form onSubmit={handleFormSubmit} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="prompt"
@@ -698,7 +698,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -721,7 +721,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="storyLength"
@@ -744,7 +744,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -768,7 +768,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="narrator"
@@ -792,7 +792,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
                   />
                 </div>
-                
+
                 {/* Batch Generation for Premium Users */}
                 {userData?.subscriptionTier === "premium" && (
                   <div className="mt-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
@@ -800,7 +800,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     <p className="text-sm text-gray-700 mb-3">
                       As a premium user, you can generate multiple stories at once with the same prompt.
                     </p>
-                    
+
                     <div className="flex items-center mb-4">
                       <Switch 
                         checked={batchMode} 
@@ -812,7 +812,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         Enable Batch Story Generation
                       </label>
                     </div>
-                    
+
                     {batchMode && (
                       <div className="mt-2">
                         <label className="block text-sm font-medium mb-1">Number of Stories to Generate (1-10):</label>
@@ -839,9 +839,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
                   </div>
                 )}
-                
+
                 {/* Batch story generation has been moved to its own tab */}
-                
+
                 <FormField
                   control={form.control}
                   name="includeSoundEffects"
@@ -853,7 +853,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         </FormLabel>
                         <div className="text-sm text-muted-foreground">
                           {canUseSoundEffects 
-                            ? "Get AI suggestions for sound effects to enhance your story" 
+                            ?"Get AI suggestions for sound effects to enhance your story" 
                             : "Upgrade to Pro or Premium plan to use sound effects"}
                         </div>
                       </div>
@@ -868,7 +868,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 {/* Character Selection */}
                 {userCharacters.length > 0 && (
                   <div className="space-y-4 border rounded-lg p-4">
@@ -911,7 +911,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="flex justify-end">
                   <Button 
                     type="submit" 
@@ -934,10 +934,10 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               </form>
             </Form>
           </TabsContent>
-          
+
           <TabsContent value="batch" className="p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleGenerateStory)} className="space-y-6">
+              <form onSubmit={handleFormSubmit} className="space-y-6">
                 <div className="mb-4">
                   <h3 className="font-heading font-bold text-xl bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                     Batch Story Creation
@@ -945,11 +945,11 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   <p className="text-gray-600 mb-6">
                     Create up to 10 different stories at once. Each story will have a different prompt but share the same settings.
                   </p>
-                  
+
                   {/* Common settings section */}
                   <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
                     <h4 className="font-medium text-lg mb-4">Common Settings for All Stories</h4>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                       <FormField
                         control={form.control}
@@ -972,7 +972,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="storyLength"
@@ -994,7 +994,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="narrator"
@@ -1018,7 +1018,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         )}
                       />
                     </div>
-                    
+
                     <FormField
                       control={form.control}
                       name="storyType"
@@ -1042,7 +1042,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         </FormItem>
                       )}
                     />
-                    
+
                     {canUseSoundEffects && (
                       <FormField
                         control={form.control}
@@ -1064,7 +1064,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Batch count control */}
                 <div className="mb-6">
                   <FormField
@@ -1096,7 +1096,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
                   />
                 </div>
-                
+
                 {/* Characters section */}
                 {userCharacters.length > 0 && (
                   <div className="space-y-4 border rounded-lg p-4 mb-6">
@@ -1139,11 +1139,11 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Story prompts section */}
                 <div className="space-y-6 max-h-[600px] overflow-y-auto pr-2 border border-gray-200 rounded-xl p-4">
                   <h4 className="font-heading font-semibold text-lg sticky top-0 bg-white py-2">Story Prompts</h4>
-                  
+
                   {batchPromptFields.map((field, index) => (
                     <div key={field.id} className="p-4 bg-white rounded-xl border-2 border-gray-200">
                       <div className="flex justify-between items-center mb-2">
@@ -1169,7 +1169,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="flex justify-end">
                   <Button 
                     type="button" 
@@ -1197,7 +1197,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               </form>
             </Form>
           </TabsContent>
-          
+
           <TabsContent value="batch-results" className="p-6">
             <div className="space-y-8">
               <div className="mb-4">
@@ -1206,18 +1206,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   Here are all the stories generated in this batch. You can listen to each one and save or delete them.
                 </p>
               </div>
-              
+
               {batchStories.length > 0 ? (
                 batchStories.map((story, index) => {
                   const audioUrl = batchAudios[index] || '';
                   const storyId = batchStoriesIds[index] || -1;
-                  
+
                   return (
                     <div key={index} className="border border-gray-200 rounded-xl overflow-hidden mb-6">
                       <div className="bg-gray-50 p-4 border-b">
                         <h4 className="font-heading font-semibold text-lg">{story.title}</h4>
                       </div>
-                      
+
                       {/* Audio player for this story */}
                       <div className="p-4 border-b bg-white">
                         {audioUrl ? (
@@ -1227,7 +1227,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                               storyText={story.content}
                               className="w-full"
                             />
-                            
+
                             <div className="flex flex-wrap gap-2 justify-end">
                               {storyId > 0 ? (
                                 <Button 
@@ -1239,21 +1239,21 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                                       const response = await fetch(`/api/stories/${storyId}`, {
                                         method: 'DELETE'
                                       });
-                                      
+
                                       if (response.ok) {
                                         // Update the local state to remove this story
                                         const newBatchStories = [...batchStories];
                                         const newBatchAudios = [...batchAudios];
                                         const newBatchIds = [...batchStoriesIds];
-                                        
+
                                         newBatchStories.splice(index, 1);
                                         newBatchAudios.splice(index, 1);
                                         newBatchIds.splice(index, 1);
-                                        
+
                                         setBatchStories(newBatchStories);
                                         setBatchAudios(newBatchAudios);
                                         setBatchStoriesIds(newBatchIds);
-                                        
+
                                         toast({
                                           title: "Story Deleted",
                                           description: "Story has been removed from your library",
@@ -1302,15 +1302,15 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                                           characterIds: selectedCharacters
                                         }),
                                       });
-                                      
+
                                       if (response.ok) {
                                         const savedStory = await response.json();
-                                        
+
                                         // Update the ID in our state
                                         const newIds = [...batchStoriesIds];
                                         newIds[index] = savedStory.id;
                                         setBatchStoriesIds(newIds);
-                                        
+
                                         toast({
                                           title: "Story Saved",
                                           description: "Story has been saved to your library",
@@ -1334,7 +1334,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                                   Save
                                 </Button>
                               )}
-                              
+
                               <Button 
                                 type="button" 
                                 variant="outline"
@@ -1356,7 +1356,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Story content summary */}
                       <div className="p-4 bg-white">
                         <div className="max-h-32 overflow-y-auto text-sm text-gray-700">
@@ -1374,7 +1374,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               )}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="preview" className="p-0">
             {generatedStory && audioUrl && (
               <>
@@ -1384,7 +1384,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   soundEffects={soundEffects}
                   characterIds={selectedCharacters}
                 />
-                
+
                 <div className="p-6 border-t border-gray-200">
                   <h3 className="font-heading font-semibold text-xl mb-4">Edit Story Content</h3>
                   <div className="space-y-4">
@@ -1396,7 +1396,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         className="w-full rounded-xl border-2 border-gray-200 p-3 focus:border-primary focus:ring focus:ring-primary/20"
                       />
                     </div>
-                    
+
                     <div>
                       <FormLabel className="block font-heading font-semibold mb-2">Content:</FormLabel>
                       <Textarea 
