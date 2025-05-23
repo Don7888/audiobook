@@ -17,14 +17,19 @@ interface ExportOptions {
 export async function exportStories(options: ExportOptions): Promise<{ downloadUrl: string; filename: string }> {
   const { playlistName, format, storyIds } = options;
   
+  console.log('Starting export with options:', options);
+  
   // Get stories by IDs
   const stories: Story[] = [];
   for (const id of storyIds) {
     const story = await storage.getStory(id);
     if (story) {
+      console.log(`Found story: ${story.title}, audioUrl: ${story.audioUrl}`);
       stories.push(story);
     }
   }
+  
+  console.log(`Retrieved ${stories.length} stories for export`);
   
   if (stories.length === 0) {
     throw new Error('No valid stories found for export');
