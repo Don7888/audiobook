@@ -328,12 +328,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
 
   // Submit handler for the form
   const handleFormSubmit = async (data: StoryGeneration) => {
+    console.log("Form submitted with data:", data);
+    console.log("Active tab:", activeTab);
+    
     // For single story generation
     if (activeTab === "prompt") {
+      console.log("Starting single story generation");
       await handleSingleStoryGeneration(data);
     } 
     // For batch story generation
     else if (activeTab === "batch") {
+      console.log("Starting batch generation");
       await handleGenerateBatch();
     }
   };
