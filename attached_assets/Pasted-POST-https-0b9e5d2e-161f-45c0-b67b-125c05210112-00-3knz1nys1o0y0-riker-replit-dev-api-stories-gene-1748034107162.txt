@@ -1,0 +1,51 @@
+POST https://0b9e5d2e-161f-45c0-b67b-125c05210112-00-3knz1nys1o0y0.riker.replit.dev/api/stories/generate 400 (Bad Request)
+apiRequest @ queryClient.ts:15
+generateStory @ openai.ts:17
+handleSingleStoryGeneration @ StoryCreator.tsx:286
+handleFormSubmit @ StoryCreator.tsx:337
+onClick @ StoryCreator.tsx:567
+callCallback2 @ chunk-RPCDYKBN.js?v=43ea9a01:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=43ea9a01:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=43ea9a01:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=43ea9a01:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=43ea9a01:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=43ea9a01:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=43ea9a01:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=43ea9a01:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=43ea9a01:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=43ea9a01:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=43ea9a01:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=43ea9a01:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=43ea9a01:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=43ea9a01:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=43ea9a01:5449Understand this error
+openai.ts:20 Error generating story: Error: 400: {"message":"Validation error","errors":[{"code":"too_small","minimum":10,"type":"string","inclusive":true,"exact":false,"message":"Please enter a longer story idea","path":["batchPrompts",0,"prompt"]},{"code":"too_small","minimum":10,"type":"string","inclusive":true,"exact":false,"message":"Please enter a longer story idea","path":["batchPrompts",1,"prompt"]},{"code":"too_small","minimum":10,"type":"string","inclusive":true,"exact":false,"message":"Please enter a longer story idea","path":["batchPrompts",2,"prompt"]}]}
+    at throwIfResNotOk (queryClient.ts:6:11)
+    at async apiRequest (queryClient.ts:22:3)
+    at async generateStory (openai.ts:17:22)
+    at async handleSingleStoryGeneration (StoryCreator.tsx:286:29)
+    at async handleFormSubmit (StoryCreator.tsx:337:7)
+generateStory @ openai.ts:20
+await in generateStory
+handleSingleStoryGeneration @ StoryCreator.tsx:286
+handleFormSubmit @ StoryCreator.tsx:337
+onClick @ StoryCreator.tsx:567
+callCallback2 @ chunk-RPCDYKBN.js?v=43ea9a01:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=43ea9a01:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=43ea9a01:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=43ea9a01:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=43ea9a01:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=43ea9a01:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=43ea9a01:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=43ea9a01:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=43ea9a01:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=43ea9a01:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=43ea9a01:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=43ea9a01:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=43ea9a01:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=43ea9a01:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=43ea9a01:5449Understand this error
+StoryCreator.tsx:318 Error generating single story: Error: Failed to generate story. Please try again.
+    at generateStory (openai.ts:21:11)
+    at async handleSingleStoryGeneration (StoryCreator.tsx:286:29)
+    at async handleFormSubmit (StoryCreator.tsx:337:7)

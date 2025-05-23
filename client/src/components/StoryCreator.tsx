@@ -562,9 +562,20 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                   e.preventDefault();
                   console.log("Button clicked!");
                   const formData = form.getValues();
-                  console.log("Form values:", formData);
-                  console.log("Starting story generation directly...");
-                  handleFormSubmit(formData);
+                  // For single story generation, we only need the main story data, not batch prompts
+                  const singleStoryData = {
+                    prompt: formData.prompt,
+                    ageRange: formData.ageRange,
+                    storyLength: formData.storyLength,
+                    storyType: formData.storyType,
+                    narrator: formData.narrator,
+                    batchMode: false,
+                    batchCount: 1,
+                    includeSoundEffects: formData.includeSoundEffects,
+                    batchPrompts: [{ prompt: formData.prompt }] // Only include the main prompt
+                  };
+                  console.log("Starting story generation with:", singleStoryData);
+                  handleFormSubmit(singleStoryData);
                 }}
               >
                 {isGenerating ? (
