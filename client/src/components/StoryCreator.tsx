@@ -558,6 +558,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 size="lg" 
                 disabled={isGenerating || !form.watch("prompt")?.trim()}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                onClick={() => {
+                  console.log("Button clicked!");
+                  console.log("Form values:", form.getValues());
+                  console.log("Prompt value:", form.watch("prompt"));
+                  console.log("Is disabled:", isGenerating || !form.watch("prompt")?.trim());
+                }}
               >
                 {isGenerating ? (
                   <>
