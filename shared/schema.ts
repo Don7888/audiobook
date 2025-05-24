@@ -142,6 +142,133 @@ export const characterCreationSchema = z.object({
   personality: z.string().min(5, "Please describe the character's personality"),
 });
 
+// Schema for story templates
+export const storyTemplateSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  prompt: z.string(),
+  category: z.string(),
+  recommendedAge: z.string(),
+  recommendedLength: z.string(),
+  recommendedType: z.string(),
+  tags: z.array(z.string()),
+});
+
+// Story templates data
+export const storyTemplates = [
+  {
+    id: "magical-forest",
+    title: "Magical Forest Adventure",
+    description: "A child discovers a hidden magical forest where animals can talk",
+    prompt: "A young child finds a secret path that leads to a magical forest where all the animals can talk and need help solving a problem",
+    category: "Adventure",
+    recommendedAge: "3-5",
+    recommendedLength: "short",
+    recommendedType: "adventure",
+    tags: ["magic", "animals", "forest", "friendship"]
+  },
+  {
+    id: "space-explorer",
+    title: "Little Space Explorer",
+    description: "An exciting journey through space meeting friendly aliens",
+    prompt: "A brave young astronaut travels through space and meets colorful alien friends who teach them about different planets",
+    category: "Adventure",
+    recommendedAge: "5-7",
+    recommendedLength: "medium",
+    recommendedType: "adventure",
+    tags: ["space", "aliens", "exploration", "learning"]
+  },
+  {
+    id: "underwater-kingdom",
+    title: "Underwater Kingdom",
+    description: "Dive deep into an ocean kingdom with mermaids and sea creatures",
+    prompt: "A child with a special swimming ability discovers an underwater kingdom where mermaids and sea creatures live in harmony",
+    category: "Adventure",
+    recommendedAge: "4-6",
+    recommendedLength: "medium",
+    recommendedType: "adventure",
+    tags: ["ocean", "mermaids", "underwater", "friendship"]
+  },
+  {
+    id: "dragon-friend",
+    title: "The Friendly Dragon",
+    description: "A misunderstood dragon just wants to make friends",
+    prompt: "Everyone in the village is afraid of the dragon on the mountain, but one brave child discovers the dragon is actually very kind and just lonely",
+    category: "Friendship",
+    recommendedAge: "3-6",
+    recommendedLength: "short",
+    recommendedType: "friendship",
+    tags: ["dragon", "friendship", "kindness", "courage"]
+  },
+  {
+    id: "time-traveler",
+    title: "Time Traveling Adventure",
+    description: "A child travels through time to different historical periods",
+    prompt: "A curious child finds a magical clock that transports them to different time periods where they learn about history and help solve problems",
+    category: "Educational",
+    recommendedAge: "6-8",
+    recommendedLength: "long",
+    recommendedType: "educational",
+    tags: ["time travel", "history", "learning", "adventure"]
+  },
+  {
+    id: "superhero-day",
+    title: "Everyday Superhero",
+    description: "A child discovers they have special powers to help others",
+    prompt: "A regular child wakes up one day with the power to help others in small but meaningful ways around their neighborhood",
+    category: "Adventure",
+    recommendedAge: "4-7",
+    recommendedLength: "medium",
+    recommendedType: "adventure",
+    tags: ["superhero", "helping", "community", "powers"]
+  },
+  {
+    id: "lost-pet",
+    title: "The Lost Pet Adventure",
+    description: "Help a lost pet find their way back home",
+    prompt: "A kind child finds a lost pet and goes on an adventure through the neighborhood to help the pet find its way back home",
+    category: "Friendship",
+    recommendedAge: "3-5",
+    recommendedLength: "short",
+    recommendedType: "friendship",
+    tags: ["pets", "helping", "neighborhood", "kindness"]
+  },
+  {
+    id: "rainbow-bridge",
+    title: "The Rainbow Bridge",
+    description: "Cross a magical rainbow bridge to a land of colors",
+    prompt: "After a storm, a child sees a beautiful rainbow and discovers they can walk across it to a magical land where everything is made of colors",
+    category: "Fantasy",
+    recommendedAge: "3-6",
+    recommendedLength: "medium",
+    recommendedType: "fantasy",
+    tags: ["rainbow", "colors", "magic", "wonder"]
+  },
+  {
+    id: "treasure-hunt",
+    title: "Backyard Treasure Hunt",
+    description: "An exciting treasure hunt in the backyard with family",
+    prompt: "A child and their family go on a treasure hunt in their own backyard and discover that the real treasure is spending time together",
+    category: "Family",
+    recommendedAge: "4-6",
+    recommendedLength: "short",
+    recommendedType: "family",
+    tags: ["treasure", "family", "backyard", "togetherness"]
+  },
+  {
+    id: "robot-helper",
+    title: "My Robot Helper",
+    description: "A child builds a robot that becomes their best friend",
+    prompt: "A creative child builds a robot from recycled materials, and the robot comes to life to help with daily tasks and become a loyal friend",
+    category: "Technology",
+    recommendedAge: "5-8",
+    recommendedLength: "medium",
+    recommendedType: "adventure",
+    tags: ["robots", "friendship", "creativity", "technology"]
+  }
+];
+
 // Schema for story generation with character selection
 export const storyWithCharactersSchema = storyGenerationSchema.extend({
   characterIds: z.array(z.number()).optional(),
@@ -162,5 +289,6 @@ export type Story = typeof stories.$inferSelect;
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type StoryGeneration = z.infer<typeof storyGenerationSchema>;
 export type StoryWithCharacters = z.infer<typeof storyWithCharactersSchema>;
+export type StoryTemplate = z.infer<typeof storyTemplateSchema>;
 export type SoundEffectPlacement = z.infer<typeof soundEffectPlacementSchema>;
 export type SubscriptionTier = z.infer<typeof subscriptionTierEnum>;

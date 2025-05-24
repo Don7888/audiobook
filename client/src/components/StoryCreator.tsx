@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
-import { StoryGeneration, storyGenerationSchema, SoundEffectPlacement, type Character } from "@shared/schema";
+import { StoryGeneration, storyGenerationSchema, SoundEffectPlacement, type Character, storyTemplates, type StoryTemplate } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,6 +40,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [batchStories, setBatchStories] = useState<GeneratedStory[]>([]);
   const [batchAudios, setBatchAudios] = useState<string[]>([]);
   const [batchStoriesIds, setBatchStoriesIds] = useState<number[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<StoryTemplate | null>(null);
+  const [templateCategory, setTemplateCategory] = useState<string>("all");
   const { toast } = useToast();
   const { user, isAuthenticated, userId } = useAuth();
   const { progress, generateBatchStories } = useParallelProcessing();
@@ -104,6 +106,26 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       }
     }
   }, [form.watch("batchCount"), appendBatchPrompt, removeBatchPrompt]);
+
+  // Apply template to form
+  const applyTemplate = (template: StoryTemplate) => {
+    setSelectedTemplate(template);
+    form.setValue("prompt", template.prompt);
+    form.setValue("ageRange", template.recommendedAge);
+    form.setValue("storyLength", template.recommendedLength);
+    form.setValue("storyType", template.recommendedType);
+    
+    toast({
+      title: "Template Applied!",
+      description: `"${template.title}" template has been applied. You can customize the prompt further.`,
+    });
+  };
+
+  // Get unique categories for filtering
+  const categories = Array.from(new Set(storyTemplates.map(t => t.category)));
+  const filteredTemplates = templateCategory === "all" 
+    ? storyTemplates 
+    : storyTemplates.filter(t => t.category === templateCategory);
 
   // Batch generation handler - uses the optimized parallel processing for speed
   const handleGenerateBatch = async () => {
