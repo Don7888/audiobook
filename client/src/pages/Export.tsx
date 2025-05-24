@@ -524,7 +524,6 @@ export default function Export() {
               className="w-full bg-red-600 hover:bg-red-700 mb-2 py-6 text-lg"
               size="lg"
               onClick={() => {
-                form.setValue("format", "mp3");
                 form.handleSubmit(onSubmit)();
               }}
               disabled={isExporting || selectedStories.length === 0}

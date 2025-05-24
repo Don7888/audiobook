@@ -8,14 +8,16 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 // Map voice selection to OpenAI voice models
 export function mapVoiceToOpenAI(voice: string): string {
   switch(voice) {
-    case "Female - Gentle":
+    case "Female-Gentle":
       return "nova";
-    case "Male - Cheerful":
+    case "Male-Cheerful":
       return "echo";
-    case "Female - Animated":
+    case "Female-Animated":
       return "shimmer";
-    case "Male - Storyteller":
+    case "Male-Storyteller":
       return "onyx";
+    case "Male-English":
+      return "echo"; // Using echo for English accent
     default:
       return "alloy"; // default voice
   }
