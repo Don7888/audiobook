@@ -373,14 +373,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check subscription limits before generating
       if (!(await checkSubscriptionLimits(userId, res))) return;
       
-      // Create prompt for OpenAI
+      // Create prompt for OpenAI with specific length requirements
+      let lengthGuidance = "";
+      if (storyParams.storyLength === "short") {
+        lengthGuidance = "Write approximately 300-400 words to create a 2-3 minute story when narrated.";
+      } else if (storyParams.storyLength === "medium") {
+        lengthGuidance = "Write approximately 800-1000 words to create a 5-7 minute story when narrated.";
+      } else if (storyParams.storyLength === "long") {
+        lengthGuidance = "Write approximately 1500-2000 words to create a 10+ minute story when narrated.";
+      }
+
       let prompt = `
         Create a children's story with the following parameters:
         - Story idea: ${storyParams.prompt}
         - Age range: ${storyParams.ageRange}
-        - Story length: ${storyParams.storyLength}
+        - Story length: ${storyParams.storyLength} (${lengthGuidance})
         - Story type: ${storyParams.storyType}
         - Narrator style: ${storyParams.narrator}
+        
+        IMPORTANT LENGTH REQUIREMENT: ${lengthGuidance}
+        Make sure to include enough detail, dialogue, and story development to reach the target word count.
         
         Format the response as a JSON object with the following structure:
         {
