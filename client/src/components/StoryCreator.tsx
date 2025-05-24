@@ -427,8 +427,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="prompt">Story Prompt</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="templates">Templates</TabsTrigger>
+              <TabsTrigger value="prompt">Custom Prompt</TabsTrigger>
               <TabsTrigger value="batch" disabled={!userHasPremium}>
                 Batch Creation {!userHasPremium && "(Premium)"}
               </TabsTrigger>
@@ -439,6 +440,121 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 Batch Results
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="templates" className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Story Templates</h2>
+                  <p className="text-gray-600">Choose from our pre-made story ideas to get started quickly!</p>
+                </div>
+
+                {/* Category Filter */}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant={templateCategory === "all" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setTemplateCategory("all")}
+                  >
+                    All Stories
+                  </Button>
+                  {categories.map((category) => (
+                    <Button
+                      key={category}
+                      type="button"
+                      variant={templateCategory === category ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTemplateCategory(category)}
+                    >
+                      {category}
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Template Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filteredTemplates.map((template) => (
+                    <div
+                      key={template.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                        selectedTemplate?.id === template.id
+                          ? "border-purple-500 bg-purple-50"
+                          : "border-gray-200 hover:border-purple-300"
+                      }`}
+                      onClick={() => applyTemplate(template)}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-lg text-gray-900">{template.title}</h3>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          {template.category}
+                        </span>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-3">{template.description}</p>
+                      <div className="flex justify-between items-center text-xs text-gray-500">
+                        <span>Ages {template.recommendedAge}</span>
+                        <span className="capitalize">{template.recommendedLength}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {template.tags.map((tag) => (
+                          <span key={tag} className="px-1.5 py-0.5 bg-purple-100 text-purple-600 text-xs rounded">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedTemplate && (
+                  <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-green-800 font-medium">Template Applied: {selectedTemplate.title}</span>
+                    </div>
+                    <p className="text-green-700 text-sm">
+                      Switch to the "Custom Prompt" tab to customize the story further, or generate it directly below.
+                    </p>
+                  </div>
+                )}
+
+                {/* Generate from Template */}
+                {selectedTemplate && (
+                  <Button 
+                    type="button"
+                    size="lg" 
+                    disabled={isGenerating}
+                    className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const templateData = {
+                        prompt: selectedTemplate.prompt,
+                        ageRange: selectedTemplate.recommendedAge,
+                        storyLength: selectedTemplate.recommendedLength,
+                        storyType: selectedTemplate.recommendedType,
+                        narrator: form.getValues("narrator"),
+                        batchMode: false,
+                        batchCount: 1,
+                        includeSoundEffects: form.getValues("includeSoundEffects"),
+                        batchPrompts: [{ prompt: selectedTemplate.prompt }]
+                      };
+                      handleFormSubmit(templateData);
+                    }}
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating Your Story...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="mr-2 h-4 w-4" />
+                        Generate Story from Template
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </TabsContent>
 
             <TabsContent value="prompt" className="space-y-6">
               <FormField
