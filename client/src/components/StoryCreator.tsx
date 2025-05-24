@@ -343,6 +343,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     }
   };
 
+  // Separate handler for batch generation button
+  const handleBatchSubmit = async () => {
+    console.log("Batch generation button clicked");
+    await handleGenerateBatch();
+  };
+
   const handleSoundEffectsChange = (newEffects: SoundEffectPlacement[]) => {
     setSoundEffects(newEffects);
   };
@@ -794,10 +800,11 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     )}
 
                     <Button 
-                      type="submit" 
+                      type="button" 
                       size="lg" 
                       disabled={isGenerating}
                       className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                      onClick={handleBatchSubmit}
                     >
                       {isGenerating ? (
                         <>
