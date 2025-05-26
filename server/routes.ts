@@ -373,26 +373,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check subscription limits before generating
       if (!(await checkSubscriptionLimits(userId, res))) return;
       
-      // Create prompt for OpenAI with specific length requirements
+      // Get available sound effects from storage
+      const availableSoundEffects = await storage.getAllSoundEffects();
+      const soundEffectsList = availableSoundEffects.map(effect => effect.name).join(", ");
+      
+      // Create prompt for OpenAI with very specific length requirements
       let lengthGuidance = "";
+      let wordCountRequirement = "";
+      
       if (storyParams.storyLength === "short") {
         lengthGuidance = "Write approximately 300-400 words to create a 2-3 minute story when narrated.";
+        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 300-400 words. Count the words as you write. This is NON-NEGOTIABLE.";
       } else if (storyParams.storyLength === "medium") {
         lengthGuidance = "Write approximately 800-1000 words to create a 5-7 minute story when narrated.";
+        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 800-1000 words. Count the words as you write. This is NON-NEGOTIABLE for a 5-7 minute narration.";
       } else if (storyParams.storyLength === "long") {
-        lengthGuidance = "Write approximately 1500-2000 words to create a 10+ minute story when narrated.";
+        lengthGuidance = "Write approximately 2000-2500 words to create a 10+ minute story when narrated.";
+        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 2000-2500 words. Count the words as you write. This is NON-NEGOTIABLE for a 10+ minute narration.";
       }
 
       let prompt = `
         Create a children's story with the following parameters:
         - Story idea: ${storyParams.prompt}
         - Age range: ${storyParams.ageRange}
-        - Story length: ${storyParams.storyLength} (${lengthGuidance})
+        - Story length: ${storyParams.storyLength}
         - Story type: ${storyParams.storyType}
         - Narrator style: ${storyParams.narrator}
         
-        IMPORTANT LENGTH REQUIREMENT: ${lengthGuidance}
-        Make sure to include enough detail, dialogue, and story development to reach the target word count.
+        ${wordCountRequirement}
+        
+        To reach the required word count, you MUST include:
+        - Detailed descriptions of characters and settings
+        - Multiple scenes and plot developments
+        - Dialogue between characters
+        - Rich sensory details (what characters see, hear, feel)
+        - A complete story arc with beginning, middle, and satisfying end
         
         Format the response as a JSON object with the following structure:
         {
@@ -400,21 +415,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           "content": "The full story text with proper paragraphs"
         }
         
-        The story should be appropriate for children in the specified age range and should be engaging and imaginative.
+        Remember: ${lengthGuidance} The story should be appropriate for children in the specified age range and should be engaging and imaginative.
       `;
       
       // Always add sound effects in the text regardless of subscription tier
       prompt += `
-        VERY IMPORTANT: Include sound effects directly in the story text using the format [SFX:description] 
-        where "description" is a brief description of the sound.
+        VERY IMPORTANT: Include sound effects directly in the story text using the format [SFX:effect_name] 
+        where "effect_name" is EXACTLY one of these available sound effects: ${soundEffectsList}
+        
+        You MUST ONLY use sound effects from this exact list: ${soundEffectsList}
         
         For example:
-        - "Once upon a time [SFX:magical chimes], in a forest far away..."
-        - "Suddenly, there was a loud crash! [SFX:thunder]"
-        - "The little bird sang happily [SFX:birds chirping] as it flew through the blue sky."
+        - "Once upon a time [SFX:Wind], in a forest far away..."
+        - "Suddenly, there was a loud crash! [SFX:Thunder]"
+        - "The little bird sang happily [SFX:Birds] as it flew through the blue sky."
         
         Include 4-6 appropriate sound effects throughout the story at natural points where they would enhance
-        the storytelling experience. Make the sound effects descriptive but concise.
+        the storytelling experience. Use ONLY the exact names from the available list.
       `;
       
       // For subscription tiers that include sound effects, add suggestions
