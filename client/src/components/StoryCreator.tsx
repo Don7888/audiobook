@@ -34,6 +34,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<StoryGeneration | null>(null);
   const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
+  const [storyImageUrl, setStoryImageUrl] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [soundEffects, setSoundEffects] = useState<SoundEffectPlacement[]>([]);
   const [audioDuration, setAudioDuration] = useState(0);
@@ -193,7 +194,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           ...formData,
           prompt: fullPrompt,
           userId,
-          characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined
+          characterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined,
+          includeSoundEffects: formData.includeSoundEffects
         };
       });
 
@@ -325,6 +327,26 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
       setAudioUrl(audioUrl);
 
+      // Generate story illustration
+      setLoadingStatus("Creating story illustration...");
+      try {
+        const imageResponse = await fetch('/api/stories/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `Children's book illustration for: ${storyResponse.title}. ${storyResponse.content.substring(0, 200)}`,
+            userId: userId
+          })
+        });
+        
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          setStoryImageUrl(imageData.imageUrl);
+        }
+      } catch (error) {
+        console.log('Image generation failed, continuing without illustration');
+      }
+
       setLoadingStatus("Finalizing your story...");
 
       // Estimate audio duration (1 character ≈ 0.1 seconds)
@@ -394,6 +416,21 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   // Separate handler for batch generation button
   const handleBatchSubmit = async () => {
     console.log("Batch generation button clicked");
+    
+    const formData = form.getValues();
+    
+    // Check for legal issues before generating batch stories
+    const allPrompts = formData.batchPrompts?.map(bp => bp.prompt).filter(p => p.trim()) || [];
+    const hasLegalIssues = allPrompts.some(prompt => 
+      checkForCopyrightedContent(prompt) || checkForInappropriateContent(prompt)
+    );
+
+    if (hasLegalIssues && !legalAccepted) {
+      setPendingFormData(formData);
+      setShowLegalConfirmation(true);
+      return;
+    }
+
     await handleGenerateBatch();
   };
 
@@ -1035,7 +1072,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               <Checkbox
                 id="legal-agreement"
                 checked={legalAccepted}
-                onCheckedChange={setLegalAccepted}
+                onCheckedChange={(checked) => setLegalAccepted(checked === true)}
               />
               <label htmlFor="legal-agreement" className="text-sm">
                 I have read and agree to the <Link href="/legal" className="text-blue-600 underline">legal requirements</Link>

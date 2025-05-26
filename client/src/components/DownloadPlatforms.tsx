@@ -58,10 +58,8 @@ export default function DownloadPlatforms() {
               </div>
               <h3 className="font-heading font-bold text-xl mb-2 text-center">{platform.name}</h3>
               <p className="text-gray-600 text-center mb-6">{platform.description}</p>
-              <Link href={platform.learnMoreUrl}>
-                <a className={`block ${platform.buttonColor} text-white text-center font-semibold py-3 rounded-xl hover:bg-opacity-90 transition-all`}>
+              <Link href={platform.learnMoreUrl} className={`block ${platform.buttonColor} text-white text-center font-semibold py-3 rounded-xl hover:bg-opacity-90 transition-all`}>
                   Learn More
-                </a>
               </Link>
             </div>
           ))}

@@ -18,7 +18,7 @@ export default function Header() {
   
   return (
     <header className="bg-white shadow-md">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <div className="text-primary text-3xl mr-2">
             <BookOpen />
