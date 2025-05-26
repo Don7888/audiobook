@@ -31,6 +31,7 @@ function Router() {
       <Route path="/characters" component={Characters} />
       <Route path="/sound-effects" component={SoundEffects} />
       <Route path="/export" component={Export} />
+      <Route path="/legal" component={Legal} />
       <Route component={NotFound} />
     </Switch>
   );

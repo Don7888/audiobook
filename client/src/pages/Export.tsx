@@ -281,8 +281,8 @@ export default function Export() {
                           <SelectContent>
                             <SelectItem value="mp3">MP3 (Standard Audio)</SelectItem>
                             <SelectItem value="yuto">Yuto Format</SelectItem>
-                            <SelectItem value="toniebox">Toniebox Format</SelectItem>
-                            <SelectItem value="audible">Audible Format</SelectItem>
+                            <SelectItem value="toniebox">Toniebox Format (Single MP3)</SelectItem>
+                            <SelectItem value="audible" disabled>Audible Format (Coming Soon)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>

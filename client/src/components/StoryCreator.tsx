@@ -18,6 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useParallelProcessing } from "@/hooks/useParallelProcessing";
 
 interface StoryCreatorProps {
@@ -29,6 +30,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [activeTab, setActiveTab] = useState("prompt");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState<string>("");
+  const [showLegalConfirmation, setShowLegalConfirmation] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<StoryGeneration | null>(null);
   const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [soundEffects, setSoundEffects] = useState<SoundEffectPlacement[]>([]);
@@ -354,10 +358,26 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     }
   };
 
+  // Handle legal confirmation
+  const handleLegalConfirmation = () => {
+    if (legalAccepted && pendingFormData) {
+      setShowLegalConfirmation(false);
+      handleActualFormSubmit(pendingFormData);
+    }
+  };
+
   // Submit handler for the form
   const handleFormSubmit = async (data: StoryGeneration) => {
     console.log("Form submitted with data:", data);
     console.log("Active tab:", activeTab);
+    
+    // Show legal confirmation popup first
+    setPendingFormData(data);
+    setShowLegalConfirmation(true);
+  };
+
+  // Actual form submission after legal confirmation
+  const handleActualFormSubmit = async (data: StoryGeneration) => {
     
     // For single story generation
     if (activeTab === "prompt") {
@@ -992,6 +1012,50 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
           </Tabs>
         </form>
       </Form>
+
+      {/* Legal Confirmation Dialog */}
+      <Dialog open={showLegalConfirmation} onOpenChange={setShowLegalConfirmation}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">⚠️ Legal Requirements</DialogTitle>
+            <DialogDescription>
+              Please confirm you understand the legal requirements before generating your story.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              By proceeding, you confirm that:
+            </p>
+            <ul className="text-sm text-gray-700 space-y-1">
+              <li>• Your story prompt does not request copyrighted characters or content</li>
+              <li>• You will not use this for commercial purposes without proper licensing</li>
+              <li>• You have read and agree to our legal requirements</li>
+            </ul>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="legal-agreement"
+                checked={legalAccepted}
+                onCheckedChange={setLegalAccepted}
+              />
+              <label htmlFor="legal-agreement" className="text-sm">
+                I have read and agree to the <Link href="/legal" className="text-blue-600 underline">legal requirements</Link>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowLegalConfirmation(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleLegalConfirmation}
+              disabled={!legalAccepted}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              Generate Story
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
