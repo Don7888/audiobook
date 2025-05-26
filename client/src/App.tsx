@@ -15,6 +15,7 @@ import SignUp from "@/pages/SignUp";
 import Characters from "@/pages/Characters";
 import SoundEffects from "@/pages/SoundEffects";
 import Export from "@/pages/Export";
+import Legal from "@/pages/Legal";
 import NotFound from "@/pages/not-found";
 
 function Router() {

@@ -382,14 +382,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let wordCountRequirement = "";
       
       if (storyParams.storyLength === "short") {
-        lengthGuidance = "Write approximately 300-400 words to create a 2-3 minute story when narrated.";
-        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 300-400 words. Count the words as you write. This is NON-NEGOTIABLE.";
+        lengthGuidance = "Write approximately 150-250 words to create a 1-2 minute story when narrated.";
+        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 150-250 words. Count the words as you write. This is NON-NEGOTIABLE.";
       } else if (storyParams.storyLength === "medium") {
-        lengthGuidance = "Write approximately 800-1000 words to create a 5-7 minute story when narrated.";
-        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 800-1000 words. Count the words as you write. This is NON-NEGOTIABLE for a 5-7 minute narration.";
+        lengthGuidance = "Write approximately 250-400 words to create a 2-3 minute story when narrated.";
+        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 250-400 words. Count the words as you write. This is NON-NEGOTIABLE for a 2-3 minute narration.";
       } else if (storyParams.storyLength === "long") {
-        lengthGuidance = "Write approximately 2000-2500 words to create a 10+ minute story when narrated.";
-        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 2000-2500 words. Count the words as you write. This is NON-NEGOTIABLE for a 10+ minute narration.";
+        lengthGuidance = "Write approximately 600-800 words to create a 4+ minute story when narrated.";
+        wordCountRequirement = "ABSOLUTE REQUIREMENT: The story MUST be exactly 600-800 words. Count the words as you write. This is NON-NEGOTIABLE for a 4+ minute narration.";
       }
 
       let prompt = `
@@ -416,6 +416,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         Remember: ${lengthGuidance} The story should be appropriate for children in the specified age range and should be engaging and imaginative.
+        
+        CRITICAL LEGAL REQUIREMENTS:
+        - Create completely original content - do NOT use any existing copyrighted characters, names, or storylines
+        - Avoid references to trademarked characters (like Disney, Marvel, Pokemon, etc.)
+        - Do not mention specific brand names, company names, or copyrighted properties
+        - Create unique character names that are not associated with existing media
+        - Ensure all plot elements are original and not derivative of existing works
+        - Keep content family-friendly and appropriate for children
       `;
       
       // Always add sound effects in the text regardless of subscription tier

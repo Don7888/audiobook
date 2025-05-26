@@ -542,9 +542,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="short">Short (2-3 min)</SelectItem>
-                          <SelectItem value="medium">Medium (5-7 min)</SelectItem>
-                          <SelectItem value="long">Long (10+ min)</SelectItem>
+                          <SelectItem value="short">Short (1-2 min)</SelectItem>
+                          <SelectItem value="medium">Medium (2-3 min)</SelectItem>
+                          <SelectItem value="long">Long (4+ min)</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -767,9 +767,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="short">Short (2-3 min)</SelectItem>
-                                <SelectItem value="medium">Medium (5-7 min)</SelectItem>
-                                <SelectItem value="long">Long (10+ min)</SelectItem>
+                                <SelectItem value="short">Short (1-2 min)</SelectItem>
+                                <SelectItem value="medium">Medium (2-3 min)</SelectItem>
+                                <SelectItem value="long">Long (4+ min)</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormItem>
