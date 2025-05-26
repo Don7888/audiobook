@@ -307,6 +307,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       }
 
       // Generate the story (include character IDs for saving)
+      setLoadingStatus("Creating your magical story...");
       const storyResponse = await generateStory({ ...data, prompt: fullPrompt });
       setGeneratedStory(storyResponse);
 
@@ -316,8 +317,11 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       }
 
       // Generate audio for the story (include title so narrator reads it first)
+      setLoadingStatus("Recording the narration...");
       const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
       setAudioUrl(audioUrl);
+
+      setLoadingStatus("Finalizing your story...");
 
       // Estimate audio duration (1 character ≈ 0.1 seconds)
       const estimatedDuration = storyResponse.content.length * 0.1;
@@ -416,7 +420,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-4xl mx-auto p-6 space-y-6 relative">
+      {/* Full-screen animated loader */}
+      {isGenerating && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Creating Your Story</h3>
+            <p className="text-gray-600 animate-pulse">{loadingStatus || "Preparing your story..."}</p>
+          </div>
+        </div>
+      )}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
           AI Story Creator
