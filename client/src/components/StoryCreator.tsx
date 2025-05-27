@@ -20,6 +20,42 @@ import { Link } from "wouter";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useParallelProcessing } from "@/hooks/useParallelProcessing";
+import EditableStoryPreview from "./EditableStoryPreview";
+
+// Legal compliance check functions
+const checkForCopyrightedContent = (prompt: string): boolean => {
+  const copyrightedTerms = [
+    // Disney characters
+    'mickey mouse', 'minnie mouse', 'donald duck', 'goofy', 'pluto', 'elsa', 'anna', 'olaf', 'frozen',
+    'simba', 'lion king', 'mulan', 'belle', 'beast', 'ariel', 'little mermaid', 'cinderella',
+    'snow white', 'sleeping beauty', 'rapunzel', 'tangled', 'moana', 'maui', 'buzz lightyear',
+    'woody', 'toy story', 'nemo', 'dory', 'finding nemo', 'incredibles', 'monsters inc',
+    
+    // Other major franchises
+    'pokemon', 'pikachu', 'mario', 'luigi', 'sonic', 'hedgehog', 'batman', 'superman',
+    'spider-man', 'spiderman', 'iron man', 'captain america', 'hulk', 'thor', 'avengers',
+    'star wars', 'luke skywalker', 'darth vader', 'yoda', 'harry potter', 'hermione',
+    'ron weasley', 'dumbledore', 'hogwarts', 'naruto', 'goku', 'dragon ball',
+    
+    // Popular children's characters
+    'peppa pig', 'thomas tank engine', 'teletubbies', 'barney', 'sesame street',
+    'big bird', 'elmo', 'cookie monster', 'dora explorer', 'blues clues', 'paw patrol'
+  ];
+  
+  const lowerPrompt = prompt.toLowerCase();
+  return copyrightedTerms.some(term => lowerPrompt.includes(term));
+};
+
+const checkForInappropriateContent = (prompt: string): boolean => {
+  const inappropriateTerms = [
+    'violence', 'death', 'kill', 'murder', 'blood', 'war', 'fight', 'gun', 'weapon',
+    'scary', 'horror', 'nightmare', 'monster', 'demon', 'ghost', 'zombie',
+    'adult', 'mature', 'inappropriate', 'explicit'
+  ];
+  
+  const lowerPrompt = prompt.toLowerCase();
+  return inappropriateTerms.some(term => lowerPrompt.includes(term));
+};
 
 interface StoryCreatorProps {
   onStoryGenerated?: (story: GeneratedStory, audio: string, soundEffects?: SoundEffectPlacement[]) => void;
@@ -46,6 +82,24 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [batchStories, setBatchStories] = useState<GeneratedStory[]>([]);
   const [batchAudios, setBatchAudios] = useState<string[]>([]);
   const [batchStoriesIds, setBatchStoriesIds] = useState<number[]>([]);
+
+  // Handler for updating single story
+  const handleSingleStoryUpdate = (updatedStory: GeneratedStory, newAudioUrl: string) => {
+    setGeneratedStory(updatedStory);
+    setAudioUrl(newAudioUrl);
+  };
+
+  // Handler for updating batch story
+  const handleBatchStoryUpdate = (index: number, updatedStory: GeneratedStory, newAudioUrl: string) => {
+    const newBatchStories = [...batchStories];
+    const newBatchAudios = [...batchAudios];
+    
+    newBatchStories[index] = updatedStory;
+    newBatchAudios[index] = newAudioUrl;
+    
+    setBatchStories(newBatchStories);
+    setBatchAudios(newBatchAudios);
+  };
   const [selectedTemplate, setSelectedTemplate] = useState<StoryTemplate | null>(null);
   const [templateCategory, setTemplateCategory] = useState<string>("all");
   const { toast } = useToast();
@@ -164,6 +218,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
         return;
       }
 
+      // Legal check is handled in handleBatchSubmit, so we can proceed here
+
       // Get form data
       const formData = form.getValues();
 
@@ -240,7 +296,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               narrator: formData.narrator,
               audioUrl: audioUrls[i],
               userId: userId,
-              characterIds: selectedCharacters
+              characterIds: selectedCharacters,
+              includeSoundEffects: formData.includeSoundEffects
             }),
           });
 
@@ -924,11 +981,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             <TabsContent value="preview" className="space-y-6">
               {generatedStory ? (
                 <div className="space-y-6">
-                  <StoryPreview
+                  <EditableStoryPreview
                     story={generatedStory}
                     audioUrl={audioUrl || ""}
-                    soundEffects={soundEffects}
-                    characterIds={selectedCharacters}
+                    narrator={form.watch("narrator")}
+                    userId={userId || 0}
+                    onStoryUpdate={handleSingleStoryUpdate}
                   />
 
                   <Tabs defaultValue="audio" className="w-full">
