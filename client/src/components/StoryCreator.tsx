@@ -483,7 +483,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     );
 
     if (hasLegalIssues && !legalAccepted) {
-      setPendingFormData(formData);
+      setPendingFormData({ ...formData, batchMode: true });
       setShowLegalConfirmation(true);
       return;
     }
@@ -1041,59 +1041,17 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
 
                   <div className="grid gap-6">
                     {batchStories.map((story, index) => (
-                      <div key={index} className="border rounded-lg p-6 bg-white">
-                        <div className="flex justify-between items-start mb-4">
-                          <h3 className="text-xl font-semibold text-gray-900">{story.title}</h3>
-                          <div className="flex gap-2">
-                            {batchStoriesIds[index] > 0 && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  // Handle save logic here
-                                  toast({
-                                    title: "Story Saved",
-                                    description: "Story has been saved to your library.",
-                                  });
-                                }}
-                              >
-                                Save
-                              </Button>
-                            )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // Handle delete logic here
-                                const newStories = batchStories.filter((_, i) => i !== index);
-                                const newAudios = batchAudios.filter((_, i) => i !== index);
-                                const newIds = batchStoriesIds.filter((_, i) => i !== index);
-                                setBatchStories(newStories);
-                                setBatchAudios(newAudios);
-                                setBatchStoriesIds(newIds);
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {batchAudios[index] && (
-                          <div className="mb-4">
-                            <AudioPlayer
-                              audioUrl={batchAudios[index]}
-                              className="w-full"
-                              storyText={story.content}
-                            />
-                          </div>
-                        )}
-                        
-                        <div className="prose max-w-none">
-                          <div className="text-gray-700 leading-relaxed whitespace-pre-wrap line-clamp-6">
-                            {story.content}
-                          </div>
-                        </div>
-                      </div>
+                      <EditableStoryPreview
+                        key={index}
+                        story={story}
+                        audioUrl={batchAudios[index] || ""}
+                        narrator={form.watch("narrator")}
+                        userId={userId || 0}
+                        onStoryUpdate={(updatedStory, newAudioUrl) => 
+                          handleBatchStoryUpdate(index, updatedStory, newAudioUrl)
+                        }
+                        storyIndex={index}
+                      />
                     ))}
                   </div>
                 </div>
