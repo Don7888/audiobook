@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { BookOpen, User, Menu } from "lucide-react";
+import { User, Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   DropdownMenu,
@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import nabliLogo from "@assets/ChatGPT Image May 30, 2025, 08_16_18 PM.png";
 
 export default function Header() {
   const [location] = useLocation();
@@ -17,13 +18,12 @@ export default function Header() {
     <header className="bg-white shadow-md">
       <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="text-primary text-3xl mr-2">
-            <BookOpen />
-          </div>
-          <Link href="/">
-            <h1 className="font-heading font-bold text-2xl md:text-3xl text-primary cursor-pointer">
-              StoryTunes
-            </h1>
+          <Link href="/" className="flex items-center">
+            <img 
+              src={nabliLogo} 
+              alt="nabli logo" 
+              className="h-10 w-auto mr-2"
+            />
           </Link>
         </div>
         
