@@ -438,11 +438,23 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   };
 
   // Handle legal confirmation
-  const handleLegalConfirmation = () => {
-    if (legalAccepted && pendingFormData) {
-      setShowLegalConfirmation(false);
-      handleActualFormSubmit(pendingFormData);
+  const handleLegalConfirmation = async (confirmed: boolean) => {
+    setShowLegalConfirmation(false);
+    
+    if (confirmed && pendingFormData) {
+      setLegalAccepted(true);
+      
+      // Check if this is batch mode or single story mode
+      if (pendingFormData.batchMode) {
+        console.log("Proceeding with batch generation after legal confirmation");
+        await handleGenerateBatch();
+      } else {
+        console.log("Proceeding with single story generation after legal confirmation");
+        await handleActualFormSubmit(pendingFormData);
+      }
     }
+    
+    setPendingFormData(null);
   };
 
   // Submit handler for the form
@@ -1000,39 +1012,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     onStoryUpdate={handleSingleStoryUpdate}
                   />
 
-                  <Tabs defaultValue="audio" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="audio">
-                        <Headphones className="mr-2 h-4 w-4" />
-                        Audio & Effects
-                      </TabsTrigger>
-                      <TabsTrigger value="text">
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Text View
-                      </TabsTrigger>
-                    </TabsList>
 
-                    <TabsContent value="audio" className="space-y-4">
-                      {audioUrl && (
-                        <div className="space-y-4">
-                          <AudioPlayer
-                            audioUrl={audioUrl}
-                            className="w-full"
-                            storyText={generatedStory.content}
-                          />
-                        </div>
-                      )}
-                    </TabsContent>
-
-                    <TabsContent value="text" className="space-y-4">
-                      <div className="prose max-w-none p-6 bg-white border rounded-lg">
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">{generatedStory.title}</h2>
-                        <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                          {generatedStory.content}
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
                 </div>
               ) : (
                 <div className="text-center text-gray-500 py-12">
@@ -1107,11 +1087,18 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLegalConfirmation(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowLegalConfirmation(false);
+              setPendingFormData(null);
+            }}>
               Cancel
             </Button>
             <Button 
-              onClick={handleLegalConfirmation}
+              onClick={async () => {
+                if (legalAccepted && pendingFormData) {
+                  await handleLegalConfirmation(true);
+                }
+              }}
               disabled={!legalAccepted}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >

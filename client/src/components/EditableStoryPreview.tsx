@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Edit, Save, X, Volume2, Loader2 } from "lucide-react";
+import { Edit, Save, X, Volume2, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AudioPlayer from "./AudioPlayer";
 import { GeneratedStory } from "@/lib/openai";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EditableStoryPreviewProps {
   story: GeneratedStory;
@@ -28,7 +29,9 @@ export default function EditableStoryPreview({
   const [editedContent, setEditedContent] = useState(story.content);
   const [editedTitle, setEditedTitle] = useState(story.title);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSave = async () => {
     if (!editedContent.trim() || !editedTitle.trim()) {
