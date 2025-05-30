@@ -1,5 +1,5 @@
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
-import nabliLogo from "@assets/ChatGPT Image May 30, 2025, 08_16_18 PM.png";
+import nabliLogo from "@assets/nabli_logo_transparent.png";
 
 export default function Footer() {
   return (

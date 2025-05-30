@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import nabliLogo from "@assets/ChatGPT Image May 30, 2025, 08_16_18 PM.png";
+import nabliLogo from "@assets/nabli_logo_transparent.png";
 
 export default function Header() {
   const [location] = useLocation();
