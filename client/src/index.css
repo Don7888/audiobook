@@ -19,7 +19,7 @@
   --input: 20 5.9% 90%;
   
   /* Brand colors */
-  --primary: 0 82% 71%;  /* #FF6B6B */
+  --primary: 249 48% 58%; /* #6A5ACD - Purple */
   --primary-foreground: 211 100% 99%;
   --secondary: 174 65% 57%; /* #4ECDC4 */
   --secondary-foreground: 210 11% 30%;
@@ -27,29 +27,29 @@
   --accent-foreground: 210 11% 30%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 60 9.1% 97.8%;
-  --purple: 249 48% 58%; /* #6A5ACD */
+  --purple: 259 58% 45%; /* #6B46C1 - Dark Purple */
   --dark: 210 11% 30%; /* #495057 */
   --light: 210 17% 98%; /* #F8F9FA */
   
-  --ring: 0 82% 71%;
+  --ring: 249 48% 58%;
   --radius: 1rem;
   
   /* Chart colors */
-  --chart-1: 0 82% 71%; 
+  --chart-1: 249 48% 58%; 
   --chart-2: 174 65% 57%;
   --chart-3: 44 100% 70%;
-  --chart-4: 249 48% 58%;
+  --chart-4: 259 58% 45%;
   --chart-5: 210 11% 30%;
   
   /* Sidebar colors */
   --sidebar-background: 210 17% 98%;
   --sidebar-foreground: 210 11% 30%;
-  --sidebar-primary: 0 82% 71%;
+  --sidebar-primary: 249 48% 58%;
   --sidebar-primary-foreground: 210 17% 98%;
   --sidebar-accent: 44 100% 70%;
   --sidebar-accent-foreground: 210 11% 30%;
   --sidebar-border: 20 5.9% 90%;
-  --sidebar-ring: 0 82% 71%;
+  --sidebar-ring: 249 48% 58%;
 }
 
 .dark {
@@ -63,7 +63,7 @@
   --card-foreground: 210 40% 98%;
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
-  --primary: 0 82% 65%;
+  --primary: 249 48% 58%;
   --primary-foreground: 210 40% 98%;
   --secondary: 174 65% 45%;
   --secondary-foreground: 210 40% 98%;
