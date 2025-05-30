@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import heroImage from "@assets/Hero.png";
 
 export default function Hero() {
   return (
@@ -35,8 +36,8 @@ export default function Hero() {
           </div>
           <div className="md:w-1/2 flex justify-center">
             <img 
-              src="https://images.unsplash.com/photo-1635048424329-a9bfb146d7aa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600" 
-              alt="Child with magical storybook" 
+              src={heroImage} 
+              alt="Magical fantasy world with storybook characters" 
               className="rounded-3xl shadow-2xl max-w-full md:max-w-md h-auto object-cover" 
             />
           </div>

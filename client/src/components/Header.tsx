@@ -80,7 +80,7 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2">
                   <User size={18} />
-                  <span className="hidden sm:inline">{user?.firstName || 'User'}</span>
+                  <span className="hidden sm:inline">{user?.username || 'User'}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
