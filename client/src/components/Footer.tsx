@@ -11,7 +11,7 @@ export default function Footer() {
               <img 
                 src={nabliLogo} 
                 alt="nabli logo" 
-                className="h-12 w-auto"
+                className="h-16 w-auto"
               />
             </div>
             <p className="text-gray-400 mb-4">Creating magical audiobook experiences for children and families.</p>
