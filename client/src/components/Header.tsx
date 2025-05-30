@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import nabliLogo from "@assets/nabli_logo_transparent.png";
+import nabliLogo from "@assets/nabli_logo_transparent - Edited.png";
 
 export default function Header() {
   const [location] = useLocation();

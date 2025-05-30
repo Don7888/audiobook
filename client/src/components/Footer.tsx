@@ -1,5 +1,5 @@
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
-import nabliLogo from "@assets/nabli_logo_transparent.png";
+import nabliLogo from "@assets/nabli_logo_transparent - Edited.png";
 
 export default function Footer() {
   return (
