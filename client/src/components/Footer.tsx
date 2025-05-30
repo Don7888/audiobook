@@ -1,5 +1,5 @@
-import { BookOpen } from "lucide-react";
 import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import nabliLogo from "@assets/ChatGPT Image May 30, 2025, 08_16_18 PM.png";
 
 export default function Footer() {
   return (
@@ -8,10 +8,11 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center mb-4">
-              <div className="text-primary text-3xl mr-2">
-                <BookOpen />
-              </div>
-              <h3 className="font-heading font-bold text-2xl text-primary">StoryTunes</h3>
+              <img 
+                src={nabliLogo} 
+                alt="nabli logo" 
+                className="h-12 w-auto"
+              />
             </div>
             <p className="text-gray-400 mb-4">Creating magical audiobook experiences for children and families.</p>
             <div className="flex space-x-4">
@@ -62,7 +63,7 @@ export default function Footer() {
         </div>
         
         <div className="border-t border-gray-700 mt-12 pt-6 text-center text-gray-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} StoryTunes. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} nabli. All rights reserved.</p>
         </div>
       </div>
     </footer>

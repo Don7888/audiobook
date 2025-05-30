@@ -22,7 +22,7 @@ export default function Header() {
             <img 
               src={nabliLogo} 
               alt="nabli logo" 
-              className="h-10 w-auto mr-2"
+              className="h-16 w-auto mr-2"
             />
           </Link>
         </div>
