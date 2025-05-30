@@ -15,6 +15,10 @@ interface EditableStoryPreviewProps {
   userId: number;
   onStoryUpdate?: (updatedStory: GeneratedStory, newAudioUrl: string) => void;
   storyIndex?: number; // For batch stories
+  prompt?: string; // Add prompt for saving stories
+  ageRange?: string;
+  storyLength?: string;
+  storyType?: string;
 }
 
 export default function EditableStoryPreview({
@@ -23,7 +27,11 @@ export default function EditableStoryPreview({
   narrator,
   userId,
   onStoryUpdate,
-  storyIndex
+  storyIndex,
+  prompt = "Generated story",
+  ageRange = "3-5",
+  storyLength = "short",
+  storyType = "adventure"
 }: EditableStoryPreviewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(story.content);
@@ -123,6 +131,51 @@ export default function EditableStoryPreview({
     setIsEditing(false);
   };
 
+  const handleSaveToLibrary = async () => {
+    try {
+      setIsSaving(true);
+
+      const saveResponse = await fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          title: story.title,
+          text: story.content,
+          prompt: prompt,
+          audioUrl: audioUrl,
+          ageRange: ageRange,
+          storyLength: storyLength,
+          storyType: storyType,
+          narrator: narrator,
+          soundEffects: null,
+          characterIds: []
+        })
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Failed to save story');
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['/api/stories'] });
+      
+      toast({
+        title: "Success!",
+        description: "Your story has been saved to your library.",
+      });
+
+    } catch (error) {
+      console.error('Error saving story:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save story to library. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
@@ -170,14 +223,34 @@ export default function EditableStoryPreview({
               </Button>
             </>
           ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsEditing(true)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Story
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Story
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSaveToLibrary}
+                disabled={isSaving}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Save to Library
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
       </CardHeader>

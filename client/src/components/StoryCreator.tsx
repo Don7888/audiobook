@@ -1010,6 +1010,10 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                     narrator={form.watch("narrator")}
                     userId={userId || 0}
                     onStoryUpdate={handleSingleStoryUpdate}
+                    prompt={form.watch("prompt")}
+                    ageRange={form.watch("ageRange")}
+                    storyLength={form.watch("storyLength")}
+                    storyType={form.watch("storyType")}
                   />
 
 
@@ -1042,6 +1046,10 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                           handleBatchStoryUpdate(index, updatedStory, newAudioUrl)
                         }
                         storyIndex={index}
+                        prompt={form.getValues("batchPrompts")?.[index]?.prompt || "Generated story"}
+                        ageRange={form.watch("ageRange")}
+                        storyLength={form.watch("storyLength")}
+                        storyType={form.watch("storyType")}
                       />
                     ))}
                   </div>
