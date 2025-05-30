@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { BookOpen, User } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { BookOpen, User, Menu } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   DropdownMenu,
@@ -9,12 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Menu } from "lucide-react";
 
 export default function Header() {
-  const isMobile = useMobile();
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   return (
     <header className="bg-white shadow-md">
@@ -29,144 +26,78 @@ export default function Header() {
             </h1>
           </Link>
         </div>
-        <nav>
-          {isMobile ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link href="/">Create</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/library">My Library</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/characters">Characters</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/sound-effects">Sound Effects</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/export">Export</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/subscription">Plans</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/help">Help</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <ul className="flex space-x-6 items-center">
-              <li>
-                <Link href="/">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/' ? 'text-primary' : ''}`}>
-                    Create
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/library">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/library' ? 'text-primary' : ''}`}>
-                    My Library
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/subscription">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/subscription' ? 'text-primary' : ''}`}>
-                    Plans
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/characters">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/characters' ? 'text-primary' : ''}`}>
-                    Characters
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/sound-effects">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/sound-effects' ? 'text-primary' : ''}`}>
-                    Sound Effects
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/export">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/export' ? 'text-primary' : ''}`}>
-                    Export
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/help">
-                  <span className={`font-medium hover:text-primary transition-colors duration-200 ${location === '/help' ? 'text-primary' : ''}`}>
-                    Help
-                  </span>
-                </Link>
-              </li>
-              <li>
-                {isAuthenticated ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <User size={18} />
-                        <span>{user?.username}</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href="/library">My Stories</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => logout()}>
-                        Sign Out
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Link href="/signin">
-                    <Button className="bg-accent hover:bg-amber-400 text-dark font-semibold">
-                      Sign In
-                    </Button>
-                  </Link>
-                )}
-              </li>
-            </ul>
-          )}
-          
-          {isMobile && !isAuthenticated && (
-            <Link href="/signin">
-              <Button className="bg-accent hover:bg-amber-400 text-dark font-semibold ml-2">
-                Sign In
+        
+        <div className="flex items-center gap-2">
+          {/* Main Navigation Hamburger Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Menu className="h-6 w-6" />
               </Button>
-            </Link>
-          )}
-          {isMobile && isAuthenticated && (
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href="/" className={location === '/' ? 'text-primary font-medium' : ''}>
+                  Create
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/library" className={location === '/library' ? 'text-primary font-medium' : ''}>
+                  My Library
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/characters" className={location === '/characters' ? 'text-primary font-medium' : ''}>
+                  Characters
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/sound-effects" className={location === '/sound-effects' ? 'text-primary font-medium' : ''}>
+                  Sound Effects
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/export" className={location === '/export' ? 'text-primary font-medium' : ''}>
+                  Export
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/subscription" className={location === '/subscription' ? 'text-primary font-medium' : ''}>
+                  Plans
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/help" className={location === '/help' ? 'text-primary font-medium' : ''}>
+                  Help
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Account Section */}
+          {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 ml-2">
+                <Button variant="outline" className="flex items-center gap-2">
                   <User size={18} />
-                  <span>{user?.username}</span>
+                  <span className="hidden sm:inline">{user?.firstName || 'User'}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                   <Link href="/library">My Stories</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => logout()}>
-                  Sign Out
+                <DropdownMenuItem asChild>
+                  <a href="/api/logout">Sign Out</a>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : (
+            <Button asChild className="bg-accent hover:bg-amber-400 text-dark font-semibold">
+              <a href="/api/login">Sign In</a>
+            </Button>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
