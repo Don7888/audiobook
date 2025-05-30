@@ -478,11 +478,22 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
     
     // Check for legal issues before generating batch stories
     const allPrompts = formData.batchPrompts?.map(bp => bp.prompt).filter(p => p.trim()) || [];
-    const hasLegalIssues = allPrompts.some(prompt => 
-      checkForCopyrightedContent(prompt) || checkForInappropriateContent(prompt)
-    );
+    console.log("Checking prompts for copyright issues:", allPrompts);
+    
+    // Reset legal acceptance for each new generation attempt
+    setLegalAccepted(false);
+    
+    const hasLegalIssues = allPrompts.some(prompt => {
+      const hasCopyright = checkForCopyrightedContent(prompt);
+      const hasInappropriate = checkForInappropriateContent(prompt);
+      console.log(`Prompt "${prompt}": copyright=${hasCopyright}, inappropriate=${hasInappropriate}`);
+      return hasCopyright || hasInappropriate;
+    });
 
-    if (hasLegalIssues && !legalAccepted) {
+    console.log("Has legal issues:", hasLegalIssues);
+
+    if (hasLegalIssues) {
+      console.log("Showing legal confirmation dialog");
       setPendingFormData({ ...formData, batchMode: true });
       setShowLegalConfirmation(true);
       return;

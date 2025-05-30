@@ -40,6 +40,28 @@ export default function EditableStoryPreview({
       return;
     }
 
+    // Check for inappropriate content before generating audio
+    const inappropriateTerms = [
+      'violence', 'death', 'kill', 'murder', 'blood', 'war', 'fight', 'gun', 'weapon',
+      'scary', 'horror', 'nightmare', 'demon', 'ghost', 'zombie',
+      'adult', 'mature', 'inappropriate', 'explicit', 'hate', 'racist', 'discrimination'
+    ];
+    
+    const lowerContent = editedContent.toLowerCase();
+    const lowerTitle = editedTitle.toLowerCase();
+    const hasInappropriateContent = inappropriateTerms.some(term => 
+      lowerContent.includes(term) || lowerTitle.includes(term)
+    );
+
+    if (hasInappropriateContent) {
+      toast({
+        title: "Inappropriate Content Detected",
+        description: "Your story contains inappropriate language or themes. Please edit the content to remove any violent, scary, or mature themes before generating audio.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsRegenerating(true);
 
