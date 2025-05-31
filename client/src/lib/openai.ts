@@ -83,9 +83,10 @@ export async function generateAudioBatch(
     try {
       // Run each batch concurrently
       const batchResults = await Promise.all(
-        batch.map(({ text, voice, userId, title }) => 
-          generateAudio(text, voice, userId, title)
-        )
+        batch.map(async ({ text, voice, userId, title }) => {
+          const audioResult = await generateAudio(text, voice, userId, title);
+          return audioResult.audioUrl;
+        })
       );
       
       // Add the results to our final array

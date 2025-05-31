@@ -628,10 +628,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 ${textWithPauses}`
           : textWithPauses;
         
-        // Call OpenAI's TTS API
+        // Set consistent speaking speed for timing synchronization
+        const speakingSpeed = 1.0; // Normal speed (can be 0.25 to 4.0)
+        
+        // Call OpenAI's TTS API with consistent speed
         const mp3 = await openai.audio.speech.create({
           model: "gpt-4o-mini-tts",
           voice: openAiVoice,
+          speed: speakingSpeed,
           input: titleAndStory.substring(0, 4096), // OpenAI has a limit, so truncate if necessary
         });
         
@@ -644,27 +648,35 @@ ${textWithPauses}`
         const soundEffectTimings = [];
         let match;
         
-        // More accurate timing calculation
-        const titleDuration = title ? (title.split(' ').length * 0.5) + 1.5 : 0; // 0.5s per word + 1.5s pause
+        // Calculate timing based on exact TTS speed and word count
+        const baseWordsPerMinute = 150; // Average WPM for TTS
+        const adjustedWPM = baseWordsPerMinute * speakingSpeed;
+        const wordsPerSecond = adjustedWPM / 60;
+        
+        // Calculate title duration
+        const titleWordCount = title ? title.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
+        const titleDuration = titleWordCount > 0 ? (titleWordCount / wordsPerSecond) + 2.0 : 0; // +2s pause after title
         
         while ((match = soundEffectRegex.exec(text)) !== null) {
           const textBeforeEffect = text.substring(0, match.index);
           const cleanTextBefore = textBeforeEffect.replace(/\[SFX:[^\]]+\]/g, ''); // Remove other SFX tags
           
-          // Count characters for more accurate timing (including punctuation pauses)
-          const charsBefore = cleanTextBefore.length;
-          const wordsBefore = cleanTextBefore.trim().split(/\s+/).filter(w => w.length > 0).length;
+          // Count words accurately
+          const wordsBefore = cleanTextBefore.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
           
-          // Calculate timing: 150 chars per minute + punctuation pauses
-          const readingTime = (charsBefore * 60) / (150 * 60); // chars per second
-          const pauseTime = (cleanTextBefore.match(/[.!?]/g) || []).length * 0.3; // 0.3s per sentence end
+          // Calculate precise timing based on TTS speed
+          const readingTime = wordsBefore / wordsPerSecond;
           
-          const estimatedTime = titleDuration + readingTime + pauseTime;
+          // Add small pauses for punctuation
+          const punctuationPauses = (cleanTextBefore.match(/[.!?]/g) || []).length * 0.4;
+          
+          const estimatedTime = titleDuration + readingTime + punctuationPauses;
           
           soundEffectTimings.push({
             effectName: match[1],
             timestamp: Math.max(0, estimatedTime),
-            duration: 2 // 2 second sound effect duration
+            duration: 2,
+            calculatedWPM: adjustedWPM // Include for debugging
           });
         }
         
