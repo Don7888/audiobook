@@ -643,47 +643,49 @@ ${textWithPauses}`
         const buffer = await mp3.arrayBuffer();
         fs.writeFileSync(audioFilePath, Buffer.from(buffer));
         
-        // Extract sound effects timing from original text
-        const soundEffectRegex = /\[SFX:([^\]]+)\]/g;
-        const soundEffectTimings = [];
-        let match;
-        
-        // Calculate timing based on exact TTS speed and word count
-        const baseWordsPerMinute = 150; // Average WPM for TTS
-        const adjustedWPM = baseWordsPerMinute * speakingSpeed;
-        const wordsPerSecond = adjustedWPM / 60;
-        
-        // Calculate title duration
-        const titleWordCount = title ? title.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
-        const titleDuration = titleWordCount > 0 ? (titleWordCount / wordsPerSecond) + 2.0 : 0; // +2s pause after title
-        
-        while ((match = soundEffectRegex.exec(text)) !== null) {
-          const textBeforeEffect = text.substring(0, match.index);
-          const cleanTextBefore = textBeforeEffect.replace(/\[SFX:[^\]]+\]/g, ''); // Remove other SFX tags
+        // Convert sound effect tags to spoken narration for reliability
+        if (includeSoundEffects && text.includes('[SFX:')) {
+          console.log('Converting sound effect tags to spoken narration');
           
-          // Count words accurately
-          const wordsBefore = cleanTextBefore.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
-          
-          // Calculate precise timing based on TTS speed
-          const readingTime = wordsBefore / wordsPerSecond;
-          
-          // Add small pauses for punctuation
-          const punctuationPauses = (cleanTextBefore.match(/[.!?]/g) || []).length * 0.4;
-          
-          const estimatedTime = titleDuration + readingTime + punctuationPauses;
-          
-          soundEffectTimings.push({
-            effectName: match[1],
-            timestamp: Math.max(0, estimatedTime),
-            duration: 2,
-            calculatedWPM: adjustedWPM // Include for debugging
+          // Replace sound effect tags with natural spoken descriptions
+          const textWithSpokenEffects = text.replace(/\[SFX:([^\]]+)\]/g, (match, effectName) => {
+            // Convert effect names to natural spoken descriptions
+            const spokenEffectMap: { [key: string]: string } = {
+              'meow': 'meow meow',
+              'dog bark': 'woof woof',
+              'bird chirp': 'chirp chirp chirp',
+              'thunder': 'rumble rumble boom',
+              'rain': 'pitter patter of raindrops',
+              'wind': 'whoooosh',
+              'footsteps': 'tap tap tap',
+              'door creak': 'creeeeak',
+              'magic spell': 'sparkle sparkle zing',
+              'horse gallop': 'clip clop clip clop'
+            };
+            
+            const spokenEffect = spokenEffectMap[effectName.toLowerCase()] || effectName;
+            return ` ${spokenEffect} `;
           });
+          
+          // Re-generate the audio with spoken sound effects
+          const finalTextWithEffects = title 
+            ? `${title}. ${textWithSpokenEffects}`
+            : textWithSpokenEffects;
+            
+          const mp3WithEffects = await openai.audio.speech.create({
+            model: "gpt-4o-mini-tts",
+            voice: openAiVoice,
+            speed: speakingSpeed,
+            input: finalTextWithEffects.substring(0, 4096),
+          });
+          
+          const bufferWithEffects = await mp3WithEffects.arrayBuffer();
+          fs.writeFileSync(audioFilePath, Buffer.from(bufferWithEffects));
+          
+          console.log(`Audio with spoken sound effects generated and saved to ${audioFilePath}`);
         }
         
-        return res.status(200).json({ 
-          audioUrl,
-          soundEffectTimings: soundEffectTimings
-        });
+        return res.status(200).json({ audioUrl });
       } catch (openAiError) {
         console.error("OpenAI TTS error:", openAiError);
         
