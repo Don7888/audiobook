@@ -90,27 +90,7 @@ export default function SoundEffects() {
     ? soundEffects 
     : soundEffects.filter(effect => effect.category === selectedCategory);
   
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      return apiRequest(`/api/sound-effects/${id}`, "DELETE");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sound-effects'] });
-      toast({
-        title: "Sound effect deleted",
-        description: "The sound effect was deleted successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting sound effect:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete sound effect",
-        variant: "destructive",
-      });
-    }
-  });
+
   
   // Form for uploading new sound effects
   const form = useForm<z.infer<typeof uploadFormSchema>>({
@@ -187,12 +167,7 @@ export default function SoundEffects() {
     }
   };
   
-  // Handle sound effect deletion
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this sound effect?")) {
-      deleteMutation.mutate(id);
-    }
-  };
+
   
   if (isLoading) {
     return (
@@ -387,16 +362,6 @@ export default function SoundEffects() {
                 >
                   <Play size={16} className="mr-1" /> Preview
                 </Button>
-                {isPremiumUser && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-red-500 border-red-200 hover:bg-red-50"
-                    onClick={() => handleDelete(effect.id)}
-                  >
-                    <Trash size={16} className="mr-1" /> Delete
-                  </Button>
-                )}
               </div>
             </div>
           ))}
