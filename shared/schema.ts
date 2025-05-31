@@ -74,6 +74,7 @@ export const stories = pgTable("stories", {
   storyLength: varchar("story_length", { length: 50 }).notNull(),
   storyType: varchar("story_type", { length: 50 }).notNull(),
   narrator: varchar("narrator", { length: 50 }).notNull(),
+  vibe: varchar("vibe", { length: 50 }),
   audioUrl: text("audio_url").notNull(),
   soundEffects: json("sound_effects").$type<SoundEffectPlacement[]>(),
   characterIds: json("character_ids").$type<number[]>().default([]),

@@ -118,6 +118,7 @@ export interface SaveStoryParams {
   storyLength: string;
   storyType: string;
   narrator: string;
+  vibe?: string;
   audioUrl: string;
   userId?: number;
   soundEffects?: SoundEffectPlacement[];

@@ -294,6 +294,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
               storyLength: formData.storyLength,
               storyType: formData.storyType,
               narrator: formData.narrator,
+              vibe: formData.vibe,
               audioUrl: audioUrls[i],
               userId: userId,
               characterIds: selectedCharacters,

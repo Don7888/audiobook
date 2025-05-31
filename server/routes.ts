@@ -398,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         - Age range: ${storyParams.ageRange}
         - Story length: ${storyParams.storyLength}
         - Story type: ${storyParams.storyType}
-        - Narrator style: ${storyParams.narrator}
+        - Narrator style: ${storyParams.narrator}${storyParams.vibe ? `\n        - Story vibe/mood: ${storyParams.vibe}` : ''}
         
         ${wordCountRequirement}
         
