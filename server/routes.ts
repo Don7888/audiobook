@@ -216,17 +216,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // SOUND EFFECTS ENDPOINTS
 
-  // Get all sound effects
+  // Get all sound effects by scanning actual files
   app.get("/api/sound-effects", async (req: Request, res: Response) => {
     try {
-      // For demonstration purposes, return all sound effects regardless of authentication
-      // In a real app, you would filter based on user permissions
-      const allEffects = await storage.getAllSoundEffects();
+      const soundEffects: any[] = [];
+      const soundsDir = path.join(process.cwd(), 'public/sounds');
       
-      // Log the effects for debugging
-      console.log("Retrieved sound effects:", allEffects.length);
+      // Check if sounds directory exists
+      if (!fs.existsSync(soundsDir)) {
+        return res.status(200).json([]);
+      }
       
-      return res.status(200).json(allEffects);
+      // Read all category directories
+      const categories = fs.readdirSync(soundsDir, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+      
+      let effectId = 1;
+      
+      // Scan each category for MP3 files
+      for (const category of categories) {
+        const categoryPath = path.join(soundsDir, category);
+        
+        try {
+          const files = fs.readdirSync(categoryPath)
+            .filter(file => file.toLowerCase().endsWith('.mp3'));
+          
+          for (const file of files) {
+            const name = path.parse(file).name; // Remove .mp3 extension
+            const url = `/sounds/${category}/${file}`;
+            
+            soundEffects.push({
+              id: effectId++,
+              name: name,
+              category: category,
+              url: url,
+              userId: null // System sound effects
+            });
+          }
+        } catch (categoryError) {
+          console.warn(`Error reading category ${category}:`, categoryError);
+        }
+      }
+      
+      console.log("Retrieved sound effects from files:", soundEffects.length);
+      
+      return res.status(200).json(soundEffects);
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: "Error fetching sound effects" });

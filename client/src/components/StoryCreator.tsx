@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { StoryGeneration, storyGenerationSchema, SoundEffectPlacement, type Character, storyTemplates, type StoryTemplate } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -739,6 +739,27 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="includeSoundEffects"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Include Sound Effects</FormLabel>
+                      <FormDescription>
+                        Add sound effects to enhance your story
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
               <Button 
                 type="submit" 
                 size="lg" 
@@ -962,6 +983,27 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                               <SelectItem value="Fable">Fable</SelectItem>
                             </SelectContent>
                           </Select>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="includeSoundEffects"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Include Sound Effects</FormLabel>
+                            <FormDescription>
+                              Add sound effects to enhance your stories
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
                         </FormItem>
                       )}
                     />
