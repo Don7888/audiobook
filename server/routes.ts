@@ -594,15 +594,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioFilePath = path.join(audioDir, audioFileName);
       
       try {
-        // Remove [SFX:xxx] tags before generating audio so the narrator doesn't read them
-        const textWithoutSfx = text.replace(/\[SFX:[^\]]+\]/g, '');
+        // Replace [SFX:xxx] tags with pauses instead of removing them completely
+        // This preserves timing for sound effect synchronization
+        const textWithPauses = text.replace(/\[SFX:[^\]]+\]/g, '... ...');
         
         // Add the title to the beginning of the narration with a pause after it
         const titleAndStory = title 
           ? `${title}. 
 
-${textWithoutSfx}`
-          : textWithoutSfx;
+${textWithPauses}`
+          : textWithPauses;
         
         // Call OpenAI's TTS API
         const mp3 = await openai.audio.speech.create({
@@ -615,7 +616,31 @@ ${textWithoutSfx}`
         const buffer = await mp3.arrayBuffer();
         fs.writeFileSync(audioFilePath, Buffer.from(buffer));
         
-        return res.status(200).json({ audioUrl });
+        // Extract sound effects timing from original text
+        const soundEffectRegex = /\[SFX:([^\]]+)\]/g;
+        const soundEffectTimings = [];
+        let match;
+        
+        // Estimate timing based on text position
+        const wordsBeforeTitle = title ? title.split(' ').length + 2 : 0; // +2 for pause
+        const avgWordsPerSecond = 2.5; // Average speaking speed
+        
+        while ((match = soundEffectRegex.exec(text)) !== null) {
+          const textBeforeEffect = text.substring(0, match.index);
+          const wordsBefore = textBeforeEffect.split(/\s+/).length;
+          const estimatedTime = (wordsBefore + wordsBeforeTitle) / avgWordsPerSecond;
+          
+          soundEffectTimings.push({
+            effectName: match[1],
+            timestamp: Math.max(0, estimatedTime - 1), // Play slightly before the pause
+            duration: 3 // 3 second sound effect duration
+          });
+        }
+        
+        return res.status(200).json({ 
+          audioUrl,
+          soundEffectTimings: soundEffectTimings
+        });
       } catch (openAiError) {
         console.error("OpenAI TTS error:", openAiError);
         

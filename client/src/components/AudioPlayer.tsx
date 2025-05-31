@@ -3,17 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Play, Pause, Volume } from "lucide-react";
 import SoundEffectPlayer from "./SoundEffectPlayer";
 
+interface SoundEffectTiming {
+  effectName: string;
+  timestamp: number;
+  duration: number;
+}
+
 interface AudioPlayerProps {
   audioUrl: string;
   className?: string;
   storyText?: string;
+  soundEffectTimings?: SoundEffectTiming[];
 }
 
-export default function AudioPlayer({ audioUrl, className = "", storyText = "" }: AudioPlayerProps) {
+export default function AudioPlayer({ audioUrl, className = "", storyText = "", soundEffectTimings = [] }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [playedEffects, setPlayedEffects] = useState<Set<number>>(new Set());
   const audioRef = useRef<HTMLAudioElement>(null);
+  const soundEffectAudios = useRef<Map<string, HTMLAudioElement>>(new Map());
 
   // Create a direct URL for the audio file using our static audio serving route
   // Replace /api/stories/audio/ with /audio/ to match our Express static serving
@@ -29,12 +38,30 @@ export default function AudioPlayer({ audioUrl, className = "", storyText = "" }
     };
 
     const updateTime = () => {
-      setCurrentTime(audio.currentTime);
+      const newTime = audio.currentTime;
+      setCurrentTime(newTime);
+      
+      // Check if any sound effects should be triggered at this time
+      soundEffectTimings.forEach((timing, index) => {
+        if (!playedEffects.has(index) && 
+            newTime >= timing.timestamp && 
+            newTime <= timing.timestamp + 0.5) { // 0.5 second window
+          
+          // Find and play the corresponding sound effect
+          const soundAudio = soundEffectAudios.current.get(timing.effectName);
+          if (soundAudio) {
+            soundAudio.currentTime = 0;
+            soundAudio.play().catch(console.error);
+            setPlayedEffects(prev => new Set(prev).add(index));
+          }
+        }
+      });
     };
 
     const audioEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
+      setPlayedEffects(new Set()); // Reset played effects for replay
     };
 
     audio.addEventListener('loadedmetadata', setupAudio);
@@ -47,6 +74,26 @@ export default function AudioPlayer({ audioUrl, className = "", storyText = "" }
       audio.removeEventListener('ended', audioEnded);
     };
   }, []);
+
+  // Initialize sound effect audio elements
+  useEffect(() => {
+    soundEffectTimings.forEach((timing) => {
+      if (!soundEffectAudios.current.has(timing.effectName)) {
+        const audio = new Audio(`/sounds/${timing.effectName}.mp3`);
+        audio.volume = 0.7; // Slightly lower volume than main narration
+        soundEffectAudios.current.set(timing.effectName, audio);
+      }
+    });
+
+    // Cleanup when component unmounts
+    return () => {
+      soundEffectAudios.current.forEach(audio => {
+        audio.pause();
+        audio.src = '';
+      });
+      soundEffectAudios.current.clear();
+    };
+  }, [soundEffectTimings]);
 
   // Format time in minutes:seconds
   const formatTime = (time: number) => {
