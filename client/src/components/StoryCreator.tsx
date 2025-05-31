@@ -739,33 +739,6 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="vibe"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Story Vibe (Optional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select story vibe" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="calm">Calm</SelectItem>
-                        <SelectItem value="energetic">Energetic</SelectItem>
-                        <SelectItem value="mysterious">Mysterious</SelectItem>
-                        <SelectItem value="whimsical">Whimsical</SelectItem>
-                        <SelectItem value="adventurous">Adventurous</SelectItem>
-                        <SelectItem value="peaceful">Peaceful</SelectItem>
-                        <SelectItem value="exciting">Exciting</SelectItem>
-                        <SelectItem value="magical">Magical</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-
               <Button 
                 type="submit" 
                 size="lg" 
@@ -987,33 +960,6 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                               <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
                               <SelectItem value="Male-English">Male - English</SelectItem>
                               <SelectItem value="Fable">Fable</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="vibe"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Story Vibe (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select story vibe" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="calm">Calm</SelectItem>
-                              <SelectItem value="energetic">Energetic</SelectItem>
-                              <SelectItem value="mysterious">Mysterious</SelectItem>
-                              <SelectItem value="whimsical">Whimsical</SelectItem>
-                              <SelectItem value="adventurous">Adventurous</SelectItem>
-                              <SelectItem value="peaceful">Peaceful</SelectItem>
-                              <SelectItem value="exciting">Exciting</SelectItem>
-                              <SelectItem value="magical">Magical</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
