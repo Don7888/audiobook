@@ -99,11 +99,14 @@ export async function generateAudioBatch(
   return results;
 }
 
-export async function generateAudio(text: string, voice: string = "female-gentle", userId?: number, title?: string): Promise<string> {
+export async function generateAudio(text: string, voice: string = "female-gentle", userId?: number, title?: string): Promise<{audioUrl: string, soundEffectTimings?: any[]}> {
   try {
     const response = await apiRequest("POST", "/api/stories/generate-audio", { text, voice, userId, title });
     const data = await response.json();
-    return data.audioUrl;
+    return {
+      audioUrl: data.audioUrl,
+      soundEffectTimings: data.soundEffectTimings || []
+    };
   } catch (error) {
     console.error("Error generating audio:", error);
     throw new Error("Failed to generate audio. Please try again.");

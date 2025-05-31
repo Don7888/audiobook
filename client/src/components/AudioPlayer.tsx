@@ -77,11 +77,47 @@ export default function AudioPlayer({ audioUrl, className = "", storyText = "", 
 
   // Initialize sound effect audio elements
   useEffect(() => {
+    // Create a mapping from effect names to actual file paths
+    const effectNameMapping: Record<string, string> = {
+      'rain': '/sounds/Weather/rain.mp3',
+      'Rain': '/sounds/Weather/rain.mp3',
+      'meow': '/sounds/Animals/meow.mp3',
+      'cat': '/sounds/Animals/meow.mp3',
+      'woof': '/sounds/Animals/woof.mp3',
+      'dog': '/sounds/Animals/woof.mp3',
+      'bark': '/sounds/Animals/woof.mp3',
+      'Sea': '/sounds/Environment/Sea.mp3',
+      'ocean': '/sounds/Environment/Sea.mp3',
+      'water': '/sounds/Environment/Sea.mp3',
+      'Twinkle': '/sounds/Fantasy/Twinkle.mp3',
+      'twinkle': '/sounds/Fantasy/Twinkle.mp3',
+      'stars': '/sounds/Fantasy/Twinkle.mp3',
+      'magic_twinkle': '/sounds/Fantasy/magic_twinkle.mp3',
+      'magic': '/sounds/Fantasy/magic_twinkle.mp3',
+      'rocket': '/sounds/Fantasy/rocket.mp3',
+      'space': '/sounds/Fantasy/rocket.mp3',
+      'creak door': '/sounds/Household/creak door.mp3',
+      'door': '/sounds/Household/creak door.mp3',
+      'door slam': '/sounds/Household/door slam.mp3',
+      'slam': '/sounds/Household/door slam.mp3',
+      'child laugh': '/sounds/Human/child laugh.mp3',
+      'laugh': '/sounds/Human/child laugh.mp3',
+      'giggle': '/sounds/Human/child laugh.mp3'
+    };
+
     soundEffectTimings.forEach((timing) => {
       if (!soundEffectAudios.current.has(timing.effectName)) {
-        const audio = new Audio(`/sounds/${timing.effectName}.mp3`);
-        audio.volume = 0.7; // Slightly lower volume than main narration
-        soundEffectAudios.current.set(timing.effectName, audio);
+        // Find the correct file path for this effect
+        const effectPath = effectNameMapping[timing.effectName] || 
+                          effectNameMapping[timing.effectName.toLowerCase()];
+        
+        if (effectPath) {
+          const audio = new Audio(effectPath);
+          audio.volume = 0.7; // Slightly lower volume than main narration
+          soundEffectAudios.current.set(timing.effectName, audio);
+        } else {
+          console.warn(`No sound file found for effect: ${timing.effectName}`);
+        }
       }
     });
 

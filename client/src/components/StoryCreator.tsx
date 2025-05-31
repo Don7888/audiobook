@@ -72,6 +72,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
   const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
   const [storyImageUrl, setStoryImageUrl] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [soundEffectTimings, setSoundEffectTimings] = useState<any[]>([]);
   const [soundEffects, setSoundEffects] = useState<SoundEffectPlacement[]>([]);
   const [audioDuration, setAudioDuration] = useState(0);
   const [soundEffectSuggestions, setSoundEffectSuggestions] = useState<Array<{ description: string; timing: string; }>>([]);
@@ -382,8 +383,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
 
       // Generate audio for the story (include title so narrator reads it first)
       setLoadingStatus("Recording the narration...");
-      const audioUrl = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
-      setAudioUrl(audioUrl);
+      const audioResult = await generateAudio(storyResponse.content, data.narrator, userId, storyResponse.title);
+      setAudioUrl(audioResult.audioUrl);
+      setSoundEffectTimings(audioResult.soundEffectTimings || []);
 
       // Generate story illustration
       setLoadingStatus("Creating story illustration...");
@@ -418,8 +420,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       setActiveTab("preview");
 
       // Notify parent component if callback provided
-      if (onStoryGenerated) {
-        onStoryGenerated(storyResponse, audioUrl);
+      if (onStoryGenerated && audioResult.audioUrl) {
+        onStoryGenerated(storyResponse, audioResult.audioUrl);
       }
 
       toast({

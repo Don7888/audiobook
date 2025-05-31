@@ -408,9 +408,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check subscription limits before generating
       if (!(await checkSubscriptionLimits(userId, res))) return;
       
-      // Get available sound effects from storage
-      const availableSoundEffects = await storage.getAllSoundEffects();
-      const soundEffectsList = availableSoundEffects.map(effect => effect.name).join(", ");
+      // Get available sound effects by scanning actual files
+      const soundEffects: any[] = [];
+      const soundsDir = path.join(process.cwd(), 'public/sounds');
+      
+      if (fs.existsSync(soundsDir)) {
+        const categories = fs.readdirSync(soundsDir, { withFileTypes: true })
+          .filter(dirent => dirent.isDirectory())
+          .map(dirent => dirent.name);
+        
+        for (const category of categories) {
+          const categoryPath = path.join(soundsDir, category);
+          try {
+            const files = fs.readdirSync(categoryPath)
+              .filter(file => file.toLowerCase().endsWith('.mp3'));
+            
+            for (const file of files) {
+              const name = path.parse(file).name;
+              soundEffects.push(name);
+            }
+          } catch (categoryError) {
+            console.warn(`Error reading category ${category}:`, categoryError);
+          }
+        }
+      }
+      
+      const soundEffectsList = soundEffects.join(", ");
       
       // Create prompt for OpenAI with very specific length requirements
       let lengthGuidance = "";
@@ -621,19 +644,27 @@ ${textWithPauses}`
         const soundEffectTimings = [];
         let match;
         
-        // Estimate timing based on text position
-        const wordsBeforeTitle = title ? title.split(' ').length + 2 : 0; // +2 for pause
-        const avgWordsPerSecond = 2.5; // Average speaking speed
+        // More accurate timing calculation
+        const titleDuration = title ? (title.split(' ').length * 0.5) + 1.5 : 0; // 0.5s per word + 1.5s pause
         
         while ((match = soundEffectRegex.exec(text)) !== null) {
           const textBeforeEffect = text.substring(0, match.index);
-          const wordsBefore = textBeforeEffect.split(/\s+/).length;
-          const estimatedTime = (wordsBefore + wordsBeforeTitle) / avgWordsPerSecond;
+          const cleanTextBefore = textBeforeEffect.replace(/\[SFX:[^\]]+\]/g, ''); // Remove other SFX tags
+          
+          // Count characters for more accurate timing (including punctuation pauses)
+          const charsBefore = cleanTextBefore.length;
+          const wordsBefore = cleanTextBefore.trim().split(/\s+/).filter(w => w.length > 0).length;
+          
+          // Calculate timing: 150 chars per minute + punctuation pauses
+          const readingTime = (charsBefore * 60) / (150 * 60); // chars per second
+          const pauseTime = (cleanTextBefore.match(/[.!?]/g) || []).length * 0.3; // 0.3s per sentence end
+          
+          const estimatedTime = titleDuration + readingTime + pauseTime;
           
           soundEffectTimings.push({
             effectName: match[1],
-            timestamp: Math.max(0, estimatedTime - 1), // Play slightly before the pause
-            duration: 3 // 3 second sound effect duration
+            timestamp: Math.max(0, estimatedTime),
+            duration: 2 // 2 second sound effect duration
           });
         }
         
