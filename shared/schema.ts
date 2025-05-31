@@ -97,6 +97,7 @@ export const storyGenerationSchema = z.object({
   storyLength: z.string(),
   storyType: z.string(),
   narrator: z.string(),
+  vibe: z.string().optional(),
   includeSoundEffects: z.boolean().optional().default(false),
   batchMode: z.boolean().optional().default(false),
   batchCount: z.number().min(1).max(10).optional().default(3),
