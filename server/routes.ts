@@ -571,7 +571,7 @@ ${textWithoutSfx}`
         
         // Call OpenAI's TTS API
         const mp3 = await openai.audio.speech.create({
-          model: "tts-1",
+          model: "gpt-4o-mini-tts",
           voice: openAiVoice,
           input: titleAndStory.substring(0, 4096), // OpenAI has a limit, so truncate if necessary
         });
