@@ -539,6 +539,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case "Male - Storyteller":
           openAiVoice = "onyx";
           break;
+        case "Male - English":
+          openAiVoice = "alloy";
+          break;
+        case "Fable":
+          openAiVoice = "fable";
+          break;
+        case "vibe":
+          openAiVoice = "vibe";
+          break;
         default:
           openAiVoice = "alloy";
       }

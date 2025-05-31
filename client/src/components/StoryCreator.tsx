@@ -730,6 +730,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         <SelectItem value="Male-Cheerful">Male - Cheerful</SelectItem>
                         <SelectItem value="Female-Animated">Female - Animated</SelectItem>
                         <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
+                        <SelectItem value="Male-English">Male - English</SelectItem>
+                        <SelectItem value="Fable">Fable</SelectItem>
+                        <SelectItem value="vibe">Vibe</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -956,6 +959,8 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                               <SelectItem value="Female-Animated">Female - Animated</SelectItem>
                               <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
                               <SelectItem value="Male-English">Male - English</SelectItem>
+                              <SelectItem value="Fable">Fable</SelectItem>
+                              <SelectItem value="vibe">Vibe</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
