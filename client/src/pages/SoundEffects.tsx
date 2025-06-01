@@ -28,13 +28,7 @@ export default function SoundEffects() {
           For now, our narrators naturally include sound effects by speaking them as part of the story.
         </p>
         
-        <div className="bg-white rounded-xl p-6 max-w-lg mx-auto">
-          <h3 className="font-semibold text-gray-900 mb-3">Current Sound Effects</h3>
-          <p className="text-sm text-gray-600">
-            Our AI narrators already include sound effects like "meow meow", "woof woof", 
-            "rumble rumble boom" and more as natural parts of your stories.
-          </p>
-        </div>
+
       </div>
     </div>
   );

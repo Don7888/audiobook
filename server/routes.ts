@@ -496,21 +496,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         - "Suddenly, there was a loud crash! [SFX:Thunder]"
         - "The little bird sang happily [SFX:Birds] as it flew through the blue sky."
         
-        Include 4-6 appropriate sound effects throughout the story at natural points where they would enhance
-        the storytelling experience. Use ONLY the exact names from the available list.
+        Focus on creating an engaging narrative with vivid descriptions and dialogue.
       `;
       
-      // For subscription tiers that include sound effects, add suggestions
-      if (storyParams.includeSoundEffects) {
-        prompt += `
-          Additionally, suggest 3-5 sound effects that would enhance this story, with timing recommendations.
-          Add these to your JSON response as an array of objects:
-          "soundEffectSuggestions": [
-            {"description": "Thunder rumbling", "timing": "When the storm begins in paragraph 2"},
-            {"description": "Birds chirping", "timing": "As the morning scene is described in paragraph 4"}
-          ]
-        `;
-      }
+
       
       // Call OpenAI API
       const response = await openai.chat.completions.create({
@@ -643,47 +632,7 @@ ${textWithPauses}`
         const buffer = await mp3.arrayBuffer();
         fs.writeFileSync(audioFilePath, Buffer.from(buffer));
         
-        // Convert sound effect tags to spoken narration for reliability
-        if (includeSoundEffects && text.includes('[SFX:')) {
-          console.log('Converting sound effect tags to spoken narration');
-          
-          // Replace sound effect tags with natural spoken descriptions
-          const textWithSpokenEffects = text.replace(/\[SFX:([^\]]+)\]/g, (match, effectName) => {
-            // Convert effect names to natural spoken descriptions
-            const spokenEffectMap: { [key: string]: string } = {
-              'meow': 'meow meow',
-              'dog bark': 'woof woof',
-              'bird chirp': 'chirp chirp chirp',
-              'thunder': 'rumble rumble boom',
-              'rain': 'pitter patter of raindrops',
-              'wind': 'whoooosh',
-              'footsteps': 'tap tap tap',
-              'door creak': 'creeeeak',
-              'magic spell': 'sparkle sparkle zing',
-              'horse gallop': 'clip clop clip clop'
-            };
-            
-            const spokenEffect = spokenEffectMap[effectName.toLowerCase()] || effectName;
-            return ` ${spokenEffect} `;
-          });
-          
-          // Re-generate the audio with spoken sound effects
-          const finalTextWithEffects = title 
-            ? `${title}. ${textWithSpokenEffects}`
-            : textWithSpokenEffects;
-            
-          const mp3WithEffects = await openai.audio.speech.create({
-            model: "gpt-4o-mini-tts",
-            voice: openAiVoice,
-            speed: speakingSpeed,
-            input: finalTextWithEffects.substring(0, 4096),
-          });
-          
-          const bufferWithEffects = await mp3WithEffects.arrayBuffer();
-          fs.writeFileSync(audioFilePath, Buffer.from(bufferWithEffects));
-          
-          console.log(`Audio with spoken sound effects generated and saved to ${audioFilePath}`);
-        }
+        console.log(`Audio generated and saved to ${audioFilePath}`);
         
         return res.status(200).json({ audioUrl });
       } catch (openAiError) {
