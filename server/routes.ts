@@ -484,20 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         - Keep content family-friendly and appropriate for children
       `;
       
-      // Always add sound effects in the text regardless of subscription tier
-      prompt += `
-        VERY IMPORTANT: Include sound effects directly in the story text using the format [SFX:effect_name] 
-        where "effect_name" is EXACTLY one of these available sound effects: ${soundEffectsList}
-        
-        You MUST ONLY use sound effects from this exact list: ${soundEffectsList}
-        
-        For example:
-        - "Once upon a time [SFX:Wind], in a forest far away..."
-        - "Suddenly, there was a loud crash! [SFX:Thunder]"
-        - "The little bird sang happily [SFX:Birds] as it flew through the blue sky."
-        
-        Focus on creating an engaging narrative with vivid descriptions and dialogue.
-      `;
+
       
 
       
@@ -606,16 +593,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioFilePath = path.join(audioDir, audioFileName);
       
       try {
-        // Replace [SFX:xxx] tags with pauses instead of removing them completely
-        // This preserves timing for sound effect synchronization
-        const textWithPauses = text.replace(/\[SFX:[^\]]+\]/g, '... ...');
+        // Clean the text by removing any sound effect tags
+        const cleanText = text.replace(/\[SFX:[^\]]+\]/g, '');
         
         // Add the title to the beginning of the narration with a pause after it
         const titleAndStory = title 
           ? `${title}. 
 
-${textWithPauses}`
-          : textWithPauses;
+${cleanText}`
+          : cleanText;
         
         // Set consistent speaking speed for timing synchronization
         const speakingSpeed = 1.0; // Normal speed (can be 0.25 to 4.0)
