@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play } from "lucide-react";
+import henrySpaceImage from "@assets/HenrySpace.png";
 
 interface ExampleStory {
   id: number;
@@ -14,11 +15,11 @@ interface ExampleStory {
 const exampleStories: ExampleStory[] = [
   {
     id: 1,
-    title: "The Mermaid's Treasure",
-    description: "A young mermaid discovers a magical pearl that grants wishes, but learns that friendship is the greatest treasure of all.",
-    imageUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=300",
-    duration: "5-7 MIN",
-    ageRange: "Ages 4-6"
+    title: "Henry The Space Explorer",
+    description: "When space pirates steal Vesper’s magical Golden Cat, young explorer Henry sets off in his starship to save the day — using bravery, heart, and starlight to restore joy to the galaxy.",
+    imageUrl: henrySpaceImage,
+    duration: "3-4 MIN",
+    ageRange: "Ages 3-6"
   },
   {
     id: 2,
