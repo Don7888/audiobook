@@ -8,11 +8,11 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "" });
 // Map voice selection to OpenAI voice models
 export function mapVoiceToOpenAI(voice: string): string {
   switch(voice) {
-    case "Alloy (Female)":
+    case "Alloy (Neutral)":
       return "alloy";
     case "Echo (Male)":
       return "echo";
-    case "Fable (Female)":
+    case "Fable (Male)":
       return "fable";
     case "Onyx (Male)":
       return "onyx";

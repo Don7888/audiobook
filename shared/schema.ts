@@ -7,9 +7,9 @@ export const subscriptionTierEnum = z.enum(["basic", "pro", "premium"]);
 
 // OpenAI TTS voice options enum
 export const narratorVoiceEnum = z.enum([
-  "Alloy (Female)",
+  "Alloy (Neutral)",
   "Echo (Male)", 
-  "Fable (Female)",
+  "Fable (Male)",
   "Nova (Female)",
   "Onyx (Male)",
   "Shimmer (Female)"

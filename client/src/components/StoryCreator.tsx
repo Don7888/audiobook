@@ -137,7 +137,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       ageRange: "3-5",
       storyLength: "short",
       storyType: "adventure",
-      narrator: "Alloy (Female)",
+      narrator: "Alloy (Neutral)",
       includeSoundEffects: false,
       batchPrompts: Array.from({ length: 3 }, () => ({ prompt: "" }))
     },
@@ -729,9 +729,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Alloy (Female)">Alloy (Female)</SelectItem>
+                        <SelectItem value="Alloy (Neutral)">Alloy (Neutral)</SelectItem>
                         <SelectItem value="Echo (Male)">Echo (Male)</SelectItem>
-                        <SelectItem value="Fable (Female)">Fable (Female)</SelectItem>
+                        <SelectItem value="Fable (Male)">Fable (Male)</SelectItem>
                         <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
                         <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
                         <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
@@ -958,9 +958,9 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Alloy (Female)">Alloy (Female)</SelectItem>
+                              <SelectItem value="Alloy (Neutral)">Alloy (Neutral)</SelectItem>
                               <SelectItem value="Echo (Male)">Echo (Male)</SelectItem>
-                              <SelectItem value="Fable (Female)">Fable (Female)</SelectItem>
+                              <SelectItem value="Fable (Male)">Fable (Male)</SelectItem>
                               <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
                               <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
                               <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
