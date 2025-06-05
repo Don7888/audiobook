@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play } from "lucide-react";
+import { useState } from "react";
 
 interface ExampleStory {
   id: number;
@@ -42,6 +43,40 @@ const exampleStories: ExampleStory[] = [
 ];
 
 export default function ExampleStories() {
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<number | null>(null);
+
+  const handlePlayAudio = (story: ExampleStory) => {
+    if (!story.audioUrl) return;
+
+    // Stop any currently playing audio
+    if (currentlyPlaying !== null) {
+      const currentAudio = document.getElementById(`audio-${currentlyPlaying}`) as HTMLAudioElement;
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+    }
+
+    // Play the selected audio
+    const audio = document.getElementById(`audio-${story.id}`) as HTMLAudioElement;
+    if (audio) {
+      if (currentlyPlaying === story.id) {
+        // If clicking the same story, pause it
+        audio.pause();
+        setCurrentlyPlaying(null);
+      } else {
+        // Play the new story
+        audio.play();
+        setCurrentlyPlaying(story.id);
+        
+        // Reset when audio ends
+        audio.onended = () => {
+          setCurrentlyPlaying(null);
+        };
+      }
+    }
+  };
+
   return (
     <section id="examples" className="py-16 bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4">
@@ -67,9 +102,24 @@ export default function ExampleStories() {
                   <Badge variant="secondary" className="bg-secondary bg-opacity-20 text-secondary font-semibold text-xs py-1 px-3 rounded-full">
                     {story.ageRange}
                   </Badge>
-                  <Button variant="ghost" className="text-primary hover:text-purple transition-colors p-1">
-                    <Play className="h-6 w-6" />
-                  </Button>
+                  {story.audioUrl ? (
+                    <>
+                      <Button 
+                        variant="ghost" 
+                        className="text-primary hover:text-purple transition-colors p-1"
+                        onClick={() => handlePlayAudio(story)}
+                      >
+                        <Play className={`h-6 w-6 ${currentlyPlaying === story.id ? 'text-purple-600' : ''}`} />
+                      </Button>
+                      <audio id={`audio-${story.id}`} preload="metadata">
+                        <source src={story.audioUrl} type="audio/mpeg" />
+                      </audio>
+                    </>
+                  ) : (
+                    <Button variant="ghost" className="text-gray-400 cursor-not-allowed p-1" disabled>
+                      <Play className="h-6 w-6" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
