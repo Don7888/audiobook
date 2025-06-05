@@ -9,7 +9,7 @@ export const subscriptionTierEnum = z.enum(["basic", "pro", "premium"]);
 export const narratorVoiceEnum = z.enum([
   "Alloy (Female)",
   "Echo (Male)", 
-  "Fable (Male)",
+  "Fable (Female)",
   "Nova (Female)",
   "Onyx (Male)",
   "Shimmer (Female)"

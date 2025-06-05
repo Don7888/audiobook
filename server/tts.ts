@@ -12,7 +12,7 @@ export function mapVoiceToOpenAI(voice: string): string {
       return "alloy";
     case "Echo (Male)":
       return "echo";
-    case "Fable (Male)":
+    case "Fable (Female)":
       return "fable";
     case "Onyx (Male)":
       return "onyx";

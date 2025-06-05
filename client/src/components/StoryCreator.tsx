@@ -731,7 +731,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                       <SelectContent>
                         <SelectItem value="Alloy (Female)">Alloy (Female)</SelectItem>
                         <SelectItem value="Echo (Male)">Echo (Male)</SelectItem>
-                        <SelectItem value="Fable (Male)">Fable (Male)</SelectItem>
+                        <SelectItem value="Fable (Female)">Fable (Female)</SelectItem>
                         <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
                         <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
                         <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
@@ -960,7 +960,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                             <SelectContent>
                               <SelectItem value="Alloy (Female)">Alloy (Female)</SelectItem>
                               <SelectItem value="Echo (Male)">Echo (Male)</SelectItem>
-                              <SelectItem value="Fable (Male)">Fable (Male)</SelectItem>
+                              <SelectItem value="Fable (Female)">Fable (Female)</SelectItem>
                               <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
                               <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
                               <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
