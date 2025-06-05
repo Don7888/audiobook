@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play } from "lucide-react";
-import heroImage from "@assets/Hero.png";
 
 interface ExampleStory {
   id: number;
@@ -17,17 +16,17 @@ const exampleStories: ExampleStory[] = [
     id: 1,
     title: "Henry The Space Explorer",
     description: "When space pirates steal Vesper’s magical Golden Cat, young explorer Henry sets off in his starship to save the day — using bravery, heart, and starlight to restore joy to the galaxy.",
-    imageUrl: heroImage,
+    imageUrl: "/HenrySpace.png",
     duration: "3-4 MIN",
     ageRange: "Ages 3-6"
   },
   {
     id: 2,
-    title: "Forest Explorers",
-    description: "Two siblings discover a hidden path in the woods that leads to a magical forest filled with talking animals.",
-    imageUrl: "https://pixabay.com/get/ga76498930130a3002c1f92030e04e090a603a48e690a95db4ad3ca544d3eb73f9c6cf593bfc5f68f27e986a17999c9c5c9e60117ec7bc5d0f53e38d74439ba2e_1280.jpg",
-    duration: "8-10 MIN",
-    ageRange: "Ages 6-8"
+    title: "The Alphabet Jungle Adventure",
+    description: "Join the dancing letters as they explore their magical jungle home, learning sounds and making friends in this educational adventure.",
+    imageUrl: "/AlphaJungle.png",
+    duration: "5-7 MIN",
+    ageRange: "Ages 3-5"
   },
   {
     id: 3,
