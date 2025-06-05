@@ -13,6 +13,9 @@ app.use('/audio', express.static(path.join(process.cwd(), 'audio')));
 // Serve static files from the 'public' directory
 app.use('/sounds', express.static(path.join(process.cwd(), 'public/sounds')));
 
+// Serve all public files (including images)
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
