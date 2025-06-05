@@ -137,7 +137,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
       ageRange: "3-5",
       storyLength: "short",
       storyType: "adventure",
-      narrator: "Female-Gentle",
+      narrator: "Alloy (Female)",
       includeSoundEffects: false,
       batchPrompts: Array.from({ length: 3 }, () => ({ prompt: "" }))
     },
@@ -729,12 +729,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Female-Gentle">Female - Gentle</SelectItem>
-                        <SelectItem value="Male-Cheerful">Male - Cheerful</SelectItem>
-                        <SelectItem value="Female-Animated">Female - Animated</SelectItem>
-                        <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
-                        <SelectItem value="Male-English">Male - English</SelectItem>
-                        <SelectItem value="Fable">Fable</SelectItem>
+                        <SelectItem value="Alloy (Female)">Alloy (Female)</SelectItem>
+                        <SelectItem value="Echo (Male)">Echo (Male)</SelectItem>
+                        <SelectItem value="Fable (Male)">Fable (Male)</SelectItem>
+                        <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
+                        <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
+                        <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
@@ -958,12 +958,12 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Female-Gentle">Female - Gentle</SelectItem>
-                              <SelectItem value="Male-Cheerful">Male - Cheerful</SelectItem>
-                              <SelectItem value="Female-Animated">Female - Animated</SelectItem>
-                              <SelectItem value="Male-Storyteller">Male - Storyteller</SelectItem>
-                              <SelectItem value="Male-English">Male - English</SelectItem>
-                              <SelectItem value="Fable">Fable</SelectItem>
+                              <SelectItem value="Alloy (Female)">Alloy (Female)</SelectItem>
+                              <SelectItem value="Echo (Male)">Echo (Male)</SelectItem>
+                              <SelectItem value="Fable (Male)">Fable (Male)</SelectItem>
+                              <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
+                              <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
+                              <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>

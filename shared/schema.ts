@@ -5,6 +5,16 @@ import { z } from "zod";
 // Subscription tiers
 export const subscriptionTierEnum = z.enum(["basic", "pro", "premium"]);
 
+// OpenAI TTS voice options enum
+export const narratorVoiceEnum = z.enum([
+  "Alloy (Female)",
+  "Echo (Male)", 
+  "Fable (Male)",
+  "Nova (Female)",
+  "Onyx (Male)",
+  "Shimmer (Female)"
+]);
+
 // User schema
 // Session storage table for Replit Auth
 export const sessions = pgTable(
@@ -97,7 +107,7 @@ export const storyGenerationSchema = z.object({
   ageRange: z.string(),
   storyLength: z.string(),
   storyType: z.string(),
-  narrator: z.string(),
+  narrator: narratorVoiceEnum,
   vibe: z.string().optional(),
   includeSoundEffects: z.boolean().optional().default(false),
   batchMode: z.boolean().optional().default(false),
