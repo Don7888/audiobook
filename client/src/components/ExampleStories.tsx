@@ -17,7 +17,7 @@ const exampleStories: ExampleStory[] = [
     title: "Henry The Space Explorer",
     description: "When space pirates steal Vesper’s magical Golden Cat, young explorer Henry sets off in his starship to save the day — using bravery, heart, and starlight to restore joy to the galaxy.",
     imageUrl: "/HenrySpace.png",
-    duration: "3-4 MIN",
+    duration: "4+ MINs",
     ageRange: "Ages 3-6"
   },
   {
@@ -25,16 +25,16 @@ const exampleStories: ExampleStory[] = [
     title: "The Alphabet Jungle Adventure",
     description: "Join the dancing letters as they explore their magical jungle home, learning sounds and making friends in this educational adventure.",
     imageUrl: "/AlphaJungle.png",
-    duration: "5-7 MIN",
-    ageRange: "Ages 3-5"
+    duration: "2-3 MIN",
+    ageRange: "Ages 2-3"
   },
   {
     id: 3,
-    title: "Beep's Space Journey",
-    description: "A little robot named Beep gets separated from his spaceship and must navigate the stars to find his way home.",
-    imageUrl: "https://images.unsplash.com/photo-1614728263952-84ea256f9679?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&h=300",
-    duration: "12-15 MIN",
-    ageRange: "Ages 7-10"
+    title: "Eva Beaver",
+    description: "A curious beaver named Eva discovers a magical clearing of dancing fairies and joins their joyful celebration, leaving with a crystal flower and a heart full of wonder.",
+    imageUrl: "/EvaBeaver.png",
+    duration: "1-2 MIN",
+    ageRange: "Ages 6-8"
   }
 ];
 
