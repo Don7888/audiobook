@@ -9,6 +9,7 @@ interface ExampleStory {
   imageUrl: string;
   duration: string;
   ageRange: string;
+  audioUrl?: string;
 }
 
 const exampleStories: ExampleStory[] = [
@@ -18,7 +19,8 @@ const exampleStories: ExampleStory[] = [
     description: "When space pirates steal Vesper’s magical Golden Cat, young explorer Henry sets off in his starship to save the day — using bravery, heart, and starlight to restore joy to the galaxy.",
     imageUrl: "/HenrySpace.png",
     duration: "4+ MINs",
-    ageRange: "Ages 3-6"
+    ageRange: "Ages 3-6",
+    audioUrl: "/henry-space-explorer.mp3"
   },
   {
     id: 2,
@@ -26,7 +28,8 @@ const exampleStories: ExampleStory[] = [
     description: "Join the dancing letters as they explore their magical jungle home, learning sounds and making friends in this educational adventure.",
     imageUrl: "/AlphaJungle.png",
     duration: "2-3 MIN",
-    ageRange: "Ages 2-3"
+    ageRange: "Ages 2-3",
+    audioUrl: "/alphabet-jungle-adventure.mp3"
   },
   {
     id: 3,
