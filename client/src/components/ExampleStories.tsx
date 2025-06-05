@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Play } from "lucide-react";
+import heroImage from "@assets/Hero.png";
 
 interface ExampleStory {
   id: number;
@@ -16,7 +17,7 @@ const exampleStories: ExampleStory[] = [
     id: 1,
     title: "Henry The Space Explorer",
     description: "When space pirates steal Vesper’s magical Golden Cat, young explorer Henry sets off in his starship to save the day — using bravery, heart, and starlight to restore joy to the galaxy.",
-    imageUrl: "/HenrySpace.png",
+    imageUrl: heroImage,
     duration: "3-4 MIN",
     ageRange: "Ages 3-6"
   },
