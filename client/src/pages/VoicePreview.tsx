@@ -15,11 +15,15 @@ export default function VoicePreview() {
 
   const voices = narratorVoiceEnum.options;
 
+  const getAudioId = (voiceName: string) => {
+    return `voice-audio-${voiceName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  };
+
   const handlePlayAudio = async (voiceName: string) => {
     try {
       // Stop any currently playing audio
       if (playingVoice !== null) {
-        const currentAudio = document.getElementById(`voice-audio-${playingVoice}`) as HTMLAudioElement;
+        const currentAudio = document.getElementById(getAudioId(playingVoice)) as HTMLAudioElement;
         if (currentAudio) {
           currentAudio.pause();
           currentAudio.currentTime = 0;
@@ -59,7 +63,7 @@ export default function VoicePreview() {
       }
 
       // Use exact same playback method as ExampleStories
-      const audio = document.getElementById(`voice-audio-${voiceName}`) as HTMLAudioElement;
+      const audio = document.getElementById(getAudioId(voiceName)) as HTMLAudioElement;
       if (audio) {
         if (playingVoice === voiceName) {
           // If clicking the same voice, pause it
@@ -173,7 +177,7 @@ export default function VoicePreview() {
                             </>
                           )}
                         </Button>
-                        <audio id={`voice-audio-${voice}`} preload="metadata">
+                        <audio id={getAudioId(voice)} preload="metadata">
                           <source src="" type="audio/mpeg" />
                         </audio>
                       </>
