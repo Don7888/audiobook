@@ -67,15 +67,45 @@ export default function VoicePreview() {
           setPlayingVoice(null);
         } else {
           // Play the new voice
+          if (!audioUrl) {
+            console.error("No audio URL available for:", voiceName);
+            return;
+          }
+          console.log("Setting audio source:", audioUrl);
           audio.src = audioUrl;
-          audio.play();
-          setPlayingVoice(voiceName);
+          console.log("Starting audio playback for:", voiceName);
+          
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.then(() => {
+              console.log("Audio started successfully for:", voiceName);
+              setPlayingVoice(voiceName);
+            }).catch(error => {
+              console.error("Audio play failed:", error);
+              toast({
+                title: "Playback Error",
+                description: "Unable to play audio. Please try again.",
+                variant: "destructive"
+              });
+            });
+          } else {
+            setPlayingVoice(voiceName);
+          }
 
           // Reset when audio ends
           audio.onended = () => {
+            console.log("Audio ended for:", voiceName);
+            setPlayingVoice(null);
+          };
+          
+          // Add error handler
+          audio.onerror = (e) => {
+            console.error("Audio error:", e);
             setPlayingVoice(null);
           };
         }
+      } else {
+        console.error("Audio element not found for:", voiceName);
       }
       
     } catch (error: any) {
