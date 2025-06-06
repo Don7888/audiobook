@@ -19,7 +19,7 @@ const sampleText = "I am your audiobook narrator";
 export default function VoicePreview() {
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
-  const [audioElements, setAudioElements] = useState<Map<string, HTMLAudioElement>>(new Map());
+  const [audioCache, setAudioCache] = useState<Map<string, string>>(new Map());
   const { toast } = useToast();
 
   const playVoicePreview = async (voiceName: string) => {
@@ -27,24 +27,20 @@ export default function VoicePreview() {
       console.log("Playing voice preview for:", voiceName);
       
       // Stop any currently playing audio
+      if (playingVoice === voiceName) {
+        setPlayingVoice(null);
+        return;
+      }
+      
+      // Stop other playing audio
       if (playingVoice) {
-        const currentAudio = audioElements.get(playingVoice);
-        if (currentAudio) {
-          currentAudio.pause();
-          currentAudio.currentTime = 0;
-        }
         setPlayingVoice(null);
       }
 
-      // If clicking the same voice while it's playing, just stop
-      if (playingVoice === voiceName) {
-        return;
-      }
-
-      // Check if we already have audio for this voice
-      let audio = audioElements.get(voiceName);
+      // Check if we already have cached audio URL for this voice
+      let audioUrl = audioCache.get(voiceName);
       
-      if (!audio) {
+      if (!audioUrl) {
         // Generate new audio for this voice
         setIsGenerating(voiceName);
         console.log("Generating audio for voice:", voiceName);
@@ -65,66 +61,56 @@ export default function VoicePreview() {
         }
 
         const result = await response.json();
-        console.log("Audio generated, URL:", result.audioUrl);
+        audioUrl = result.audioUrl.startsWith('http') ? result.audioUrl : `${window.location.origin}${result.audioUrl}`;
+        console.log("Audio generated, URL:", audioUrl);
         
-        // Create audio element with full URL
-        const audioUrl = result.audioUrl.startsWith('http') ? result.audioUrl : `${window.location.origin}${result.audioUrl}`;
-        audio = new Audio(audioUrl);
-        
-        // Set up event listeners before adding to map
-        audio.addEventListener('ended', () => {
-          console.log("Audio ended for:", voiceName);
-          setPlayingVoice(null);
-        });
-        
-        audio.addEventListener('error', (e) => {
-          console.error("Audio error for:", voiceName, e);
-          toast({
-            title: "Playback Error",
-            description: "Failed to play voice preview",
-            variant: "destructive"
-          });
-          setPlayingVoice(null);
-        });
-
-        audio.addEventListener('loadeddata', () => {
-          console.log("Audio loaded for:", voiceName);
-        });
-
-        const newMap = new Map(audioElements);
-        newMap.set(voiceName, audio);
-        setAudioElements(newMap);
+        // Cache the URL
+        setAudioCache(prev => new Map(prev.set(voiceName, audioUrl!)));
       }
 
-      // Play the audio
-      if (audio) {
-        console.log("Starting playback for:", voiceName);
-        setPlayingVoice(voiceName);
-        
-        // Reset audio to beginning
-        audio.currentTime = 0;
-        
-        try {
-          await audio.play();
-          console.log("Audio playing successfully for:", voiceName);
-        } catch (playError) {
-          console.error("Play error:", playError);
-          toast({
-            title: "Playback Error",
-            description: "Failed to start audio playback",
-            variant: "destructive"
-          });
-          setPlayingVoice(null);
-        }
-      }
+      // Create fresh audio element and play immediately
+      const audio = new Audio(audioUrl);
+      setPlayingVoice(voiceName);
       
-    } catch (error) {
+      // Set up one-time event listeners
+      audio.addEventListener('ended', () => {
+        console.log("Audio ended for:", voiceName);
+        setPlayingVoice(null);
+      });
+      
+      audio.addEventListener('error', (e: any) => {
+        console.error("Audio error for:", voiceName, e);
+        setPlayingVoice(null);
+      });
+
+      // Start playback
+      console.log("Starting playback for:", voiceName);
+      audio.play().catch((playError: any) => {
+        console.error("Play error:", playError);
+        let errorMessage = "Failed to start audio playback";
+        
+        if (playError.name === 'NotAllowedError') {
+          errorMessage = "Browser blocked audio playback. Please try clicking again.";
+        } else if (playError.name === 'NotSupportedError') {
+          errorMessage = "Audio format not supported";
+        }
+        
+        toast({
+          title: "Playback Error",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        setPlayingVoice(null);
+      });
+      
+    } catch (error: any) {
       console.error("Voice preview error:", error);
       toast({
         title: "Preview Failed",
-        description: error instanceof Error ? error.message : "Failed to generate voice preview",
+        description: error.message || "Failed to generate voice preview",
         variant: "destructive"
       });
+      setPlayingVoice(null);
     } finally {
       setIsGenerating(null);
     }
@@ -132,11 +118,6 @@ export default function VoicePreview() {
 
   const stopPlayback = () => {
     if (playingVoice) {
-      const audio = audioElements.get(playingVoice);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
       setPlayingVoice(null);
     }
   };
