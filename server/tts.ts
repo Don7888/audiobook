@@ -20,6 +20,8 @@ export function mapVoiceToOpenAI(voice: string): string {
       return "nova";
     case "Shimmer (Female)":
       return "shimmer";
+    case "Ballad (Male)":
+      return "ballad";
     default:
       return "alloy"; // default voice
   }

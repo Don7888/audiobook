@@ -12,7 +12,8 @@ export const narratorVoiceEnum = z.enum([
   "Fable (Male)",
   "Nova (Female)",
   "Onyx (Male)",
-  "Shimmer (Female)"
+  "Shimmer (Female)",
+  "Ballad (Male)"
 ]);
 
 // User schema

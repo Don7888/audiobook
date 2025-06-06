@@ -735,6 +735,7 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         <SelectItem value="Nova (Female)">Nova (Female)</SelectItem>
                         <SelectItem value="Onyx (Male)">Onyx (Male)</SelectItem>
                         <SelectItem value="Shimmer (Female)">Shimmer (Female)</SelectItem>
+                        <SelectItem value="Ballad (Male)">Ballad (Male)</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormItem>
