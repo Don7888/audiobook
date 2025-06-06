@@ -41,63 +41,36 @@ export default function VoicePreview() {
       let audioUrl = audioCache.get(voiceName);
       
       if (!audioUrl) {
-        // Check if voice sample already exists on server to avoid regeneration
+        // Use the same audio generation logic as story narration
         setIsGenerating(voiceName);
-        console.log("Checking for cached voice sample:", voiceName);
+        console.log("Generating voice sample using story audio endpoint:", voiceName);
         
-        const response = await fetch('/api/voice-samples/check', {
+        const response = await fetch('/api/stories/generate-audio', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ voice: voiceName })
+          body: JSON.stringify({
+            text: sampleText,
+            voice: voiceName,
+            title: "Voice Preview"
+          })
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          audioUrl = result.audioUrl;
-          console.log("Using cached voice sample:", audioUrl);
-        } else {
-          // Generate one-time sample only if it doesn't exist
-          console.log("Generating new voice sample for:", voiceName);
-          
-          const generateResponse = await fetch('/api/voice-samples/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              text: sampleText,
-              voice: voiceName
-            })
-          });
-
-          if (!generateResponse.ok) {
-            const errorData = await generateResponse.json();
-            throw new Error(errorData.message || 'Failed to generate voice sample');
-          }
-
-          const generateResult = await generateResponse.json();
-          audioUrl = generateResult.audioUrl;
-          console.log("Generated new voice sample:", audioUrl);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to generate voice preview');
         }
+
+        const result = await response.json();
+        audioUrl = result.audioUrl.startsWith('http') ? result.audioUrl : `${window.location.origin}${result.audioUrl}`;
+        console.log("Generated voice sample:", audioUrl);
         
         // Cache the URL
         setAudioCache(prev => new Map(prev.set(voiceName, audioUrl!)));
       }
 
-      // Create fresh audio element with better error handling
-      const audio = new Audio();
+      // Use the exact same audio playback mechanism as story narration
+      const audio = new Audio(audioUrl);
       setPlayingVoice(voiceName);
-      
-      // Set up event listeners before loading
-      audio.addEventListener('loadstart', () => {
-        console.log("Audio loading started for:", voiceName);
-      });
-      
-      audio.addEventListener('canplay', () => {
-        console.log("Audio can play for:", voiceName);
-        audio.play().catch((playError: any) => {
-          console.error("Play error after canplay:", playError);
-          setPlayingVoice(null);
-        });
-      });
       
       audio.addEventListener('ended', () => {
         console.log("Audio ended for:", voiceName);
@@ -105,44 +78,28 @@ export default function VoicePreview() {
       });
       
       audio.addEventListener('error', (e: any) => {
-        console.error("Audio error for:", voiceName, e, audio.error);
+        console.error("Audio error for:", voiceName, e);
         toast({
           title: "Audio Error",
-          description: `Failed to load audio: ${audio.error?.message || 'Unknown error'}`,
+          description: "Failed to play voice preview",
           variant: "destructive"
         });
         setPlayingVoice(null);
       });
 
-      // Load the audio source with fallback handling
-      console.log("Loading audio for:", voiceName, "URL:", audioUrl);
-      
-      // Try different loading approaches for better compatibility
-      audio.preload = 'auto';
-      audio.crossOrigin = 'anonymous';
-      
-      // Set source and load
-      if (audioUrl) {
-        audio.src = audioUrl;
-        audio.load();
-        
-        // Fallback: try direct fetch and blob URL if initial load fails
-        setTimeout(() => {
-          if (audio.readyState === 0) {
-            console.log("Trying blob URL fallback for:", voiceName);
-            fetch(audioUrl)
-              .then(response => response.blob())
-              .then(blob => {
-                const blobUrl = URL.createObjectURL(blob);
-                audio.src = blobUrl;
-                audio.load();
-              })
-              .catch(err => {
-                console.error("Blob fallback failed:", err);
-                setPlayingVoice(null);
-              });
-          }
-        }, 2000);
+      // Play immediately like story narration does
+      console.log("Playing audio for:", voiceName, "URL:", audioUrl);
+      try {
+        await audio.play();
+        console.log("Audio playing successfully for:", voiceName);
+      } catch (playError: any) {
+        console.error("Play error:", playError);
+        toast({
+          title: "Playback Error", 
+          description: "Unable to play audio. Try clicking again.",
+          variant: "destructive"
+        });
+        setPlayingVoice(null);
       }
       
     } catch (error: any) {
