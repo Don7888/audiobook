@@ -65,7 +65,9 @@ export default function VoicePreview() {
         
         // Create audio element
         audio = new Audio(result.audioUrl);
-        setAudioElements(prev => new Map(prev.set(voiceName, audio!)));
+        const newMap = new Map(audioElements);
+        newMap.set(voiceName, audio);
+        setAudioElements(newMap);
         
         // Set up event listeners
         audio.addEventListener('ended', () => {
