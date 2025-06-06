@@ -161,9 +161,9 @@ export class MemStorage implements IStorage {
       ...insertStory, 
       id, 
       createdAt: now,
-      userId: insertStory.userId || null,
+      userId: insertStory.userId ?? null,
       soundEffects,
-      characterIds: insertStory.characterIds || null
+      characterIds: insertStory.characterIds ?? []
     };
     
     this.stories.set(id, story);
