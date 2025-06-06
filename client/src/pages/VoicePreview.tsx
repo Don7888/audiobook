@@ -14,7 +14,7 @@ const voices = [
   { name: "Ballad (Male)", description: "Melodic male voice" }
 ];
 
-const sampleText = "Once upon a time, in a magical forest, there lived a brave little hamster named Henry. He loved exploring and going on exciting adventures with his friends.";
+const sampleText = "I am your audiobook narrator";
 
 export default function VoicePreview() {
   const [playingVoice, setPlayingVoice] = useState<string | null>(null);
@@ -24,6 +24,8 @@ export default function VoicePreview() {
 
   const playVoicePreview = async (voiceName: string) => {
     try {
+      console.log("Playing voice preview for:", voiceName);
+      
       // Stop any currently playing audio
       if (playingVoice) {
         const currentAudio = audioElements.get(playingVoice);
@@ -45,6 +47,7 @@ export default function VoicePreview() {
       if (!audio) {
         // Generate new audio for this voice
         setIsGenerating(voiceName);
+        console.log("Generating audio for voice:", voiceName);
         
         const response = await fetch('/api/stories/generate-audio', {
           method: 'POST',
@@ -62,19 +65,20 @@ export default function VoicePreview() {
         }
 
         const result = await response.json();
+        console.log("Audio generated, URL:", result.audioUrl);
         
-        // Create audio element
-        audio = new Audio(result.audioUrl);
-        const newMap = new Map(audioElements);
-        newMap.set(voiceName, audio);
-        setAudioElements(newMap);
+        // Create audio element with full URL
+        const audioUrl = result.audioUrl.startsWith('http') ? result.audioUrl : `${window.location.origin}${result.audioUrl}`;
+        audio = new Audio(audioUrl);
         
-        // Set up event listeners
+        // Set up event listeners before adding to map
         audio.addEventListener('ended', () => {
+          console.log("Audio ended for:", voiceName);
           setPlayingVoice(null);
         });
         
-        audio.addEventListener('error', () => {
+        audio.addEventListener('error', (e) => {
+          console.error("Audio error for:", voiceName, e);
           toast({
             title: "Playback Error",
             description: "Failed to play voice preview",
@@ -82,12 +86,36 @@ export default function VoicePreview() {
           });
           setPlayingVoice(null);
         });
+
+        audio.addEventListener('loadeddata', () => {
+          console.log("Audio loaded for:", voiceName);
+        });
+
+        const newMap = new Map(audioElements);
+        newMap.set(voiceName, audio);
+        setAudioElements(newMap);
       }
 
       // Play the audio
       if (audio) {
+        console.log("Starting playback for:", voiceName);
         setPlayingVoice(voiceName);
-        await audio.play();
+        
+        // Reset audio to beginning
+        audio.currentTime = 0;
+        
+        try {
+          await audio.play();
+          console.log("Audio playing successfully for:", voiceName);
+        } catch (playError) {
+          console.error("Play error:", playError);
+          toast({
+            title: "Playback Error",
+            description: "Failed to start audio playback",
+            variant: "destructive"
+          });
+          setPlayingVoice(null);
+        }
       }
       
     } catch (error) {
