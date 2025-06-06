@@ -1073,6 +1073,66 @@ ${cleanText}`
     }
   });
 
+  // Voice sample caching endpoints to minimize API costs
+  app.post("/api/voice-samples/check", async (req: Request, res: Response) => {
+    try {
+      const { voice } = req.body;
+      const fileName = `voice_sample_${voice.replace(/[^a-zA-Z0-9]/g, '_')}.wav`;
+      const filePath = path.join(process.cwd(), 'audio', fileName);
+      
+      if (fs.existsSync(filePath)) {
+        return res.status(200).json({ 
+          audioUrl: `/api/stories/audio/${fileName}`,
+          cached: true 
+        });
+      } else {
+        return res.status(404).json({ message: "Voice sample not found" });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error checking voice sample" });
+    }
+  });
+
+  app.post("/api/voice-samples/generate", async (req: Request, res: Response) => {
+    try {
+      const { text, voice } = req.body;
+      const fileName = `voice_sample_${voice.replace(/[^a-zA-Z0-9]/g, '_')}.wav`;
+      const filePath = path.join(process.cwd(), 'audio', fileName);
+      
+      // Check if already exists to prevent duplicate generation
+      if (fs.existsSync(filePath)) {
+        return res.status(200).json({ 
+          audioUrl: `/api/stories/audio/${fileName}`,
+          cached: true 
+        });
+      }
+
+      // Generate using TTS
+      const result = await generateAudio(text, voice);
+      
+      if (result.success) {
+        // Rename to consistent filename for caching
+        const originalPath = result.filePath.replace('/api/stories/audio/', '');
+        const originalFilePath = path.join(process.cwd(), 'audio', originalPath);
+        
+        if (fs.existsSync(originalFilePath)) {
+          fs.renameSync(originalFilePath, filePath);
+        }
+        
+        return res.status(200).json({ 
+          audioUrl: `/api/stories/audio/${fileName}`,
+          generated: true 
+        });
+      } else {
+        return res.status(500).json({ message: result.error || "Failed to generate voice sample" });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error generating voice sample" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

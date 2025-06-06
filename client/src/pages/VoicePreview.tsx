@@ -41,28 +41,42 @@ export default function VoicePreview() {
       let audioUrl = audioCache.get(voiceName);
       
       if (!audioUrl) {
-        // Generate new audio for this voice
+        // Check if voice sample already exists on server to avoid regeneration
         setIsGenerating(voiceName);
-        console.log("Generating audio for voice:", voiceName);
+        console.log("Checking for cached voice sample:", voiceName);
         
-        const response = await fetch('/api/stories/generate-audio', {
+        const response = await fetch('/api/voice-samples/check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: sampleText,
-            voice: voiceName,
-            title: "Voice Preview"
-          })
+          body: JSON.stringify({ voice: voiceName })
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to generate voice preview');
-        }
+        if (response.ok) {
+          const result = await response.json();
+          audioUrl = result.audioUrl;
+          console.log("Using cached voice sample:", audioUrl);
+        } else {
+          // Generate one-time sample only if it doesn't exist
+          console.log("Generating new voice sample for:", voiceName);
+          
+          const generateResponse = await fetch('/api/voice-samples/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: sampleText,
+              voice: voiceName
+            })
+          });
 
-        const result = await response.json();
-        audioUrl = result.audioUrl.startsWith('http') ? result.audioUrl : `${window.location.origin}${result.audioUrl}`;
-        console.log("Audio generated, URL:", audioUrl);
+          if (!generateResponse.ok) {
+            const errorData = await generateResponse.json();
+            throw new Error(errorData.message || 'Failed to generate voice sample');
+          }
+
+          const generateResult = await generateResponse.json();
+          audioUrl = generateResult.audioUrl;
+          console.log("Generated new voice sample:", audioUrl);
+        }
         
         // Cache the URL
         setAudioCache(prev => new Map(prev.set(voiceName, audioUrl!)));
