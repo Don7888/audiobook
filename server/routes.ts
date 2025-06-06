@@ -568,7 +568,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         app.get('/api/stories/audio/:filename', (req, res) => {
           const audioFile = path.join(process.cwd(), 'audio', req.params.filename);
           if (fs.existsSync(audioFile)) {
-            res.setHeader('Content-Type', 'audio/mpeg');
+            // Set appropriate content type based on file extension
+            const ext = path.extname(req.params.filename).toLowerCase();
+            let contentType = 'audio/mpeg';
+            if (ext === '.wav') {
+              contentType = 'audio/wav';
+            } else if (ext === '.ogg') {
+              contentType = 'audio/ogg';
+            }
+            
+            res.setHeader('Content-Type', contentType);
             res.setHeader('Accept-Ranges', 'bytes');
             res.setHeader('Cache-Control', 'public, max-age=3600');
             return res.sendFile(audioFile);

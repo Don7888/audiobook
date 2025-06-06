@@ -42,20 +42,20 @@ export async function generateAudio(text: string, voice: string): Promise<{ succ
       fs.mkdirSync(audioDir, { recursive: true });
     }
     
-    // Generate unique filename
-    const fileName = `${timestamp}.mp3`;
+    // Generate unique filename with WAV extension
+    const fileName = `${timestamp}.wav`;
     const filePath = path.join(audioDir, fileName);
     
-    // Call OpenAI TTS API with standard settings for better compatibility
-    const mp3 = await openai.audio.speech.create({
+    // Call OpenAI TTS API with WAV format for better browser compatibility
+    const audio = await openai.audio.speech.create({
       model: "tts-1",
       voice: openAIVoice,
       input: truncatedText,
-      response_format: "mp3"
+      response_format: "wav"
     });
     
     // Save the audio file
-    const buffer = await mp3.arrayBuffer();
+    const buffer = await audio.arrayBuffer();
     fs.writeFileSync(filePath, Buffer.from(buffer));
     
     return {
