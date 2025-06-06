@@ -738,6 +738,11 @@ export default function StoryCreator({ onStoryGenerated }: StoryCreatorProps) {
                         <SelectItem value="Ballad (Male)">Ballad (Male)</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FormDescription>
+                      <Link href="/voice-preview" className="text-primary hover:underline text-sm">
+                        Preview voice samples →
+                      </Link>
+                    </FormDescription>
                   </FormItem>
                 )}
               />

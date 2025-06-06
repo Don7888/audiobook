@@ -52,6 +52,11 @@ export default function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link href="/voice-preview" className={location === '/voice-preview' ? 'text-primary font-medium' : ''}>
+                  Voice Preview
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/sound-effects" className={location === '/sound-effects' ? 'text-primary font-medium' : ''}>
                   Sound Effects
                 </Link>

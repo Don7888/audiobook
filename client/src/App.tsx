@@ -16,6 +16,7 @@ import Characters from "@/pages/Characters";
 import SoundEffects from "@/pages/SoundEffects";
 import Export from "@/pages/Export";
 import Legal from "@/pages/Legal";
+import VoicePreview from "@/pages/VoicePreview";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/sound-effects" component={SoundEffects} />
       <Route path="/export" component={Export} />
       <Route path="/legal" component={Legal} />
+      <Route path="/voice-preview" component={VoicePreview} />
       <Route component={NotFound} />
     </Switch>
   );
