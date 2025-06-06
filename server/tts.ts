@@ -50,6 +50,7 @@ export async function generateAudio(text: string, voice: string): Promise<{ succ
       model: "tts-1",
       voice: openAIVoice,
       input: truncatedText,
+      response_format: "mp3",
     });
     
     // Save the audio file

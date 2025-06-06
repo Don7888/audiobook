@@ -68,40 +68,42 @@ export default function VoicePreview() {
         setAudioCache(prev => new Map(prev.set(voiceName, audioUrl!)));
       }
 
-      // Create fresh audio element and play immediately
-      const audio = new Audio(audioUrl);
+      // Create fresh audio element with better error handling
+      const audio = new Audio();
       setPlayingVoice(voiceName);
       
-      // Set up one-time event listeners
+      // Set up event listeners before loading
+      audio.addEventListener('loadstart', () => {
+        console.log("Audio loading started for:", voiceName);
+      });
+      
+      audio.addEventListener('canplay', () => {
+        console.log("Audio can play for:", voiceName);
+        audio.play().catch((playError: any) => {
+          console.error("Play error after canplay:", playError);
+          setPlayingVoice(null);
+        });
+      });
+      
       audio.addEventListener('ended', () => {
         console.log("Audio ended for:", voiceName);
         setPlayingVoice(null);
       });
       
       audio.addEventListener('error', (e: any) => {
-        console.error("Audio error for:", voiceName, e);
-        setPlayingVoice(null);
-      });
-
-      // Start playback
-      console.log("Starting playback for:", voiceName);
-      audio.play().catch((playError: any) => {
-        console.error("Play error:", playError);
-        let errorMessage = "Failed to start audio playback";
-        
-        if (playError.name === 'NotAllowedError') {
-          errorMessage = "Browser blocked audio playback. Please try clicking again.";
-        } else if (playError.name === 'NotSupportedError') {
-          errorMessage = "Audio format not supported";
-        }
-        
+        console.error("Audio error for:", voiceName, e, audio.error);
         toast({
-          title: "Playback Error",
-          description: errorMessage,
+          title: "Audio Error",
+          description: `Failed to load audio: ${audio.error?.message || 'Unknown error'}`,
           variant: "destructive"
         });
         setPlayingVoice(null);
       });
+
+      // Load the audio source
+      console.log("Loading audio for:", voiceName, "URL:", audioUrl);
+      audio.src = audioUrl;
+      audio.load();
       
     } catch (error: any) {
       console.error("Voice preview error:", error);
@@ -139,6 +141,9 @@ export default function VoicePreview() {
           <p className="text-gray-700 italic">
             "{sampleText}"
           </p>
+          <div className="mt-3 text-sm text-gray-600">
+            <p>If audio doesn't play, try refreshing the page or using a different browser.</p>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
