@@ -575,34 +575,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Map the voice selection to OpenAI voice models
-      let openAiVoice = "alloy"; // default voice
-      
-      switch(voice) {
-        case "Female - Gentle":
-          openAiVoice = "nova";
-          break;
-        case "Male - Cheerful":
-          openAiVoice = "echo";
-          break;
-        case "Female - Animated":
-          openAiVoice = "shimmer";
-          break;
-        case "Male - Storyteller":
-          openAiVoice = "onyx";
-          break;
-        case "Male - English":
-          openAiVoice = "alloy";
-          break;
-        case "Fable":
-          openAiVoice = "fable";
-          break;
-        case "vibe":
-          openAiVoice = "vibe";
-          break;
-        default:
-          openAiVoice = "alloy";
-      }
+      // Map the voice selection to OpenAI voice models using the centralized function
+      const openAiVoice = mapVoiceToOpenAI(voice);
       
       // Generate a unique filename
       const timestamp = Date.now();
