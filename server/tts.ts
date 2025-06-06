@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { execSync } from 'child_process';
 import OpenAI from "openai";
 
 // Initialize OpenAI client
@@ -45,12 +46,12 @@ export async function generateAudio(text: string, voice: string): Promise<{ succ
     const fileName = `${timestamp}.mp3`;
     const filePath = path.join(audioDir, fileName);
     
-    // Call OpenAI TTS API
+    // Call OpenAI TTS API with standard settings for better compatibility
     const mp3 = await openai.audio.speech.create({
       model: "tts-1",
       voice: openAIVoice,
       input: truncatedText,
-      response_format: "mp3",
+      response_format: "mp3"
     });
     
     // Save the audio file

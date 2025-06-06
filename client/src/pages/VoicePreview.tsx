@@ -100,10 +100,36 @@ export default function VoicePreview() {
         setPlayingVoice(null);
       });
 
-      // Load the audio source
+      // Load the audio source with fallback handling
       console.log("Loading audio for:", voiceName, "URL:", audioUrl);
-      audio.src = audioUrl;
-      audio.load();
+      
+      // Try different loading approaches for better compatibility
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
+      
+      // Set source and load
+      if (audioUrl) {
+        audio.src = audioUrl;
+        audio.load();
+        
+        // Fallback: try direct fetch and blob URL if initial load fails
+        setTimeout(() => {
+          if (audio.readyState === 0) {
+            console.log("Trying blob URL fallback for:", voiceName);
+            fetch(audioUrl)
+              .then(response => response.blob())
+              .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                audio.src = blobUrl;
+                audio.load();
+              })
+              .catch(err => {
+                console.error("Blob fallback failed:", err);
+                setPlayingVoice(null);
+              });
+          }
+        }, 2000);
+      }
       
     } catch (error: any) {
       console.error("Voice preview error:", error);
