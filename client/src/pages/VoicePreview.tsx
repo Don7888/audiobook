@@ -63,7 +63,10 @@ export default function VoicePreview() {
       }
 
       // Use exact same playback method as ExampleStories
-      const audio = document.getElementById(getAudioId(voiceName)) as HTMLAudioElement;
+      const audioId = getAudioId(voiceName);
+      console.log("Looking for audio element with ID:", audioId);
+      const audio = document.getElementById(audioId) as HTMLAudioElement;
+      console.log("Found audio element:", audio);
       if (audio) {
         if (playingVoice === voiceName) {
           // If clicking the same voice, pause it
