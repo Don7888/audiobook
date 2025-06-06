@@ -3,7 +3,23 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let errorMessage = `${res.status}: ${text}`;
+    
+    // Try to parse JSON error response for better error messages
+    try {
+      const errorData = JSON.parse(text);
+      if (errorData.error === 'quota_exceeded') {
+        errorMessage = errorData.message || 'API quota exceeded';
+      } else if (errorData.error === 'api_error') {
+        errorMessage = errorData.message || 'API service error';
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch (e) {
+      // Keep original error if JSON parsing fails
+    }
+    
+    throw new Error(errorMessage);
   }
 }
 

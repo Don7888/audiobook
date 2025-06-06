@@ -503,7 +503,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: result.content,
         soundEffectSuggestions: result.soundEffectSuggestions || []
       });
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Story generation error:", err);
+      
+      // Handle OpenAI API quota exceeded
+      if (err.status === 429 && err.code === 'insufficient_quota') {
+        return res.status(429).json({
+          message: "Story generation temporarily unavailable due to API quota limits. Please try again later or contact support.",
+          error: "quota_exceeded"
+        });
+      }
+      
+      // Handle other OpenAI API errors
+      if (err.status && err.error) {
+        return res.status(err.status).json({
+          message: `Story generation failed: ${err.error.message || 'API error'}`,
+          error: "api_error"
+        });
+      }
+      
       return handleZodError(err, res);
     }
   });
@@ -621,13 +639,28 @@ ${cleanText}`
         console.log(`Audio generated and saved to ${audioFilePath}`);
         
         return res.status(200).json({ audioUrl });
-      } catch (openAiError) {
+      } catch (openAiError: any) {
         console.error("OpenAI TTS error:", openAiError);
         
-        // Fallback to a simulated URL if OpenAI fails
-        return res.status(200).json({ 
-          audioUrl,
-          message: "Used fallback audio due to TTS service limitations"
+        // Handle OpenAI API quota exceeded
+        if (openAiError.status === 429 && openAiError.code === 'insufficient_quota') {
+          return res.status(429).json({
+            message: "Audio generation temporarily unavailable due to API quota limits. Please try again later or contact support.",
+            error: "quota_exceeded"
+          });
+        }
+        
+        // Handle other OpenAI API errors
+        if (openAiError.status && openAiError.error) {
+          return res.status(openAiError.status).json({
+            message: `Audio generation failed: ${openAiError.error.message || 'API error'}`,
+            error: "api_error"
+          });
+        }
+        
+        return res.status(500).json({
+          message: "Audio generation failed due to technical issues",
+          error: "generation_failed"
         });
       }
     } catch (err) {
